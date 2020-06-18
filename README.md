@@ -1,1 +1,1 @@
-# tekton-trigger-plugin
+# tekton-client-plugin
