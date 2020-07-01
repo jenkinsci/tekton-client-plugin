@@ -20,7 +20,13 @@ public class Tekton extends AbstractDescribableImpl<Tekton> {
 
     @Extension
     public static class DescriptorImpl extends Descriptor<Tekton> {
+        public Long configVersion;
         public List<ClusterConfig> clusterConfigs;
+
+        public DescriptorImpl() {
+            configVersion = 1L;
+            load();
+        }
 
         /**
          * Set the displayName for the instance of clusterConfig
@@ -72,6 +78,10 @@ public class Tekton extends AbstractDescribableImpl<Tekton> {
                 }
             }
             return null;
+        }
+
+        public void setClusterConfigs(List<ClusterConfig> configs) {
+            clusterConfigs = configs;
         }
 
         @Override
