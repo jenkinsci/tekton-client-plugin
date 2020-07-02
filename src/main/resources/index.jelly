@@ -3,5 +3,5 @@
   This view is used to render the installed plugins page.
 -->
 <div>
-    This plugin allows creation, and triggering of Tekton Pipeline Resources.
+    This plugin helps in the creation, and triggering of Tekton Pipeline Resources.
 </div>
