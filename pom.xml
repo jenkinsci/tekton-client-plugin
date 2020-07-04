@@ -11,7 +11,7 @@
     <groupId>org.waveywaves.jenkins.plugins</groupId>
     <artifactId>tekton-client</artifactId>
     <version>${revision}-${changelist}</version>
-    <name>Tekton Client plugin</name>
+    <name>Tekton Client</name>
     <description>Jenkins plugin to create and trigger Tekton pipeline resources in a Kubernetes cluster</description>
     <packaging>hpi</packaging>
     <url>https://github.com/jenkinsci/tekton-client-plugin</url>
