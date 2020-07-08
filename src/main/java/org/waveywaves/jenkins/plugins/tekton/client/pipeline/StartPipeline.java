@@ -29,7 +29,7 @@ public class StartPipeline extends Builder implements SimpleBuildStep {
     }
 
     public String getPipelineName() {
-        return this.pipelineName.;
+        return this.pipelineName.trim();
     }
 
     @Override
