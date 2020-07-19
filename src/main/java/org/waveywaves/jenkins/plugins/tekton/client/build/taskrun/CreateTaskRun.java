@@ -9,49 +9,63 @@ import hudson.model.TaskListener;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
-import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.tekton.pipeline.v1beta1.TaskRun;
-import io.fabric8.tekton.pipeline.v1beta1.TaskRunList;
+import io.fabric8.tekton.pipeline.v1beta1.TaskRunSpec;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
-import org.waveywaves.jenkins.plugins.tekton.client.build.BaseStep;
 
 import javax.annotation.Nonnull;
 import javax.servlet.ServletException;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.logging.Logger;
 
 public class CreateTaskRun extends BaseTaskRunStep {
     private static final Logger logger = Logger.getLogger(CreateTaskRun.class.getName());
+    private static final String INPUT_TYPE_URL = "URL";
+    private static final String INPUT_TYPE_YAML = "YAML";
 
     @DataBoundConstructor
-    public CreateTaskRun(String url) {
+    public CreateTaskRun(String input, String inputType) {
         super();
-        this.url = url;
+        this.inputType = inputType;
+        this.input = input;
     }
 
     @Override
     public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws InterruptedException, IOException {
-        URL taskRunUrl = new URL(this.getUrl());
+        if (getInputType().equals(INPUT_TYPE_URL)) {
+            createFromUrl();
+        } else if (getInputType().equals(INPUT_TYPE_YAML)) {
+            createFromYaml();
+        }
+    }
 
-        TaskRun taskRun = taskRunClient.load(taskRunUrl).get();
-        String namespace = tektonClient.getNamespace();
+    private void createFromUrl() throws MalformedURLException {
+        URL taskRunUrl = new URL(this.getInput());
+        TaskRun taskRun = resourceSpecificClient.load(taskRunUrl).get();
+        taskRun = resourceSpecificClient.create(taskRun);
+        logger.info("Created TaskRun from Url: " + taskRun.getMetadata().getName());
+    }
 
-        taskRun = taskRunClient.create(taskRun);
-        System.out.println("Created: " + taskRun.getMetadata().getName());
+    private void createFromYaml() {
+        String yamlInput = this.getInput();
+        InputStream yamlStream = new ByteArrayInputStream(yamlInput.getBytes());
 
-        // List TaskRun
-        TaskRunList taskRunList = taskRunClient.inNamespace(namespace).list();
-        System.out.println("There are " + taskRunList.getItems().size() + " TaskRun objects in " + namespace);
+        TaskRun taskRun = resourceSpecificClient.load(yamlStream).get();
+        taskRun = resourceSpecificClient.create(taskRun);
+        logger.info("Created TaskRun from Yaml: " + taskRun.getMetadata().getName());
     }
 
     @Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
-        public FormValidation doCheckUrl(@QueryParameter String value)
+        public FormValidation doCheckInput(@QueryParameter String value)
                 throws IOException, ServletException {
             if (value.length() == 0){
-                return FormValidation.error("url not provided");
+                return FormValidation.error("Input not provided");
             }
             return FormValidation.ok();
         }

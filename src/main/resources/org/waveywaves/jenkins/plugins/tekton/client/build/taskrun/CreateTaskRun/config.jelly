@@ -1,6 +1,12 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-    <f:entry title="URL" field="url">
-        <f:textbox />
+    <f:entry name="inputType" title="Input Type" field="inputType">
+        <select name="inputType">
+            <option value="URL" selected="${instance.inputType.equals('URL')? 'true':null}">URL</option>
+            <option value="YAML" selected="${instance.inputType.equals('YAML')? 'true':null}">YAML</option>
+        </select>
+    </f:entry>
+    <f:entry title="Input" field="input">
+        <f:expandableTextbox />
     </f:entry>
 </j:jelly>

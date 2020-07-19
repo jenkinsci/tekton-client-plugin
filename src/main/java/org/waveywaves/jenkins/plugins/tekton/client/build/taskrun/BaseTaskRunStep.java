@@ -8,16 +8,27 @@ import io.fabric8.tekton.pipeline.v1beta1.TaskRunList;
 import org.waveywaves.jenkins.plugins.tekton.client.build.BaseStep;
 
 public abstract class BaseTaskRunStep extends BaseStep {
-    protected String url;
-    protected transient MixedOperation<TaskRun, TaskRunList, DoneableTaskRun, Resource<TaskRun, DoneableTaskRun>> taskRunClient;
-    protected String TEKTON_RESOURCE_TYPE = "TaskRun";
+    protected String input;
+    protected String inputType;
 
+    // Resource Specific Client for TaskRun
+    protected transient MixedOperation<TaskRun, TaskRunList, DoneableTaskRun, Resource<TaskRun, DoneableTaskRun>>
+            resourceSpecificClient;
 
     protected BaseTaskRunStep() {
-        taskRunClient = tektonClient.v1beta1().taskRuns();
+        initResourceSpecificClient();
     }
 
-    public String getUrl() {
-        return this.url;
+    @Override
+    protected void initResourceSpecificClient() {
+        this.resourceSpecificClient =  tektonClient.v1beta1().taskRuns();
+    }
+
+    protected String getInput() {
+        return this.input;
+    }
+
+    protected String getInputType() {
+        return this.inputType;
     }
 }
