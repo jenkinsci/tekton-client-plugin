@@ -27,7 +27,6 @@ public abstract class BaseTaskRunStep extends BaseStep {
     protected String getInput() {
         return this.input;
     }
-
     protected String getInputType() {
         return this.inputType;
     }

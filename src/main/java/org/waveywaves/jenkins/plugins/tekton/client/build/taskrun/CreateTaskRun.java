@@ -3,19 +3,23 @@ package org.waveywaves.jenkins.plugins.tekton.client.build.taskrun;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
-import hudson.model.AbstractProject;
-import hudson.model.Run;
-import hudson.model.TaskListener;
+import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
 import io.fabric8.tekton.pipeline.v1beta1.TaskRun;
 import io.fabric8.tekton.pipeline.v1beta1.TaskRunSpec;
+import jenkins.model.Jenkins;
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.interceptor.RequirePOST;
+import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
 
 import javax.annotation.Nonnull;
 import javax.servlet.ServletException;
+import java.awt.*;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -62,9 +66,8 @@ public class CreateTaskRun extends BaseTaskRunStep {
 
     @Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
-        public FormValidation doCheckInput(@QueryParameter String value)
-                throws IOException, ServletException {
-            if (value.length() == 0){
+        public FormValidation doCheckInput(@QueryParameter(value = "input") final String input){
+            if (input.length() == 0){
                 return FormValidation.error("Input not provided");
             }
             return FormValidation.ok();
