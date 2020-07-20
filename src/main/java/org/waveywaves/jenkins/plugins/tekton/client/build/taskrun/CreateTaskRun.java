@@ -8,18 +8,12 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import hudson.util.ListBoxModel.Option;
 import io.fabric8.tekton.pipeline.v1beta1.TaskRun;
-import io.fabric8.tekton.pipeline.v1beta1.TaskRunSpec;
-import jenkins.model.Jenkins;
-import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.interceptor.RequirePOST;
-import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
 
 import javax.annotation.Nonnull;
-import javax.servlet.ServletException;
-import java.awt.*;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -71,6 +65,13 @@ public class CreateTaskRun extends BaseTaskRunStep {
                 return FormValidation.error("Input not provided");
             }
             return FormValidation.ok();
+        }
+
+        public ListBoxModel doFillInputTypeItems(@QueryParameter(value = "input") final String input){
+            ListBoxModel items =  new ListBoxModel();
+            items.add("YAML");
+            items.add("URL");
+            return items;
         }
 
         @Override
