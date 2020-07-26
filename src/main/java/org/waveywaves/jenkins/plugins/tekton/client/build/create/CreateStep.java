@@ -11,6 +11,7 @@ import hudson.util.ListBoxModel;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.tekton.pipeline.v1beta1.*;
+import io.fabric8.tekton.resource.v1alpha1.PipelineResource;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
@@ -45,26 +46,65 @@ public class CreateStep extends BaseStep {
     protected void createWithResourceSpecificClient(TektonResourceType resourceType, InputStream inputStream) {
         String resourceName = "";
         switch (resourceType) {
-//            case task:
-//                taskRunClient = tektonClient.v1beta1().taskRuns();
-//                TaskRun taskrun = taskRunClient.load(inputStream).get();
-//                resourceName = taskrun.getMetadata().getName();
-//                break;
-            case taskrun:
-                TaskRun taskrun = tektonClient.v1beta1().taskRuns().load(inputStream).get();
-                taskrun = tektonClient.v1beta1().taskRuns().create(taskrun);
-                resourceName = taskrun.getMetadata().getName();
+            case task:
+                resourceName = createTask(inputStream);
                 break;
-//            case pipeline:
-//                this.resourceSpecificClient = tektonClient.v1beta1().pipelines();
-//                break;
-//            case pipelinerun:
-//                this.resourceSpecificClient = tektonClient.v1beta1().pipelineRuns();
-//                break;
+            case taskrun:
+                resourceName = createTaskRun(inputStream);
+                break;
+            case pipeline:
+                resourceName = createPipeline(inputStream);
+                break;
+            case pipelinerun:
+                resourceName = createPipelineRun(inputStream);
+                break;
+            case pipelineresource:
+                resourceName = createPipelineResource(inputStream);
+                break;
             default:
                 logger.warning("Tekton ResourceSpecificClient not created");
         }
         logger.info("Created Tekton "+resourceType+" of name: "+resourceName);
+    }
+
+    private String createTaskRun(InputStream inputStream) {
+        String resourceName;
+        TaskRun taskrun = tektonClient.v1beta1().taskRuns().load(inputStream).get();
+        taskrun = tektonClient.v1beta1().taskRuns().create(taskrun);
+        resourceName = taskrun.getMetadata().getName();
+        return resourceName;
+    }
+
+    private String createTask(InputStream inputStream) {
+        String resourceName;
+        Task task = tektonClient.v1beta1().tasks().load(inputStream).get();
+        task = tektonClient.v1beta1().tasks().create(task);
+        resourceName = task.getMetadata().getName();
+        return resourceName;
+    }
+
+    private String createPipeline(InputStream inputStream) {
+        String resourceName;
+        Pipeline pipeline = tektonClient.v1beta1().pipelines().load(inputStream).get();
+        pipeline = tektonClient.v1beta1().pipelines().create(pipeline);
+        resourceName = pipeline.getMetadata().getName();
+        return resourceName;
+    }
+
+    private String createPipelineRun(InputStream inputStream) {
+        String resourceName;
+        PipelineRun pipelineRun = tektonClient.v1beta1().pipelineRuns().load(inputStream).get();
+        pipelineRun = tektonClient.v1beta1().pipelineRuns().create(pipelineRun);
+        resourceName = pipelineRun.getMetadata().getName();
+        return resourceName;
+    }
+
+    private String createPipelineResource(InputStream inputStream) {
+        String resourceName;
+        PipelineResource pipelineRes = tektonClient.v1alpha1().pipelineResources().load(inputStream).get();
+        pipelineRes = tektonClient.v1alpha1().pipelineResources().create(pipelineRes);
+        resourceName = pipelineRes.getMetadata().getName();
+        return resourceName;
     }
 
     @Override

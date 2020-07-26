@@ -21,7 +21,8 @@ public class TektonUtils {
         task,
         taskrun,
         pipeline,
-        pipelinerun
+        pipelinerun,
+        pipelineresource
     }
 
 
