@@ -10,13 +10,4 @@ import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils.TektonResourceTy
 public abstract class BaseStep extends Builder implements SimpleBuildStep {
     protected transient MixedOperation resourceSpecificClient = null;
     protected transient TektonClient tektonClient = TektonUtils.getTektonClient();
-    protected String input;
-    protected String inputType;
-
-    protected String getInput(){
-        return this.input;
-    }
-    protected String getInputType(){
-        return this.inputType;
-    }
 }
