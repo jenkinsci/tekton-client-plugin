@@ -30,6 +30,9 @@ public class CreateStep extends BaseStep {
     private static final Logger logger = Logger.getLogger(CreateStep.class.getName());
     private List<TektonResourceType> kind = new ArrayList<TektonResourceType>();
 
+    private String input;
+    private String inputType;
+
     protected enum InputType {
         URL,
         YAML,
@@ -41,6 +44,12 @@ public class CreateStep extends BaseStep {
         super();
         this.inputType = inputType;
         this.input = input;
+    }
+    private String getInput(){
+        return this.input;
+    }
+    private String getInputType(){
+        return this.inputType;
     }
 
     protected void createWithResourceSpecificClient(TektonResourceType resourceType, InputStream inputStream) {
@@ -159,7 +168,7 @@ public class CreateStep extends BaseStep {
 
         @Override
         public String getDisplayName() {
-            return "Tekton : Create Resource(s)";
+            return "Tekton : Create Resource";
         }
     }
 }
