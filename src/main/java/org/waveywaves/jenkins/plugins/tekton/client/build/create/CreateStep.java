@@ -22,6 +22,7 @@ import javax.annotation.Nonnull;
 import java.io.*;
 import java.net.URL;
 import java.nio.channels.Pipe;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -132,16 +133,18 @@ public class CreateStep extends BaseStep {
             inputStreamForKind = TektonUtils.urlToByteArrayStream(url);
             inputStreamForData = url.openStream();
         } else if (inputType.equals(InputType.YAML.toString())) {
-            inputStreamForKind = new ByteArrayInputStream(inputData.getBytes());
-            inputStreamForData = new ByteArrayInputStream(inputData.getBytes());
+            inputStreamForKind = new ByteArrayInputStream(inputData.getBytes(StandardCharsets.UTF_8));
+            inputStreamForData = new ByteArrayInputStream(inputData.getBytes(StandardCharsets.UTF_8));
         }
 
-        kind = TektonUtils.getKindFromInputStream(inputStreamForKind, this.getInputType());
-        if (kind.size() > 1){
-            logger.info("Multiple Objects in YAML not supported yet");
-            return;
-        } else {
-            createWithResourceSpecificClient(kind.get(0), inputStreamForData);
+        if (inputStreamForKind != null) {
+            kind = TektonUtils.getKindFromInputStream(inputStreamForKind, this.getInputType());
+            if (kind.size() > 1){
+                logger.info("Multiple Objects in YAML not supported yet");
+                return;
+            } else {
+                createWithResourceSpecificClient(kind.get(0), inputStreamForData);
+            }
         }
     }
 
