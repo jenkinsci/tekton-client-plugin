@@ -1,5 +1,7 @@
 # tekton-client-plugin
 
+[![Build Status](https://travis-ci.com/jenkinsci/tekton-client-plugin.svg?branch=master)](https://travis-ci.com/jenkinsci/tekton-client-plugin)
+
 Jenkins plugin to interact with [Tekton Pipelines](https://github.com/tektoncd/pipeline) on a Kubernetes Cluster. 
 #### **Current State** : _Proof of Concept_
 
