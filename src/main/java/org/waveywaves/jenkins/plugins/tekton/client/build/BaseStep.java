@@ -8,6 +8,5 @@ import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils.TektonResourceType;
 
 public abstract class BaseStep extends Builder implements SimpleBuildStep {
-    protected transient MixedOperation resourceSpecificClient = null;
     protected transient TektonClient tektonClient = TektonUtils.getTektonClient();
 }

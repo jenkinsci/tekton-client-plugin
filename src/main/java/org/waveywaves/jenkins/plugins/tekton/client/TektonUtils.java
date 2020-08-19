@@ -64,10 +64,13 @@ public class TektonUtils {
     public static InputStream urlToByteArrayStream(URL url) throws IOException {
         InputStream inputStream;
         inputStream = url.openStream();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-        String response = new String();
-        for (String line; (line = reader.readLine()) != null; response += line+"\n");
-        inputStream = new ByteArrayInputStream(response.getBytes());
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+        String response = "";
+        StringBuffer sb = new StringBuffer();
+
+        for (String line; (line = reader.readLine()) != null; response = sb.append(line).append("\n").toString());
+
+        inputStream = new ByteArrayInputStream(response.getBytes(StandardCharsets.UTF_8));
         reader.close();
 
         return inputStream;
