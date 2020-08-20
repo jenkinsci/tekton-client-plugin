@@ -127,23 +127,29 @@ public class CreateStep extends BaseStep {
         InputStream inputStreamForData = null;
         String inputData = this.getInput();
         String inputType = this.getInputType();
+        try {
+            if (inputType.equals(InputType.URL.toString())) {
+                URL url = new URL(inputData);
+                inputStreamForKind = TektonUtils.urlToByteArrayStream(url);
+                inputStreamForData = url.openStream();
 
-        if (inputType.equals(InputType.URL.toString())) {
-            URL url = new URL(inputData);
-            inputStreamForKind = TektonUtils.urlToByteArrayStream(url);
-            inputStreamForData = url.openStream();
-        } else if (inputType.equals(InputType.YAML.toString())) {
-            inputStreamForKind = new ByteArrayInputStream(inputData.getBytes(StandardCharsets.UTF_8));
-            inputStreamForData = new ByteArrayInputStream(inputData.getBytes(StandardCharsets.UTF_8));
-        }
-
-        if (inputStreamForKind != null) {
-            kind = TektonUtils.getKindFromInputStream(inputStreamForKind, this.getInputType());
-            if (kind.size() > 1){
-                logger.info("Multiple Objects in YAML not supported yet");
-                return;
-            } else {
-                createWithResourceSpecificClient(kind.get(0), inputStreamForData);
+            } else if (inputType.equals(InputType.YAML.toString())) {
+                inputStreamForKind = new ByteArrayInputStream(inputData.getBytes(StandardCharsets.UTF_8));
+                inputStreamForData = new ByteArrayInputStream(inputData.getBytes(StandardCharsets.UTF_8));
+            }
+        } finally {
+            if (inputStreamForKind != null) {
+                kind = TektonUtils.getKindFromInputStream(inputStreamForKind, this.getInputType());
+                if (kind.size() > 1){
+                    logger.info("Multiple Objects in YAML not supported yet");
+                    return;
+                } else {
+                    createWithResourceSpecificClient(kind.get(0), inputStreamForData);
+                }
+                inputStreamForKind.close();
+            }
+            if (inputStreamForData != null) {
+                inputStreamForData.close();
             }
         }
     }
