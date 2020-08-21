@@ -1,6 +1,5 @@
 package org.waveywaves.jenkins.plugins.tekton.client.build.delete;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -18,13 +17,11 @@ import io.fabric8.tekton.pipeline.v1beta1.TaskRun;
 import io.fabric8.tekton.resource.v1alpha1.PipelineResource;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
-import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils.TektonResourceType;
 import org.waveywaves.jenkins.plugins.tekton.client.build.BaseStep;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.List;
 import java.util.logging.Logger;
 
