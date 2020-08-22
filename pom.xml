@@ -23,6 +23,7 @@
         <pipeline-model-definition.version>1.6.0</pipeline-model-definition.version>
         <revision>1.0-alpha</revision>
         <changelist>SNAPSHOT</changelist>
+        <jenkins-test-harness.version>2.34</jenkins-test-harness.version>
     </properties>
 
     <licenses>
@@ -58,6 +59,25 @@
         </dependency>
     </dependencies>
 
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.jenkins-ci.plugins.workflow</groupId>
+                <artifactId>workflow-basic-steps</artifactId>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.jenkins-ci.plugins.workflow</groupId>
+                <artifactId>workflow-durable-task-step</artifactId>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.jenkins-ci.plugins.workflow</groupId>
+                <artifactId>workflow-job</artifactId>
+                <scope>test</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     <repositories>
         <repository>
             <id>repo.jenkins-ci.org</id>

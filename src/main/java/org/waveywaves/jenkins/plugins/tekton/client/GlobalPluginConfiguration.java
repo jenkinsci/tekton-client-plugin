@@ -1,15 +1,12 @@
 package org.waveywaves.jenkins.plugins.tekton.client;
 
 import hudson.Extension;
-import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import jenkins.model.GlobalConfiguration;
-import jenkins.util.Timer;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.util.logging.Logger;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.logging.Level.SEVERE;
 
 @Extension

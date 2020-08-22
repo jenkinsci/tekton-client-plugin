@@ -8,9 +8,10 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
-import io.fabric8.kubernetes.client.dsl.MixedOperation;
-import io.fabric8.kubernetes.client.dsl.Resource;
-import io.fabric8.tekton.pipeline.v1beta1.*;
+import io.fabric8.tekton.pipeline.v1beta1.Pipeline;
+import io.fabric8.tekton.pipeline.v1beta1.PipelineRun;
+import io.fabric8.tekton.pipeline.v1beta1.Task;
+import io.fabric8.tekton.pipeline.v1beta1.TaskRun;
 import io.fabric8.tekton.resource.v1alpha1.PipelineResource;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -19,7 +20,9 @@ import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils.TektonResourceTy
 import org.waveywaves.jenkins.plugins.tekton.client.build.BaseStep;
 
 import javax.annotation.Nonnull;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.nio.channels.Pipe;
 import java.nio.charset.StandardCharsets;
