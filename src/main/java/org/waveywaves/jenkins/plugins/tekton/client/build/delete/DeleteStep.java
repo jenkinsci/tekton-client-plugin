@@ -17,6 +17,7 @@ import io.fabric8.tekton.pipeline.v1beta1.TaskRun;
 import io.fabric8.tekton.resource.v1alpha1.PipelineResource;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
+import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils.TektonResourceType;
 import org.waveywaves.jenkins.plugins.tekton.client.build.BaseStep;
 
@@ -35,7 +36,9 @@ public class DeleteStep extends BaseStep {
         super();
         this.resourceType = resourceType;
         this.resourceName = resourceName;
+        setTektonClient(TektonUtils.getTektonClient());
     }
+
     private String getResourceType(){
         return this.resourceType;
     }
@@ -48,10 +51,14 @@ public class DeleteStep extends BaseStep {
 
     @Override
     public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws InterruptedException, IOException {
+        runDelete();
+    }
+
+    protected void runDelete(){
         deleteWithResourceSpecificClient(this.getTypedResourceType(), this.getResourceName());
     }
 
-    protected void deleteWithResourceSpecificClient(TektonResourceType resourceType, String resourceName) {
+    private void deleteWithResourceSpecificClient(TektonResourceType resourceType, String resourceName) {
         Boolean isDeleted = false;
         switch (resourceType) {
             case task:
@@ -77,7 +84,6 @@ public class DeleteStep extends BaseStep {
         } else {
             logger.info("Unable to delete Tekton "+resourceType+" of name: "+resourceName);
         }
-
     }
 
     private Boolean deleteTask(String resourceName) {
