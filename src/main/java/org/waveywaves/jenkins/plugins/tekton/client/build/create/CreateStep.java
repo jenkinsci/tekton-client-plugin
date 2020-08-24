@@ -48,7 +48,9 @@ public class CreateStep extends BaseStep {
         super();
         this.inputType = inputType;
         this.input = input;
+        setTektonClient(TektonUtils.getTektonClient());
     }
+
     private String getInput(){
         return this.input;
     }
@@ -56,7 +58,7 @@ public class CreateStep extends BaseStep {
         return this.inputType;
     }
 
-    protected void createWithResourceSpecificClient(TektonResourceType resourceType, InputStream inputStream) {
+    private void createWithResourceSpecificClient(TektonResourceType resourceType, InputStream inputStream) {
         String resourceName = "";
         switch (resourceType) {
             case task:
@@ -125,7 +127,7 @@ public class CreateStep extends BaseStep {
         runCreate();
     }
 
-    private void runCreate() throws java.io.IOException {
+    protected void runCreate() throws java.io.IOException {
         InputStream inputStreamForKind = null;
         InputStream inputStreamForData = null;
         String inputData = this.getInput();
