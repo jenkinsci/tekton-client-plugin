@@ -38,6 +38,8 @@ public class CreateStep extends BaseStep {
 
     private MixedOperation<TaskRun, TaskRunList, DoneableTaskRun, Resource<TaskRun, DoneableTaskRun>>
         taskRunClient;
+    private MixedOperation<Task, TaskList, DoneableTask, Resource<Task, DoneableTask>>
+        taskClient;
 
     protected enum InputType {
         URL,
@@ -91,6 +93,11 @@ public class CreateStep extends BaseStep {
         this.taskRunClient = trc;
     }
 
+    public void setTaskClient(
+            MixedOperation<Task, TaskList, DoneableTask, Resource<Task, DoneableTask>> tc){
+        this.taskClient = tc;
+    }
+
     public String createTaskRun(InputStream inputStream) {
         if (taskRunClient == null) {
             TektonClient tc = (TektonClient) tektonClient;
@@ -103,11 +110,14 @@ public class CreateStep extends BaseStep {
         return resourceName;
     }
 
-    private String createTask(InputStream inputStream) {
-        TektonClient tc = (TektonClient) tektonClient;
+    public String createTask(InputStream inputStream) {
+        if (taskClient == null) {
+            TektonClient tc = (TektonClient) tektonClient;
+            setTaskClient(tc.v1beta1().tasks());
+        }
         String resourceName;
-        Task task = tc.v1beta1().tasks().load(inputStream).get();
-        task = tc.v1beta1().tasks().create(task);
+        Task task = taskClient.load(inputStream).get();
+        task = taskClient.create(task);
         resourceName = task.getMetadata().getName();
         return resourceName;
     }
