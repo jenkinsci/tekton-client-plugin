@@ -11,6 +11,9 @@ JENKINS_SERVICE := ${KUBE_RES_PATH}/service.yaml
 build:
 	mvn clean install
 
+coverage:
+	mvn cobertura:cobertura
+
 e2e:
 	kubectl create -f $(JENKINS_DEPLOYMENT)
 
