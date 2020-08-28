@@ -1,6 +1,7 @@
 jobs:
   include:
     - language: java
+      dist: trusty
       java:
         - 'oraclejdk8'
       stage: Testing and Build
