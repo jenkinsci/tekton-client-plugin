@@ -1,10 +1,15 @@
 jobs:
   include:
     - language: java
+      dist: trusty
       java:
         - 'oraclejdk8'
-      stage: Build
-      script: make build
+      stage: Testing and Build
+      script: 
+        - make build
+        - make coverage
+      after_success:
+        - bash <(curl -s https://codecov.io/bash)
 
     - language: go
       go:
