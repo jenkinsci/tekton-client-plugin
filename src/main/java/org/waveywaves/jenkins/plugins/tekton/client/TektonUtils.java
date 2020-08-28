@@ -2,6 +2,7 @@ package org.waveywaves.jenkins.plugins.tekton.client;
 
 import io.fabric8.tekton.client.DefaultTektonClient;
 import io.fabric8.tekton.client.TektonClient;
+import io.fabric8.tekton.pipeline.v1beta1.*;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
