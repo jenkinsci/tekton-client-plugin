@@ -40,6 +40,10 @@ public class CreateStep extends BaseStep {
         taskRunClient;
     private MixedOperation<Task, TaskList, DoneableTask, Resource<Task, DoneableTask>>
         taskClient;
+    private MixedOperation<Pipeline, PipelineList, DoneablePipeline, Resource<Pipeline, DoneablePipeline>>
+        pipelineClient;
+    MixedOperation<PipelineRun, PipelineRunList, DoneablePipelineRun, Resource<PipelineRun, DoneablePipelineRun>>
+        pipelineRunClient;
 
     protected enum InputType {
         URL,
@@ -64,28 +68,20 @@ public class CreateStep extends BaseStep {
     }
 
     private String createWithResourceSpecificClient(TektonResourceType resourceType, InputStream inputStream) {
-        String resourceName = "";
         switch (resourceType) {
             case task:
-                resourceName = createTask(inputStream);
-                break;
+                return createTask(inputStream);
             case taskrun:
-                resourceName = createTaskRun(inputStream);
-                break;
+                return createTaskRun(inputStream);
             case pipeline:
-                resourceName = createPipeline(inputStream);
-                break;
+                return createPipeline(inputStream);
             case pipelinerun:
-                resourceName = createPipelineRun(inputStream);
-                break;
+                return createPipelineRun(inputStream);
             case pipelineresource:
-                resourceName = createPipelineResource(inputStream);
-                break;
+                return createPipelineResource(inputStream);
             default:
-                logger.warning("Tekton ResourceSpecificClient not created");
+                return "";
         }
-        logger.info("Created Tekton "+resourceType+" of name: "+resourceName);
-        return resourceName;
     }
 
     public void setTaskRunClient(
@@ -96,6 +92,16 @@ public class CreateStep extends BaseStep {
     public void setTaskClient(
             MixedOperation<Task, TaskList, DoneableTask, Resource<Task, DoneableTask>> tc){
         this.taskClient = tc;
+    }
+
+    public void setPipelineClient(
+            MixedOperation<Pipeline, PipelineList, DoneablePipeline, Resource<Pipeline, DoneablePipeline>> pc){
+        this.pipelineClient = pc;
+    }
+
+    public void setPipelineRunClient(
+            MixedOperation<PipelineRun, PipelineRunList, DoneablePipelineRun, Resource<PipelineRun, DoneablePipelineRun>> prc){
+        this.pipelineRunClient = prc;
     }
 
     public String createTaskRun(InputStream inputStream) {
@@ -122,20 +128,26 @@ public class CreateStep extends BaseStep {
         return resourceName;
     }
 
-    private String createPipeline(InputStream inputStream) {
-        TektonClient tc = (TektonClient) tektonClient;
+    public String createPipeline(InputStream inputStream) {
+        if (pipelineClient == null) {
+            TektonClient tc = (TektonClient) tektonClient;
+            setPipelineClient(tc.v1beta1().pipelines());
+        }
         String resourceName;
-        Pipeline pipeline = tc.v1beta1().pipelines().load(inputStream).get();
-        pipeline = tc.v1beta1().pipelines().create(pipeline);
+        Pipeline pipeline = pipelineClient.load(inputStream).get();
+        pipeline = pipelineClient.create(pipeline);
         resourceName = pipeline.getMetadata().getName();
         return resourceName;
     }
 
-    private String createPipelineRun(InputStream inputStream) {
-        TektonClient tc = (TektonClient) tektonClient;
+    public String createPipelineRun(InputStream inputStream) {
+        if (pipelineRunClient == null) {
+            TektonClient tc = (TektonClient) tektonClient;
+            setPipelineRunClient(tc.v1beta1().pipelineRuns());
+        }
         String resourceName;
-        PipelineRun pipelineRun = tc.v1beta1().pipelineRuns().load(inputStream).get();
-        pipelineRun = tc.v1beta1().pipelineRuns().create(pipelineRun);
+        PipelineRun pipelineRun = pipelineRunClient.load(inputStream).get();
+        pipelineRun = pipelineRunClient.create(pipelineRun);
         resourceName = pipelineRun.getMetadata().getName();
         return resourceName;
     }
@@ -175,7 +187,6 @@ public class CreateStep extends BaseStep {
                 List<TektonResourceType> kind = TektonUtils.getKindFromInputStream(inputStreamForKind, this.getInputType());
                 if (kind.size() > 1){
                     logger.info("Multiple Objects in YAML not supported yet");
-                    return null;
                 } else {
                     createdResourceName = createWithResourceSpecificClient(kind.get(0), inputStreamForData);
                 }
