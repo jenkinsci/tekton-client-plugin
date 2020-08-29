@@ -9,6 +9,10 @@ import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
 
 import io.fabric8.tekton.pipeline.v1beta1.*;
+import io.fabric8.tekton.resource.v1alpha1.DoneablePipelineResource;
+import io.fabric8.tekton.resource.v1alpha1.PipelineResource;
+import io.fabric8.tekton.resource.v1alpha1.PipelineResourceBuilder;
+import io.fabric8.tekton.resource.v1alpha1.PipelineResourceList;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -187,5 +191,46 @@ public class CreateStepTest {
         PipelineRunList testPipelineRunList = pipelineRunClient.list();
         assert createdPipelineName.equals("testPipelineRun");
         assert testPipelineRunList.getItems().size() == 1;
+    }
+
+    @Test
+    public void testPipelineResourceCreate() {
+        // Given
+        String testPipelineResourceYaml = "apiVersion: tekton.dev/v1alpha1\n" +
+                "kind: PipelineResource\n" +
+                "metadata:\n" +
+                "  name: testPipelineResource\n";
+
+        KubernetesClient client = server.getClient();
+        InputStream crdAsInputStream = getClass().getResourceAsStream("/resource-crd.yaml");
+        CustomResourceDefinition pipelineResCrd = client.customResourceDefinitions().load(crdAsInputStream).get();
+        MixedOperation<PipelineResource, PipelineResourceList, DoneablePipelineResource, Resource<PipelineResource, DoneablePipelineResource>> pipelineResourceClient = client
+                .customResources(CustomResourceDefinitionContext.fromCrd(pipelineResCrd), PipelineResource.class, PipelineResourceList.class, DoneablePipelineResource.class);
+
+        // Mocked Responses
+        PipelineResourceBuilder pipelineResourceBuilder = new PipelineResourceBuilder()
+                .withNewMetadata().withName("testPipelineResource").endMetadata();
+        List<PipelineResource> presList = new ArrayList<PipelineResource>();
+        PipelineResource testPipelineResource = pipelineResourceBuilder.build();
+        presList.add(testPipelineResource);
+        PipelineResourceList pipelineResourceList = new PipelineResourceList();
+        pipelineResourceList.setItems(presList);
+
+        server.expect().post().withPath("/apis/tekton.dev/v1alpha1/namespaces/test/pipelineresources")
+                .andReturn(HttpURLConnection.HTTP_CREATED, testPipelineResource).once();
+        server.expect().get().withPath("/apis/tekton.dev/v1alpha1/namespaces/test/pipelineresources")
+                .andReturn(HttpURLConnection.HTTP_OK, pipelineResourceList).once();
+
+        // When
+        CreateStep createStep = new CreateStep(CreateStep.InputType.YAML.toString(), testPipelineResourceYaml);
+        createStep.setTektonClient(client);
+        createStep.setPipelineResourceClient(pipelineResourceClient);
+        String createdResourceName = createStep.createPipelineResource(
+                new ByteArrayInputStream(testPipelineResourceYaml.getBytes(StandardCharsets.UTF_8)));
+
+        // Then
+        PipelineResourceList testPipelineResourceList = pipelineResourceClient.list();
+        assert createdResourceName.equals("testPipelineResource");
+        assert testPipelineResourceList.getItems().size() == 1;
     }
 }

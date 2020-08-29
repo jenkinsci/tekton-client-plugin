@@ -12,7 +12,9 @@ import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.tekton.client.TektonClient;
 import io.fabric8.tekton.pipeline.v1beta1.*;
+import io.fabric8.tekton.resource.v1alpha1.DoneablePipelineResource;
 import io.fabric8.tekton.resource.v1alpha1.PipelineResource;
+import io.fabric8.tekton.resource.v1alpha1.PipelineResourceList;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
@@ -37,13 +39,15 @@ public class CreateStep extends BaseStep {
     private String inputType;
 
     private MixedOperation<TaskRun, TaskRunList, DoneableTaskRun, Resource<TaskRun, DoneableTaskRun>>
-        taskRunClient;
+            taskRunClient;
     private MixedOperation<Task, TaskList, DoneableTask, Resource<Task, DoneableTask>>
-        taskClient;
+            taskClient;
     private MixedOperation<Pipeline, PipelineList, DoneablePipeline, Resource<Pipeline, DoneablePipeline>>
-        pipelineClient;
-    MixedOperation<PipelineRun, PipelineRunList, DoneablePipelineRun, Resource<PipelineRun, DoneablePipelineRun>>
-        pipelineRunClient;
+            pipelineClient;
+    private MixedOperation<PipelineRun, PipelineRunList, DoneablePipelineRun, Resource<PipelineRun, DoneablePipelineRun>>
+            pipelineRunClient;
+    private MixedOperation<PipelineResource, PipelineResourceList, DoneablePipelineResource, Resource<PipelineResource, DoneablePipelineResource>>
+            pipelineResourceClient;
 
     protected enum InputType {
         URL,
@@ -104,6 +108,11 @@ public class CreateStep extends BaseStep {
         this.pipelineRunClient = prc;
     }
 
+    public void setPipelineResourceClient(
+            MixedOperation<PipelineResource, PipelineResourceList, DoneablePipelineResource, Resource<PipelineResource, DoneablePipelineResource>> presc){
+        this.pipelineResourceClient = presc;
+    }
+
     public String createTaskRun(InputStream inputStream) {
         if (taskRunClient == null) {
             TektonClient tc = (TektonClient) tektonClient;
@@ -152,11 +161,14 @@ public class CreateStep extends BaseStep {
         return resourceName;
     }
 
-    private String createPipelineResource(InputStream inputStream) {
-        TektonClient tc = (TektonClient) tektonClient;
+    public String createPipelineResource(InputStream inputStream) {
+        if (pipelineResourceClient == null) {
+            TektonClient tc = (TektonClient) tektonClient;
+            setPipelineResourceClient(tc.v1alpha1().pipelineResources());
+        }
         String resourceName;
-        PipelineResource pipelineRes = tc.v1alpha1().pipelineResources().load(inputStream).get();
-        pipelineRes = tc.v1alpha1().pipelineResources().create(pipelineRes);
+        PipelineResource pipelineRes = pipelineResourceClient.load(inputStream).get();
+        pipelineRes = pipelineResourceClient.create(pipelineRes);
         resourceName = pipelineRes.getMetadata().getName();
         return resourceName;
     }
