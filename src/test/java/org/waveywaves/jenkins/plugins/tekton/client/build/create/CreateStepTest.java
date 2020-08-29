@@ -13,6 +13,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
@@ -104,5 +105,87 @@ public class CreateStepTest {
         TaskRunList testTaskRunList = taskRunClient.list();
         assert createdTaskRunName.equals("home-is-set-1234");
         assert testTaskRunList.getItems().size() == 1;
+    }
+
+    @Test
+    public void testPipelineCreate() {
+        // Given
+        String testPipelineYaml = "apiVersion: tekton.dev/v1beta1\n" +
+                "kind: Pipeline\n" +
+                "metadata:\n" +
+                "  name: testPipeline\n";
+
+        KubernetesClient client = server.getClient();
+        InputStream crdAsInputStream = getClass().getResourceAsStream("/pipeline-crd.yaml");
+        CustomResourceDefinition pipelineCrd = client.customResourceDefinitions().load(crdAsInputStream).get();
+        MixedOperation<Pipeline, PipelineList, DoneablePipeline, Resource<Pipeline, DoneablePipeline>> pipelineClient = client
+                .customResources(CustomResourceDefinitionContext.fromCrd(pipelineCrd), Pipeline.class, PipelineList.class, DoneablePipeline.class);
+
+        // Mocked Responses
+        PipelineBuilder pipelineBuilder = new PipelineBuilder()
+                .withNewMetadata().withName("testPipeline").endMetadata();
+        List<Pipeline> pList = new ArrayList<Pipeline>();
+        Pipeline testPipeline = pipelineBuilder.build();
+        pList.add(testPipeline);
+        PipelineList pipelineList = new PipelineList();
+        pipelineList.setItems(pList);
+
+        server.expect().post().withPath("/apis/tekton.dev/v1/namespaces/test/pipelines")
+                .andReturn(HttpURLConnection.HTTP_CREATED, testPipeline).once();
+        server.expect().get().withPath("/apis/tekton.dev/v1/namespaces/test/pipelines")
+                .andReturn(HttpURLConnection.HTTP_OK, pipelineList).once();
+
+        // When
+        CreateStep createStep = new CreateStep(CreateStep.InputType.YAML.toString(), testPipelineYaml);
+        createStep.setTektonClient(client);
+        createStep.setPipelineClient(pipelineClient);
+        String createdPipelineName = createStep.createPipeline(
+                new ByteArrayInputStream(testPipelineYaml.getBytes(StandardCharsets.UTF_8)));
+
+        // Then
+        PipelineList testPipelineList = pipelineClient.list();
+        assert createdPipelineName.equals("testPipeline");
+        assert testPipelineList.getItems().size() == 1;
+    }
+
+    @Test
+    public void testPipelineRunCreate() {
+        // Given
+        String testPipelineRunYaml = "apiVersion: tekton.dev/v1beta1\n" +
+                "kind: PipelineRun\n" +
+                "metadata:\n" +
+                "  name: testPipelineRun\n";
+
+        KubernetesClient client = server.getClient();
+        InputStream crdAsInputStream = getClass().getResourceAsStream("/pipeline-crd.yaml");
+        CustomResourceDefinition pipelineRunCrd = client.customResourceDefinitions().load(crdAsInputStream).get();
+        MixedOperation<PipelineRun, PipelineRunList, DoneablePipelineRun, Resource<PipelineRun, DoneablePipelineRun>> pipelineRunClient = client
+                .customResources(CustomResourceDefinitionContext.fromCrd(pipelineRunCrd), PipelineRun.class, PipelineRunList.class, DoneablePipelineRun.class);
+
+        // Mocked Responses
+        PipelineRunBuilder pipelineRunBuilder = new PipelineRunBuilder()
+                .withNewMetadata().withName("testPipelineRun").endMetadata();
+        List<PipelineRun> prList = new ArrayList<PipelineRun>();
+        PipelineRun testPipelineRun = pipelineRunBuilder.build();
+        prList.add(testPipelineRun);
+        PipelineRunList pipelineRunList = new PipelineRunList();
+        pipelineRunList.setItems(prList);
+
+        server.expect().post().withPath("/apis/tekton.dev/v1/namespaces/test/pipelines")
+                .andReturn(HttpURLConnection.HTTP_CREATED, testPipelineRun).once();
+        server.expect().get().withPath("/apis/tekton.dev/v1/namespaces/test/pipelines")
+                .andReturn(HttpURLConnection.HTTP_OK, pipelineRunList).once();
+
+        // When
+        CreateStep createStep = new CreateStep(CreateStep.InputType.YAML.toString(), testPipelineRunYaml);
+        createStep.setTektonClient(client);
+        createStep.setPipelineRunClient(pipelineRunClient);
+        String createdPipelineName = createStep.createPipelineRun(
+                new ByteArrayInputStream(testPipelineRunYaml.getBytes(StandardCharsets.UTF_8)));
+
+        // Then
+        PipelineRunList testPipelineRunList = pipelineRunClient.list();
+        assert createdPipelineName.equals("testPipelineRun");
+        assert testPipelineRunList.getItems().size() == 1;
     }
 }
