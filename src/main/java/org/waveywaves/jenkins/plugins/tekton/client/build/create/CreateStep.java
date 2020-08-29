@@ -25,6 +25,7 @@ import javax.annotation.Nonnull;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.channels.Pipe;
 import java.nio.charset.StandardCharsets;
@@ -178,7 +179,8 @@ public class CreateStep extends BaseStep {
         runCreate();
     }
 
-    protected String runCreate() throws java.io.IOException {
+    protected String runCreate() {
+        URL url = null;
         InputStream inputStreamForKind = null;
         InputStream inputStreamForData = null;
         String inputData = this.getInput();
@@ -186,7 +188,7 @@ public class CreateStep extends BaseStep {
         String createdResourceName = "";
         try {
             if (inputType.equals(InputType.URL.toString())) {
-                URL url = new URL(inputData);
+                url = new URL(inputData);
                 inputStreamForKind = TektonUtils.urlToByteArrayStream(url);
                 inputStreamForData = url.openStream();
 
@@ -194,7 +196,6 @@ public class CreateStep extends BaseStep {
                 inputStreamForKind = new ByteArrayInputStream(inputData.getBytes(StandardCharsets.UTF_8));
                 inputStreamForData = new ByteArrayInputStream(inputData.getBytes(StandardCharsets.UTF_8));
             }
-        } finally {
             if (inputStreamForKind != null) {
                 List<TektonResourceType> kind = TektonUtils.getKindFromInputStream(inputStreamForKind, this.getInputType());
                 if (kind.size() > 1){
@@ -202,10 +203,23 @@ public class CreateStep extends BaseStep {
                 } else {
                     createdResourceName = createWithResourceSpecificClient(kind.get(0), inputStreamForData);
                 }
-                inputStreamForKind.close();
+            }
+        } catch (Exception e) {
+            logger.warning("possible URL related Exception has occurred "+e.toString());
+        } finally {
+            if (inputStreamForKind != null) {
+                try {
+                    inputStreamForKind.close();
+                } catch (IOException e) {
+                    logger.warning("IOException occurred "+e.toString());
+                }
             }
             if (inputStreamForData != null) {
-                inputStreamForData.close();
+                try {
+                    inputStreamForData.close();
+                } catch (IOException e) {
+                    logger.warning("IOException occurred "+e.toString());
+                }
             }
         }
         return createdResourceName;
