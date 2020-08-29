@@ -2,7 +2,6 @@ package org.waveywaves.jenkins.plugins.tekton.client;
 
 import io.fabric8.tekton.client.DefaultTektonClient;
 import io.fabric8.tekton.client.TektonClient;
-import io.fabric8.tekton.pipeline.v1beta1.*;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -45,36 +44,59 @@ public class TektonUtils {
         }
     }
 
-    public static List<TektonResourceType> getKindFromInputStream(InputStream inputStream, String inputType) throws IOException {
-        int nBytes = inputStream.available();
-        byte[] bytes = new byte[nBytes];
-        inputStream.read(bytes, 0, nBytes);
-        String readInput = new String(bytes, StandardCharsets.UTF_8);
-        logger.info("Creating from "+ inputType);
-
+    public static List<TektonResourceType> getKindFromInputStream(InputStream inputStream, String inputType) {
         List<TektonResourceType> kind = new ArrayList<TektonResourceType>();
-        String[] yamlLineByLine = readInput.split(System.lineSeparator());
-        for (int i=0; i < yamlLineByLine.length; i++){
-            String yamlLine = yamlLineByLine[i];
-            if (yamlLine.startsWith("kind")){
-                String kindName = yamlLine.split(":")[1].trim().toLowerCase();
-                 kind.add(TektonResourceType.valueOf(kindName));
+        try {
+            int nBytes = inputStream.available();
+            byte[] bytes = new byte[nBytes];
+            inputStream.read(bytes, 0, nBytes);
+            String readInput = new String(bytes, StandardCharsets.UTF_8);
+            logger.info("Creating from "+ inputType);
+
+            String[] yamlLineByLine = readInput.split(System.lineSeparator());
+            for (int i=0; i < yamlLineByLine.length; i++){
+                String yamlLine = yamlLineByLine[i];
+                if (yamlLine.startsWith("kind")){
+                    String kindName = yamlLine.split(":")[1].trim().toLowerCase();
+                    kind.add(TektonResourceType.valueOf(kindName));
+                }
             }
+        } catch(IOException e){
+            logger.warning("IOException occurred "+e.toString());
         }
+
         return kind;
     }
 
-    public static InputStream urlToByteArrayStream(URL url) throws IOException {
-        InputStream inputStream;
-        inputStream = url.openStream();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
-        String response = "";
-        StringBuffer sb = new StringBuffer();
+    public static InputStream urlToByteArrayStream(URL url) {
+        InputStream inputStream = null;
+        BufferedReader reader = null;
+        try {
+            inputStream = url.openStream();
+            reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+            String response = "";
+            StringBuffer sb = new StringBuffer();
+            for (String line; (line = reader.readLine()) != null; response = sb.append(line).append("\n").toString());
+            inputStream = new ByteArrayInputStream(response.getBytes(StandardCharsets.UTF_8));
+        } catch (IOException e){
+            logger.warning("IOException occurred "+ e.toString());
+        } finally {
+            if (inputStream != null) {
+                try {
+                    inputStream.close();
+                } catch (IOException e) {
+                    logger.warning("IOException occurred "+ e.toString());
+                }
+            }
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                    logger.warning("IOException occurred "+ e.toString());
+                }
+            }
+        }
 
-        for (String line; (line = reader.readLine()) != null; response = sb.append(line).append("\n").toString());
-
-        inputStream = new ByteArrayInputStream(response.getBytes(StandardCharsets.UTF_8));
-        reader.close();
 
         return inputStream;
     }
