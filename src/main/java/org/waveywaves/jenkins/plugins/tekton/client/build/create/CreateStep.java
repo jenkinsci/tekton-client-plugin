@@ -36,7 +36,7 @@ import java.util.logging.Logger;
 public class CreateStep extends BaseStep {
     private static final Logger logger = Logger.getLogger(CreateStep.class.getName());
 
-    private final String input;
+    private String input;
     private String inputType;
 
     private MixedOperation<TaskRun, TaskRunList, DoneableTaskRun, Resource<TaskRun, DoneableTaskRun>>
@@ -65,14 +65,14 @@ public class CreateStep extends BaseStep {
         setTektonClient(TektonUtils.getTektonClient());
     }
 
-    private String getInput(){
+    protected String getInput(){
         return this.input;
     }
-    private String getInputType(){
+    protected String getInputType(){
         return this.inputType;
     }
 
-    private String createWithResourceSpecificClient(TektonResourceType resourceType, InputStream inputStream) {
+    protected String createWithResourceSpecificClient(TektonResourceType resourceType, InputStream inputStream) {
         switch (resourceType) {
             case task:
                 return createTask(inputStream);
