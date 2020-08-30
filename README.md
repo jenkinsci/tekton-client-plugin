@@ -1,4 +1,4 @@
-# tekton-client-plugin
+# Tekton Client Plugin
 
 [![Build Status](https://travis-ci.com/jenkinsci/tekton-client-plugin.svg?branch=master)](https://travis-ci.com/jenkinsci/tekton-client-plugin) [![codecov](https://codecov.io/gh/jenkinsci/tekton-client-plugin/branch/master/graph/badge.svg)](https://codecov.io/gh/jenkinsci/tekton-client-plugin)
 
