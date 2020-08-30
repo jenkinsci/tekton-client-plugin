@@ -7,6 +7,10 @@ import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
 import io.fabric8.tekton.pipeline.v1beta1.*;
+import io.fabric8.tekton.resource.v1alpha1.DoneablePipelineResource;
+import io.fabric8.tekton.resource.v1alpha1.PipelineResource;
+import io.fabric8.tekton.resource.v1alpha1.PipelineResourceBuilder;
+import io.fabric8.tekton.resource.v1alpha1.PipelineResourceList;
 import org.junit.Rule;
 import org.junit.Test;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
@@ -176,5 +180,107 @@ public class DeleteStepMockServerTest {
         PipelineList testPipelineList = pipelineClient.list();
         assert isPipelineDeleted.equals(true);
         assert testPipelineList.getItems().size() == 0;
+    }
+
+    @Test
+    public void testPipelineRunDelete() {
+        // Given
+        String testPipelineRunYaml = "apiVersion: tekton.dev/v1beta1\n" +
+                "kind: PipelineRun\n" +
+                "metadata:\n" +
+                "  name: testPipelineRun\n";
+        String TEST_PIPELINERUN = "testPipelineRun";
+
+        KubernetesClient client = server.getClient();
+        InputStream crdAsInputStream = getClass().getResourceAsStream("/pipelinerun-crd.yaml");
+        CustomResourceDefinition pipelineRunCrd = client.customResourceDefinitions().load(crdAsInputStream).get();
+        MixedOperation<PipelineRun, PipelineRunList, DoneablePipelineRun, Resource<PipelineRun, DoneablePipelineRun>> pipelineRunClient = client
+                .customResources(CustomResourceDefinitionContext.fromCrd(pipelineRunCrd), PipelineRun.class, PipelineRunList.class, DoneablePipelineRun.class);
+
+        // Mocked Responses
+        PipelineRunBuilder pipelineRunBuilder = new PipelineRunBuilder()
+                .withNewMetadata().withName(TEST_PIPELINERUN).endMetadata();
+        List<PipelineRun> pList = new ArrayList<PipelineRun>();
+        PipelineRun testPipelineRun = pipelineRunBuilder.build();
+        pList.add(testPipelineRun);
+        PipelineRunList pipelineRunList = new PipelineRunList();
+        pipelineRunList.setItems(pList);
+
+        server.expect().post().withPath("/apis/tekton.dev/v1/namespaces/test/pipelineruns")
+                .andReturn(HttpURLConnection.HTTP_CREATED, testPipelineRun).once();
+        server.expect().get().withPath("/apis/tekton.dev/v1/namespaces/test/pipelineruns")
+                .andReturn(HttpURLConnection.HTTP_OK, pipelineRunList).once();
+        server.expect().delete().withPath("/apis/tekton.dev/v1/namespaces/test/pipelineruns/"+TEST_PIPELINERUN)
+                .andReturn(HttpURLConnection.HTTP_OK, testPipelineRun).once();
+        server.expect().get().withPath("/apis/tekton.dev/v1/namespaces/test/pipelineruns")
+                .andReturn(HttpURLConnection.HTTP_OK, new PipelineRunList()).once();
+
+
+        // When
+        CreateStep createStep = new CreateStep(CreateStep.InputType.YAML.toString(), testPipelineRunYaml);
+        createStep.setTektonClient(client);
+        createStep.setPipelineRunClient(pipelineRunClient);
+        createStep.createPipelineRun(new ByteArrayInputStream(testPipelineRunYaml.getBytes(StandardCharsets.UTF_8)));
+
+        DeleteStep deleteStep = new DeleteStep(TEST_PIPELINERUN, TektonUtils.TektonResourceType.pipelinerun.toString());
+        deleteStep.setTektonClient(client);
+        deleteStep.setPipelineRunClient(pipelineRunClient);
+        Boolean isPipelineRunDeleted = deleteStep.deletePipelineRun();
+
+        // Then
+        PipelineRunList testPipelineRunList = pipelineRunClient.list();
+        assert isPipelineRunDeleted.equals(true);
+        assert testPipelineRunList.getItems().size() == 0;
+    }
+
+    @Test
+    public void testPipelineResourceDelete() {
+        // Given
+        String testPipelineResourceYaml = "apiVersion: tekton.dev/v1alpha1\n" +
+                "kind: PipelineResource\n" +
+                "metadata:\n" +
+                "  name: testPipelineResource\n";
+        String TEST_PIPELINERESOURCE = "testPipelineResource";
+
+        KubernetesClient client = server.getClient();
+        InputStream crdAsInputStream = getClass().getResourceAsStream("/resource-crd.yaml");
+        CustomResourceDefinition pipelineResourceCrd = client.customResourceDefinitions().load(crdAsInputStream).get();
+        MixedOperation<PipelineResource, PipelineResourceList, DoneablePipelineResource, Resource<PipelineResource, DoneablePipelineResource>> pipelineResourceClient = client
+                .customResources(CustomResourceDefinitionContext.fromCrd(pipelineResourceCrd), PipelineResource.class, PipelineResourceList.class, DoneablePipelineResource.class);
+
+        // Mocked Responses
+        PipelineResourceBuilder pipelineResourceBuilder = new PipelineResourceBuilder()
+                .withNewMetadata().withName(TEST_PIPELINERESOURCE).endMetadata();
+        List<PipelineResource> pList = new ArrayList<PipelineResource>();
+        PipelineResource testPipelineResource = pipelineResourceBuilder.build();
+        pList.add(testPipelineResource);
+        PipelineResourceList pipelineResourceList = new PipelineResourceList();
+        pipelineResourceList.setItems(pList);
+
+        server.expect().post().withPath("/apis/tekton.dev/v1alpha1/namespaces/test/pipelineresources")
+                .andReturn(HttpURLConnection.HTTP_CREATED, testPipelineResource).once();
+        server.expect().get().withPath("/apis/tekton.dev/v1alpha1/namespaces/test/pipelineresources")
+                .andReturn(HttpURLConnection.HTTP_OK, pipelineResourceList).once();
+        server.expect().delete().withPath("/apis/tekton.dev/v1alpha1/namespaces/test/pipelineresources/"+TEST_PIPELINERESOURCE)
+                .andReturn(HttpURLConnection.HTTP_OK, testPipelineResource).once();
+        server.expect().get().withPath("/apis/tekton.dev/v1alpha1/namespaces/test/pipelineresources")
+                .andReturn(HttpURLConnection.HTTP_OK, new PipelineResourceList()).once();
+
+
+        // When
+        CreateStep createStep = new CreateStep(CreateStep.InputType.YAML.toString(), testPipelineResourceYaml);
+        createStep.setTektonClient(client);
+        createStep.setPipelineResourceClient(pipelineResourceClient);
+        createStep.createPipelineResource(new ByteArrayInputStream(testPipelineResourceYaml.getBytes(StandardCharsets.UTF_8)));
+
+        DeleteStep deleteStep = new DeleteStep(TEST_PIPELINERESOURCE, TektonUtils.TektonResourceType.pipelineresource.toString());
+        deleteStep.setTektonClient(client);
+        deleteStep.setPipelineResourceClient(pipelineResourceClient);
+        Boolean isPipelineDeleted = deleteStep.deletePipelineResource();
+
+        // Then
+        PipelineResourceList testPipelineResourceList = pipelineResourceClient.list();
+        assert isPipelineDeleted.equals(true);
+        assert testPipelineResourceList.getItems().size() == 0;
     }
 }
