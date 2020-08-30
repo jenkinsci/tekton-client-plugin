@@ -8,11 +8,14 @@ KUBE_RES_PATH := ./src/main/kubernetes
 JENKINS_DEPLOYMENT := ${KUBE_RES_PATH}/deployment.yaml
 JENKINS_SERVICE := ${KUBE_RES_PATH}/service.yaml
 
-build:
-	mvn clean install
+install-tekton:
+	kubectl apply --filename https://storage.googleapis.com/tekton-releases/pipeline/latest/release.yaml
 
 coverage:
 	mvn cobertura:cobertura
+
+build:
+	mvn clean install -DskipTests
 
 e2e:
 	kubectl create -f $(JENKINS_DEPLOYMENT)
