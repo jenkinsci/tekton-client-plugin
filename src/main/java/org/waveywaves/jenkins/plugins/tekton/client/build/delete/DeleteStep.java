@@ -55,35 +55,24 @@ public class DeleteStep extends BaseStep {
         runDelete();
     }
 
-    protected void runDelete(){
-        deleteWithResourceSpecificClient(this.getTypedResourceType());
+    protected boolean runDelete(){
+        return deleteWithResourceSpecificClient(this.getTypedResourceType());
     }
 
-    private void deleteWithResourceSpecificClient(TektonResourceType resourceType) {
-        Boolean isDeleted = false;
+    private boolean deleteWithResourceSpecificClient(TektonResourceType resourceType) {
         switch (resourceType) {
             case task:
-                isDeleted = deleteTask();
-                break;
+                return deleteTask();
             case taskrun:
-                isDeleted = deleteTaskRun();
-                break;
+                return deleteTaskRun();
             case pipeline:
-                isDeleted = deletePipeline();
-                break;
+                return deletePipeline();
             case pipelinerun:
-                isDeleted = deletePipelineRun();
-                break;
+                return deletePipelineRun();
             case pipelineresource:
-                isDeleted = deletePipelineResource();
-                break;
+                return deletePipelineResource();
             default:
-                logger.warning("Tekton Resource Type not supported");
-        }
-        if (isDeleted){
-            logger.info("Deleted Tekton "+resourceType+" of name: "+resourceName);
-        } else {
-            logger.info("Unable to delete Tekton "+resourceType+" of name: "+resourceName);
+                return false;
         }
     }
 
