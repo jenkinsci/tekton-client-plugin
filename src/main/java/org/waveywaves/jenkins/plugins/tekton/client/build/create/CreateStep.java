@@ -39,23 +39,6 @@ public class CreateStep extends BaseStep {
     private String input;
     private String inputType;
 
-    private MixedOperation<TaskRun, TaskRunList, DoneableTaskRun, Resource<TaskRun, DoneableTaskRun>>
-            taskRunClient;
-    private MixedOperation<Task, TaskList, DoneableTask, Resource<Task, DoneableTask>>
-            taskClient;
-    private MixedOperation<Pipeline, PipelineList, DoneablePipeline, Resource<Pipeline, DoneablePipeline>>
-            pipelineClient;
-    private MixedOperation<PipelineRun, PipelineRunList, DoneablePipelineRun, Resource<PipelineRun, DoneablePipelineRun>>
-            pipelineRunClient;
-    private MixedOperation<PipelineResource, PipelineResourceList, DoneablePipelineResource, Resource<PipelineResource, DoneablePipelineResource>>
-            pipelineResourceClient;
-
-    protected enum InputType {
-        URL,
-        YAML,
-        Interactive
-    }
-
     @DataBoundConstructor
     public CreateStep(String input, String inputType) {
         super();
@@ -87,31 +70,6 @@ public class CreateStep extends BaseStep {
             default:
                 return "";
         }
-    }
-
-    public void setTaskRunClient(
-            MixedOperation<TaskRun, TaskRunList, DoneableTaskRun, Resource<TaskRun, DoneableTaskRun>> trc){
-        this.taskRunClient = trc;
-    }
-
-    public void setTaskClient(
-            MixedOperation<Task, TaskList, DoneableTask, Resource<Task, DoneableTask>> tc){
-        this.taskClient = tc;
-    }
-
-    public void setPipelineClient(
-            MixedOperation<Pipeline, PipelineList, DoneablePipeline, Resource<Pipeline, DoneablePipeline>> pc){
-        this.pipelineClient = pc;
-    }
-
-    public void setPipelineRunClient(
-            MixedOperation<PipelineRun, PipelineRunList, DoneablePipelineRun, Resource<PipelineRun, DoneablePipelineRun>> prc){
-        this.pipelineRunClient = prc;
-    }
-
-    public void setPipelineResourceClient(
-            MixedOperation<PipelineResource, PipelineResourceList, DoneablePipelineResource, Resource<PipelineResource, DoneablePipelineResource>> presc){
-        this.pipelineResourceClient = presc;
     }
 
     public String createTaskRun(InputStream inputStream) {
