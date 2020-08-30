@@ -4,27 +4,24 @@ jobs:
       dist: trusty
       java:
         - 'oraclejdk8'
-      stage: Testing and Build
-      script: 
-        - make build
-        - make coverage
-      after_success:
-        - bash <(curl -s https://codecov.io/bash)
+      stage: Test + Build
 
-    - language: go
-      go:
-        - '1.14.x'
-      services:
-        - docker
-      stage: Testing - End To End
-      before_script:
+      install:
         # Download and install kubectl
         - curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl && chmod +x kubectl && sudo mv kubectl /usr/local/bin/
+        # Install Kind
+        - curl -Lo ./kind "https://kind.sigs.k8s.io/dl/v0.8.1/kind-$(uname)-amd64"
+        - chmod +x ./kind
+        - sudo mv ./kind /usr/local/bin/
 
-        # Download and install KinD
-        - GO111MODULE=on go get sigs.k8s.io/kind
+      script:
+        # Setup E2E env
         - kind create cluster
-      script: make e2e
+        - make install-tekton
+        - make coverage
+
+      after_success:
+        - bash <(curl -s https://codecov.io/bash)
     
 
 
