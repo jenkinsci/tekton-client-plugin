@@ -35,15 +35,15 @@ public class DeleteStep extends BaseStep {
     @DataBoundConstructor
     public DeleteStep(String resourceName, String resourceType) {
         super();
-        this.resourceType = resourceType;
         this.resourceName = resourceName;
+        this.resourceType = resourceType;
         setTektonClient(TektonUtils.getTektonClient());
     }
 
-    private String getResourceType(){
+    public String getResourceType(){
         return this.resourceType;
     }
-    private String getResourceName(){
+    public String getResourceName(){
         return this.resourceName;
     }
     private TektonResourceType getTypedResourceType(){
@@ -56,20 +56,20 @@ public class DeleteStep extends BaseStep {
     }
 
     protected void runDelete(){
-        deleteWithResourceSpecificClient(this.getTypedResourceType(), this.getResourceName());
+        deleteWithResourceSpecificClient(this.getTypedResourceType());
     }
 
-    private void deleteWithResourceSpecificClient(TektonResourceType resourceType, String resourceName) {
+    private void deleteWithResourceSpecificClient(TektonResourceType resourceType) {
         Boolean isDeleted = false;
         switch (resourceType) {
             case task:
-                isDeleted = deleteTask(resourceName);
+                isDeleted = deleteTask();
                 break;
             case taskrun:
-                isDeleted = deleteTaskRun(resourceName);
+                isDeleted = deleteTaskRun();
                 break;
             case pipeline:
-                isDeleted = deletePipeline(resourceName);
+                isDeleted = deletePipeline();
                 break;
             case pipelinerun:
                 isDeleted = deletePipelineRun(resourceName);
@@ -87,52 +87,61 @@ public class DeleteStep extends BaseStep {
         }
     }
 
-    private Boolean deleteTask(String resourceName) {
-        TektonClient tc = (TektonClient) tektonClient;
-        List<Task> taskList = tc.v1beta1().tasks().list().getItems();
+    public Boolean deleteTask() {
+        if (taskClient == null) {
+            TektonClient tc = (TektonClient) tektonClient;
+            setTaskClient(tc.v1beta1().tasks());
+        }
+        List<Task> taskList = taskClient.list().getItems();
         Boolean isDeleted = false;
         for(int i = 0; i < taskList.size(); i++){
             Task task = taskList.get(i);
             String taskName = task.getMetadata().getName();
             if (taskName.equals(this.getResourceName())){
-                isDeleted = tc.v1beta1().tasks().delete(task);
+                isDeleted = taskClient.delete(task);
                 break;
             }
         }
         return isDeleted;
     }
 
-    private Boolean deleteTaskRun(String resourceName) {
-        TektonClient tc = (TektonClient) tektonClient;
-        List<TaskRun> taskRunList = tc.v1beta1().taskRuns().list().getItems();
+    public Boolean deleteTaskRun() {
+        if (taskRunClient == null) {
+            TektonClient tc = (TektonClient) tektonClient;
+            setTaskRunClient(tc.v1beta1().taskRuns());
+        }
+        List<TaskRun> taskRunList = taskRunClient.list().getItems();
         Boolean isDeleted = false;
         for(int i = 0; i < taskRunList.size(); i++){
             TaskRun taskRun = taskRunList.get(i);
             String taskRunName = taskRun.getMetadata().getName();
             if (taskRunName.equals(this.getResourceName())){
-                isDeleted = tc.v1beta1().taskRuns().delete(taskRun);
+                isDeleted = taskRunClient.delete(taskRun);
                 break;
             }
         }
         return isDeleted;
     }
 
-    private Boolean deletePipeline(String resourceName) {
-        TektonClient tc = (TektonClient) tektonClient;
-        List<Pipeline> pipelineList = tc.v1beta1().pipelines().list().getItems();
+    public Boolean deletePipeline() {
+        if (pipelineClient == null) {
+            TektonClient tc = (TektonClient) tektonClient;
+            setPipelineClient(tc.v1beta1().pipelines());
+        }
+        List<Pipeline> pipelineList = pipelineClient.list().getItems();
         Boolean isDeleted = false;
         for(int i = 0; i < pipelineList.size(); i++){
             Pipeline pipeline = pipelineList.get(i);
             String pipelineName = pipeline.getMetadata().getName();
             if (pipelineName.equals(this.getResourceName())){
-                isDeleted = tc.v1beta1().pipelines().delete(pipeline);
+                isDeleted = pipelineClient.delete(pipeline);
                 break;
             }
         }
         return isDeleted;
     }
 
-    private Boolean deletePipelineRun(String resourceName) {
+    public Boolean deletePipelineRun(String resourceName) {
         TektonClient tc = (TektonClient) tektonClient;
         List<PipelineRun> pipelineRunList = tc.v1beta1().pipelineRuns().list().getItems();
         Boolean isDeleted = false;
@@ -147,7 +156,7 @@ public class DeleteStep extends BaseStep {
         return isDeleted;
     }
 
-    private Boolean deletePipelineResource(String resourceName) {
+    public Boolean deletePipelineResource(String resourceName) {
         TektonClient tc = (TektonClient) tektonClient;
         List<PipelineResource> pipelineResourceList = tc.v1alpha1().pipelineResources().list().getItems();
         Boolean isDeleted = false;
