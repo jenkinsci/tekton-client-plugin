@@ -14,6 +14,7 @@ import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
 
 public abstract class BaseStep extends Builder implements SimpleBuildStep {
     protected transient Client tektonClient;
+    protected transient Client kubernetesClient;
 
     protected MixedOperation<TaskRun, TaskRunList, DoneableTaskRun, Resource<TaskRun, DoneableTaskRun>>
             taskRunClient;
@@ -30,6 +31,10 @@ public abstract class BaseStep extends Builder implements SimpleBuildStep {
         URL,
         YAML,
         Interactive
+    }
+
+    public void setKubernetesClient(Client kc) {
+        this.kubernetesClient = kc;
     }
 
     public void setTektonClient(Client tc) {

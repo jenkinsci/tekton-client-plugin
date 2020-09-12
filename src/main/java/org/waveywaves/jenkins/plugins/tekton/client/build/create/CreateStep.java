@@ -6,15 +6,19 @@ import hudson.Launcher;
 import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
+import hudson.triggers.SafeTimerTask;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
-import io.fabric8.kubernetes.client.dsl.MixedOperation;
-import io.fabric8.kubernetes.client.dsl.Resource;
+import io.fabric8.knative.internal.pkg.apis.Condition;
+import io.fabric8.kubernetes.api.model.*;
+import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.dsl.LogWatch;
+import io.fabric8.kubernetes.client.dsl.PodResource;
+import io.fabric8.kubernetes.client.informers.*;
 import io.fabric8.tekton.client.TektonClient;
 import io.fabric8.tekton.pipeline.v1beta1.*;
-import io.fabric8.tekton.resource.v1alpha1.DoneablePipelineResource;
 import io.fabric8.tekton.resource.v1alpha1.PipelineResource;
-import io.fabric8.tekton.resource.v1alpha1.PipelineResourceList;
+import org.apache.commons.collections.functors.ExceptionTransformer;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
@@ -25,19 +29,26 @@ import javax.annotation.Nonnull;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
+import java.io.PrintStream;
 import java.net.URL;
-import java.nio.channels.Pipe;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import java.util.logging.Logger;
+import io.fabric8.kubernetes.client.informers.cache.Lister;
+import org.waveywaves.jenkins.plugins.tekton.client.logwatch.TaskRunLogWatch;
 
 public class CreateStep extends BaseStep {
     private static final Logger logger = Logger.getLogger(CreateStep.class.getName());
 
     private String input;
     private String inputType;
+    private PrintStream consoleLogger;
 
     @DataBoundConstructor
     public CreateStep(String input, String inputType) {
@@ -45,6 +56,7 @@ public class CreateStep extends BaseStep {
         this.inputType = inputType;
         this.input = input;
 
+        setKubernetesClient(TektonUtils.getKubernetesClient());
         setTektonClient(TektonUtils.getTektonClient());
     }
 
@@ -81,6 +93,7 @@ public class CreateStep extends BaseStep {
         TaskRun taskrun = taskRunClient.load(inputStream).get();
         taskrun = taskRunClient.create(taskrun);
         resourceName = taskrun.getMetadata().getName();
+        streamTaskRunLogsToConsole(taskrun);
         return resourceName;
     }
 
@@ -117,6 +130,8 @@ public class CreateStep extends BaseStep {
         PipelineRun pipelineRun = pipelineRunClient.load(inputStream).get();
         pipelineRun = pipelineRunClient.create(pipelineRun);
         resourceName = pipelineRun.getMetadata().getName();
+
+        // streamPipelineRunLogsToConsole(pipelineRun);
         return resourceName;
     }
 
@@ -132,8 +147,32 @@ public class CreateStep extends BaseStep {
         return resourceName;
     }
 
+    public boolean hasPipelineRunCompleted(PipelineRunStatus pipelineRunStatus){
+        if (pipelineRunStatus.getConditions().size() == 0){
+            return false;
+        }
+        Condition unknownCondition = new Condition();
+        unknownCondition.setStatus("Unknown");
+        logger.info("PipelineRun Condition check : " + pipelineRunStatus.getConditions().get(0).getStatus());
+        return !pipelineRunStatus.getConditions().get(0).getStatus().equals(unknownCondition.getStatus());
+    }
+
+    public void streamTaskRunLogsToConsole(TaskRun taskRun) {
+        KubernetesClient kc = (KubernetesClient) kubernetesClient;
+        Thread logWatchTask = null;
+        try {
+            TaskRunLogWatch logWatch = new TaskRunLogWatch(kc, taskRun, consoleLogger);
+            logWatchTask = new Thread(logWatch);
+            logWatchTask.start();
+            logWatchTask.join();
+        } catch (Exception e) {
+            logger.warning("Exception occurred "+e.toString());
+        }
+    }
+
     @Override
     public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws InterruptedException, IOException {
+        consoleLogger = listener.getLogger();
         runCreate();
     }
 
