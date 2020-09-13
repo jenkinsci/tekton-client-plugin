@@ -67,32 +67,4 @@ public class PipelineRunLogWatch implements Runnable {
             }
         }
     }
-
-    private boolean hasTaskRunCompleted(TaskRun taskRun){
-        TaskRunStatus taskRunStatus = taskRun.getStatus();
-        if (taskRunStatus.getConditions().size() == 0) {
-            return false;
-        }
-        Condition succeededCondition = new Condition();
-        succeededCondition.setStatus("Succeeded");
-        Condition failedCondition = new Condition();
-        failedCondition.setStatus("Failed");
-        Condition runningCondition = new Condition();
-        failedCondition.setStatus("Running");
-        Condition unknownCondition = new Condition();
-        failedCondition.setStatus("Unknown");
-
-        logger.info(String.format("Condition check for TaskRun %s : %s", taskRun.getMetadata().getName(), taskRunStatus.getConditions().get(0).getStatus()));
-
-        if (taskRunStatus.getConditions().get(0).getStatus().equals(succeededCondition.getStatus())) {
-            return true;
-        } else if (taskRunStatus.getConditions().get(0).getStatus().equals(failedCondition.getStatus())) {
-            return true;
-        } else if (taskRunStatus.getConditions().get(0).getStatus().equals(runningCondition.getStatus())) {
-            return false;
-        }
-
-
-        return false;
-    }
 }
