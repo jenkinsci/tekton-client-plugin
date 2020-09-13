@@ -5,6 +5,9 @@ import io.fabric8.kubernetes.api.model.DoneablePod;
 import io.fabric8.kubernetes.api.model.OwnerReference;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClientException;
+import io.fabric8.kubernetes.client.Watch;
+import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.tekton.pipeline.v1beta1.TaskRun;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
@@ -16,6 +19,7 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
@@ -52,21 +56,22 @@ public class TaskRunLogWatch implements Runnable{
                 }
             }
         }
-        try {
-            if (!podName.isEmpty() && taskRunPod != null){
-                Predicate<Pod> runningState = i -> (i.getStatus().getPhase().equals("Running"));
-                PodResource<Pod, DoneablePod> pr = kubernetesClient.pods().inNamespace(taskRunPod.getMetadata().getNamespace()).withName(podName);
-                pr.waitUntilCondition(runningState,10, TimeUnit.SECONDS);
-                List<String> taskRunContainerNames = new ArrayList<String>();
-                for (Container c : taskRunPod.getSpec().getContainers()) {
-                    taskRunContainerNames.add(c.getName());
-                }
-                for (String i : taskRunContainerNames) {
-                    pr.inContainer(i).watchLog(this.consoleLogger);
-                }
+
+        if (!podName.isEmpty() && taskRunPod != null){
+            Predicate<Pod> succeededState = i -> (i.getStatus().getPhase().equals("Succeeded"));
+            PodResource<Pod, DoneablePod> pr = kubernetesClient.pods().inNamespace(taskRunPod.getMetadata().getNamespace()).withName(podName);
+            try {
+                pr.waitUntilCondition(succeededState,60, TimeUnit.MINUTES);
+            } catch ( InterruptedException e) {
+                logger.warning("Interrupted Exception Occurred");
             }
-        } catch ( InterruptedException e) {
-            logger.warning("Interrupted Exception Occurred");
+            List<String> taskRunContainerNames = new ArrayList<String>();
+            for (Container c : taskRunPod.getSpec().getContainers()) {
+                taskRunContainerNames.add(c.getName());
+            }
+            for (String i : taskRunContainerNames) {
+                pr.inContainer(i).watchLog(this.consoleLogger);
+            }
         }
     }
 }
