@@ -58,6 +58,7 @@ public class CreateStepMockServerTest {
 
         // When
         CreateStep createStep = new CreateStep(CreateStep.InputType.YAML.toString(), testTaskYaml);
+
         createStep.setTektonClient(client);
         createStep.setTaskClient(taskClient);
         String createdTaskName = createStep.createTask(
@@ -98,7 +99,12 @@ public class CreateStepMockServerTest {
                 .andReturn(HttpURLConnection.HTTP_OK, taskRunList).once();
 
         // When
-        CreateStep createStep = new CreateStep(testTaskRunYaml, CreateStep.InputType.YAML.toString());
+        CreateStep createStep = new CreateStep(testTaskRunYaml, CreateStep.InputType.YAML.toString()){
+            @Override
+            public void streamTaskRunLogsToConsole(TaskRun taskRun) {
+                return;
+            }
+        };
         createStep.setTektonClient(client);
         createStep.setTaskRunClient(taskRunClient);
         String createdTaskRunName = createStep.createTaskRun(
@@ -180,7 +186,12 @@ public class CreateStepMockServerTest {
                 .andReturn(HttpURLConnection.HTTP_OK, pipelineRunList).once();
 
         // When
-        CreateStep createStep = new CreateStep(testPipelineRunYaml, CreateStep.InputType.YAML.toString());
+        CreateStep createStep = new CreateStep(testPipelineRunYaml, CreateStep.InputType.YAML.toString()){
+            @Override
+            public void streamPipelineRunLogsToConsole(PipelineRun pipelineRun) {
+                return;
+            }
+        };
         createStep.setTektonClient(client);
         createStep.setPipelineRunClient(pipelineRunClient);
         String createdPipelineName = createStep.createPipelineRun(
