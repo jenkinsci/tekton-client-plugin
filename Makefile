@@ -12,10 +12,10 @@ install-tekton:
 	kubectl apply --filename https://storage.googleapis.com/tekton-releases/pipeline/latest/release.yaml
 
 coverage:
-	mvn cobertura:cobertura
+	mvn cobertura:cobertura -q
 
 build:
-	mvn clean install -DskipTests
+	mvn clean install -DskipTests -q
 
 e2e:
 	kubectl create -f $(JENKINS_DEPLOYMENT)

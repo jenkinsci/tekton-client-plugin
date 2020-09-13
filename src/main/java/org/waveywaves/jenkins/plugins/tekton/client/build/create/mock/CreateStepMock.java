@@ -1,5 +1,7 @@
 package org.waveywaves.jenkins.plugins.tekton.client.build.create.mock;
 
+import io.fabric8.tekton.pipeline.v1beta1.PipelineRun;
+import io.fabric8.tekton.pipeline.v1beta1.TaskRun;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
 import org.waveywaves.jenkins.plugins.tekton.client.build.create.CreateStep;
 
@@ -33,5 +35,15 @@ public class CreateStepMock extends CreateStep {
     @Override
     public String createPipelineResource(InputStream inputStream) {
         return TektonUtils.TektonResourceType.pipelineresource.toString();
+    }
+
+    @Override
+    public void streamTaskRunLogsToConsole(TaskRun taskRun) {
+        return;
+    }
+
+    @Override
+    public void streamPipelineRunLogsToConsole(PipelineRun pipelineRun) {
+        return;
     }
 }

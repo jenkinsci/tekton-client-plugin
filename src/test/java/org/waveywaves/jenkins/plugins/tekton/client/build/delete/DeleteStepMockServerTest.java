@@ -115,7 +115,12 @@ public class DeleteStepMockServerTest {
 
 
         // When
-        CreateStep createStep = new CreateStep(CreateStep.InputType.YAML.toString(), testTaskRunYaml);
+        CreateStep createStep = new CreateStep(CreateStep.InputType.YAML.toString(), testTaskRunYaml){
+            @Override
+            public void streamTaskRunLogsToConsole(TaskRun taskRun) {
+                return;
+            }
+        };
         createStep.setTektonClient(client);
         createStep.setTaskRunClient(taskRunClient);
         createStep.createTaskRun(new ByteArrayInputStream(testTaskRunYaml.getBytes(StandardCharsets.UTF_8)));
@@ -217,7 +222,12 @@ public class DeleteStepMockServerTest {
 
 
         // When
-        CreateStep createStep = new CreateStep(CreateStep.InputType.YAML.toString(), testPipelineRunYaml);
+        CreateStep createStep = new CreateStep(CreateStep.InputType.YAML.toString(), testPipelineRunYaml){
+            @Override
+            public void streamPipelineRunLogsToConsole(PipelineRun pipelineRun) {
+                return;
+            }
+        };
         createStep.setTektonClient(client);
         createStep.setPipelineRunClient(pipelineRunClient);
         createStep.createPipelineRun(new ByteArrayInputStream(testPipelineRunYaml.getBytes(StandardCharsets.UTF_8)));

@@ -38,9 +38,9 @@ public class GlobalPluginConfiguration extends GlobalConfiguration {
 
     private synchronized void configChange() {
         logger.info("Tekton Client Plugin processing a newly supplied configuration");
-        TektonUtils.shutdownTektonClient();
+        TektonUtils.shutdownKubeClients();
         try {
-            TektonUtils.initializeTektonClient(this.server);
+            TektonUtils.initializeKubeClients(this.server);
         } catch (KubernetesClientException e){
             Throwable exceptionOrCause = (e.getCause() != null) ? e.getCause() : e;
             logger.log(SEVERE, "Failed to configure Tekton Client Plugin: " + exceptionOrCause);

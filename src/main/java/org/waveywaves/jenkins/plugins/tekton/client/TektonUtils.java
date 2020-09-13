@@ -1,5 +1,7 @@
 package org.waveywaves.jenkins.plugins.tekton.client;
 
+import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.tekton.client.DefaultTektonClient;
 import io.fabric8.tekton.client.TektonClient;
 
@@ -18,6 +20,7 @@ public class TektonUtils {
     private static final Logger logger = Logger.getLogger(TektonUtils.class.getName());
 
     private static TektonClient tektonClient;
+    private static KubernetesClient kubernetesClient;
 
     public enum TektonResourceType {
         task,
@@ -28,19 +31,24 @@ public class TektonUtils {
     }
 
 
-    public synchronized static void initializeTektonClient(String serverUrl) {
+    public synchronized static void initializeKubeClients(String serverUrl) {
         if (serverUrl != null && !serverUrl.isEmpty()) {
             logger.info("ServerUrl has been passed to Tekton Client ");
         }
         tektonClient = new DefaultTektonClient();
+        kubernetesClient = new DefaultKubernetesClient();
         String namespace = tektonClient.getNamespace();
         logger.info("Running in namespace "+namespace);
     }
 
-    public synchronized static void shutdownTektonClient() {
+    public synchronized static void shutdownKubeClients() {
         if (tektonClient != null) {
             tektonClient.close();
             tektonClient = null;
+        }
+        if (kubernetesClient != null) {
+            kubernetesClient.close();
+            kubernetesClient = null;
         }
     }
 
@@ -103,5 +111,9 @@ public class TektonUtils {
 
     public synchronized static TektonClient getTektonClient(){
         return tektonClient;
+    }
+
+    public synchronized static KubernetesClient getKubernetesClient() {
+        return kubernetesClient;
     }
 }
