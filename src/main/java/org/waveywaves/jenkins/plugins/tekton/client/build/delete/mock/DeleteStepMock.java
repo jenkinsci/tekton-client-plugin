@@ -4,8 +4,8 @@ import org.waveywaves.jenkins.plugins.tekton.client.build.delete.DeleteStep;
 
 
 public class DeleteStepMock extends DeleteStep {
-    public DeleteStepMock(String resourceName, String resourceType) {
-        super(resourceName, resourceType);
+    public DeleteStepMock(String resourceType, DeleteAllBlock deleteAllBlock) {
+        super(resourceType, deleteAllBlock);
     }
 
     @Override

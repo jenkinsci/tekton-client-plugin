@@ -33,11 +33,20 @@ public class DeleteStep extends BaseStep {
     private String resourceName;
 
     @DataBoundConstructor
-    public DeleteStep(String resourceName, String resourceType) {
+    public DeleteStep(String resourceType, DeleteAllBlock deleteAllStatus) {
         super();
-        this.resourceName = resourceName;
         this.resourceType = resourceType;
+        this.resourceName = deleteAllStatus != null ? deleteAllStatus.resourceName : null;
         setTektonClient(TektonUtils.getTektonClient());
+    }
+
+    public static class DeleteAllBlock {
+        private String resourceName;
+
+        @DataBoundConstructor
+        public DeleteAllBlock(String resourceName) {
+            this.resourceName = resourceName;
+        }
     }
 
     public String getResourceType(){
@@ -83,10 +92,12 @@ public class DeleteStep extends BaseStep {
         }
         List<Task> taskList = taskClient.list().getItems();
         Boolean isDeleted = false;
-        for(int i = 0; i < taskList.size(); i++){
-            Task task = taskList.get(i);
+        if (this.getResourceName() == null) {
+            return taskClient.delete(taskList);
+        }
+        for (Task task : taskList) {
             String taskName = task.getMetadata().getName();
-            if (taskName.equals(this.getResourceName())){
+            if (taskName.equals(this.getResourceName())) {
                 isDeleted = taskClient.delete(task);
                 break;
             }
@@ -101,10 +112,12 @@ public class DeleteStep extends BaseStep {
         }
         List<TaskRun> taskRunList = taskRunClient.list().getItems();
         Boolean isDeleted = false;
-        for(int i = 0; i < taskRunList.size(); i++){
-            TaskRun taskRun = taskRunList.get(i);
+        if (this.getResourceName() == null) {
+            return taskRunClient.delete(taskRunList);
+        }
+        for (TaskRun taskRun : taskRunList) {
             String taskRunName = taskRun.getMetadata().getName();
-            if (taskRunName.equals(this.getResourceName())){
+            if (taskRunName.equals(this.getResourceName())) {
                 isDeleted = taskRunClient.delete(taskRun);
                 break;
             }
@@ -119,10 +132,12 @@ public class DeleteStep extends BaseStep {
         }
         List<Pipeline> pipelineList = pipelineClient.list().getItems();
         Boolean isDeleted = false;
-        for(int i = 0; i < pipelineList.size(); i++){
-            Pipeline pipeline = pipelineList.get(i);
+        if (this.getResourceName() == null) {
+            return pipelineClient.delete(pipelineList);
+        }
+        for (Pipeline pipeline : pipelineList) {
             String pipelineName = pipeline.getMetadata().getName();
-            if (pipelineName.equals(this.getResourceName())){
+            if (pipelineName.equals(this.getResourceName())) {
                 isDeleted = pipelineClient.delete(pipeline);
                 break;
             }
@@ -137,10 +152,12 @@ public class DeleteStep extends BaseStep {
         }
         List<PipelineRun> pipelineRunList = pipelineRunClient.list().getItems();
         Boolean isDeleted = false;
-        for(int i = 0; i < pipelineRunList.size(); i++){
-            PipelineRun pipelineRun = pipelineRunList.get(i);
+        if (this.getResourceName() == null) {
+            return pipelineRunClient.delete(pipelineRunList);
+        }
+        for (PipelineRun pipelineRun : pipelineRunList) {
             String pipelineRunName = pipelineRun.getMetadata().getName();
-            if (pipelineRunName.equals(this.getResourceName())){
+            if (pipelineRunName.equals(this.getResourceName())) {
                 isDeleted = pipelineRunClient.delete(pipelineRun);
                 break;
             }
@@ -155,10 +172,12 @@ public class DeleteStep extends BaseStep {
         }
         List<PipelineResource> pipelineResourceList = pipelineResourceClient.list().getItems();
         Boolean isDeleted = false;
-        for(int i = 0; i < pipelineResourceList.size(); i++){
-            PipelineResource pipelineResource = pipelineResourceList.get(i);
+        if (this.getResourceName() == null) {
+            return pipelineResourceClient.delete(pipelineResourceList);
+        }
+        for (PipelineResource pipelineResource : pipelineResourceList) {
             String pipelineResourceName = pipelineResource.getMetadata().getName();
-            if (pipelineResourceName.equals(this.getResourceName())){
+            if (pipelineResourceName.equals(this.getResourceName())) {
                 isDeleted = pipelineResourceClient.delete(pipelineResource);
                 break;
             }
