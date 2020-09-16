@@ -13,7 +13,9 @@ import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.tekton.client.TektonClient;
 import io.fabric8.tekton.pipeline.v1beta1.*;
 import io.fabric8.tekton.resource.v1alpha1.PipelineResource;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils.TektonResourceType;
@@ -32,11 +34,12 @@ import java.util.logging.Logger;
 import org.waveywaves.jenkins.plugins.tekton.client.logwatch.PipelineRunLogWatch;
 import org.waveywaves.jenkins.plugins.tekton.client.logwatch.TaskRunLogWatch;
 
+@Symbol("tektonCreateStep")
 public class CreateStep extends BaseStep {
     private static final Logger logger = Logger.getLogger(CreateStep.class.getName());
 
-    private final String input;
-    private final String inputType;
+    private String input;
+    private String inputType;
     private PrintStream consoleLogger;
 
     @DataBoundConstructor
@@ -54,6 +57,16 @@ public class CreateStep extends BaseStep {
     }
     protected String getInputType(){
         return this.inputType;
+    }
+
+    @DataBoundSetter
+    protected void setInput(String input) {
+        this.input = input;
+    }
+
+    @DataBoundSetter
+    protected void setInputType(String inputType) {
+        this.input = inputType;
     }
 
     protected String createWithResourceSpecificClient(TektonResourceType resourceType, InputStream inputStream) {

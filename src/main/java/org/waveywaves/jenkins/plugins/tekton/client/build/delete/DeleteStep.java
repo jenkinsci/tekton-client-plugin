@@ -16,7 +16,9 @@ import io.fabric8.tekton.pipeline.v1beta1.PipelineRun;
 import io.fabric8.tekton.pipeline.v1beta1.Task;
 import io.fabric8.tekton.pipeline.v1beta1.TaskRun;
 import io.fabric8.tekton.resource.v1alpha1.PipelineResource;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils.TektonResourceType;
@@ -27,6 +29,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.logging.Logger;
 
+@Symbol("tektonDeleteStep")
 public class DeleteStep extends BaseStep {
     private static final Logger logger = Logger.getLogger(DeleteStep.class.getName());
     private String resourceType;
@@ -55,6 +58,17 @@ public class DeleteStep extends BaseStep {
     public String getResourceName(){
         return this.resourceName;
     }
+
+    @DataBoundSetter
+    protected void setResourceType(String resourceType) {
+        this.resourceType = resourceType;
+    }
+
+    @DataBoundSetter
+    protected void setResourceName(String resourceName) {
+        this.resourceName = resourceName;
+    }
+
     private TektonResourceType getTypedResourceType(){
         return TektonResourceType.valueOf(getResourceType());
     }
