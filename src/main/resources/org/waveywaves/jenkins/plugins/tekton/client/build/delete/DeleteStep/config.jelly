@@ -3,7 +3,15 @@
     <f:entry name="resourceType" title="Tekton Resource Type" field="resourceType">
         <f:select name="resourceType"></f:select>
     </f:entry>
-    <f:entry name="resourceName" title="Name" field="resourceName">
-        <f:textbox name="resourceName"/>
-    </f:entry>
+    <f:block>
+        <f:optionalBlock
+            name="deleteAllStatus"
+            field="deleteAllStatus"
+            title="Not checking this box will delete all the resources"
+            checked="${instance.resourceName != null}">
+                <f:entry title="Resource Name" field="resourceName" name="resourceName">
+                    <f:textbox />
+                </f:entry>
+        </f:optionalBlock>
+    </f:block>
 </j:jelly>
