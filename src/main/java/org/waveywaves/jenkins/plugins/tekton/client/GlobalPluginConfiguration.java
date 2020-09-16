@@ -3,6 +3,7 @@ package org.waveywaves.jenkins.plugins.tekton.client;
 import hudson.Extension;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import jenkins.model.GlobalConfiguration;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.util.logging.Logger;
@@ -10,9 +11,9 @@ import java.util.logging.Logger;
 import static java.util.logging.Level.SEVERE;
 
 @Extension
+@Symbol("tektonClient")
 public class GlobalPluginConfiguration extends GlobalConfiguration {
     private static final Logger logger = Logger.getLogger(GlobalPluginConfiguration.class.getName());
-
     private String server;
 
     @DataBoundConstructor
