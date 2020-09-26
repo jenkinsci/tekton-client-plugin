@@ -29,7 +29,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.logging.Logger;
 
-@Symbol("tektonDeleteStep")
+@Symbol("deleteStep")
 public class DeleteStep extends BaseStep {
     private static final Logger logger = Logger.getLogger(DeleteStep.class.getName());
     private String resourceType;
@@ -225,7 +225,7 @@ public class DeleteStep extends BaseStep {
 
         @Override
         public String getDisplayName() {
-            return "Tekton : Delete Resource(s)";
+            return "Tekton : Delete Resource";
         }
     }
 }

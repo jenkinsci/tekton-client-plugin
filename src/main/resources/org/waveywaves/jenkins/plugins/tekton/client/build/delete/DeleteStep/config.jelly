@@ -7,7 +7,7 @@
         <f:optionalBlock
             name="deleteAllStatus"
             field="deleteAllStatus"
-            title="Not checking this box will delete all the resources"
+            title="Check this box to delete all resources of the above type"
             checked="${instance.resourceName != null}">
                 <f:entry title="Resource Name" field="resourceName" name="resourceName">
                     <f:textbox />
