@@ -1,0 +1,21 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+    <f:entry field="name" title="Name">
+        <f:textbox/>
+    </f:entry>
+    <f:entry field="description" title="Description">
+        <f:textbox/>
+    </f:entry>
+    <f:dropdownList title="type" name="Type">
+        <f:dropdownListBlock title="string" value="string" selected="${instance == null || instance.isType('string')}">
+            <f:entry title="Default" field="defaultValueString">
+                <f:textbox/>
+            </f:entry>
+        </f:dropdownListBlock>
+        <f:dropdownListBlock title="array" value="array" selected="${instance.isType('array')}">
+            <f:entry title="Default" field="defaultValueArray">
+                <f:repeatableProperty field="defaultValueArray"/>
+            </f:entry>
+        </f:dropdownListBlock>
+    </f:dropdownList>
+</j:jelly>

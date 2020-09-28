@@ -30,7 +30,6 @@ public class TektonUtils {
         pipelineresource
     }
 
-
     public synchronized static void initializeKubeClients(String serverUrl) {
         if (serverUrl != null && !serverUrl.isEmpty()) {
             logger.info("ServerUrl has been passed to Tekton Client ");

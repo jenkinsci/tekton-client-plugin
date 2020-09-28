@@ -8,7 +8,6 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
-import io.fabric8.knative.internal.pkg.apis.Condition;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.tekton.client.TektonClient;
 import io.fabric8.tekton.pipeline.v1beta1.*;
@@ -34,7 +33,7 @@ import java.util.logging.Logger;
 import org.waveywaves.jenkins.plugins.tekton.client.logwatch.PipelineRunLogWatch;
 import org.waveywaves.jenkins.plugins.tekton.client.logwatch.TaskRunLogWatch;
 
-@Symbol("tektonCreateStep")
+@Symbol("createStep")
 public class CreateStep extends BaseStep {
     private static final Logger logger = Logger.getLogger(CreateStep.class.getName());
 

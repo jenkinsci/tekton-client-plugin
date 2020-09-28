@@ -69,13 +69,17 @@
             <version>${kubernetes-server-mock.version}</version>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
 
     <repositories>
         <repository>
             <id>repo.jenkins-ci.org</id>
             <url>https://repo.jenkins-ci.org/public/</url>
+        </repository>
+        <repository>
+            <id>tags</id>
+            <name>Custom Tags</name>
+            <url>https://raw.githubusercontent.com/t-wanl/Jenkins-Dynamic-Databinding-UI-Control-Library/master/jar/</url>
         </repository>
     </repositories>
 
