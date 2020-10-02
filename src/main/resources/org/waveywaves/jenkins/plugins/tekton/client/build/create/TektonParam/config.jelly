@@ -1,0 +1,23 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:st="jelly:stapler">
+    <f:entry field="name" title="Name">
+        <f:textbox/>
+    </f:entry>
+    <f:entry field="description" title="Description">
+        <f:textbox/>
+    </f:entry>
+
+    <j:set var="currentParam" value="${instance.param}"/>
+    <f:dropdownList name="params" title="Params">
+        <j:forEach var="desc" items="${instance.paramDescriptors}" varStatus="loop">
+            <j:set var="param" value="${descriptor==currentParam.descriptor?currentParam:null}"/>
+            <f:dropdownListBlock title="${desc.displayName}" value="${loop.index}"
+                                 selected="${desc!=null}" staplerClass="${desc.clazz.name}">
+                <st:include page="${desc.configPage}" from="${desc}"/>
+            </f:dropdownListBlock>
+        </j:forEach>
+    </f:dropdownList>
+    <f:entry>
+        <input type="button" value="${%Delete}" class="repeatable-delete" style="margin-left: 1em;" />
+    </f:entry>
+</j:jelly>
