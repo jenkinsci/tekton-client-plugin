@@ -135,10 +135,10 @@ public class CreateCustomTaskrun extends BaseStep {
 
     private void logTektonTaskrun() {
         consoleLogger.println("Creating Resource from Custom Config");
-        String l = String.format("Kind: %s\n" +
-                        "Name: %s\n" +
-                        "Namespace: %s\n" +
-                        "\tTaskRef: %s \n",
+        String l = String.format("Kind: %s%n" +
+                        "Name: %s%n" +
+                        "Namespace: %s%n" +
+                        "\tTaskRef: %s %n",
                 getKind(), getName(), getNamespace(), getTaskRef());
         consoleLogger.print(l);
     }
