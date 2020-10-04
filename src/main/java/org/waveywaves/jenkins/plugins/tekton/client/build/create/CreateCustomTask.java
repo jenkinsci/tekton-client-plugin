@@ -148,6 +148,7 @@ public class CreateCustomTask extends BaseStep {
                 EnvVar envVar = new EnvVar();
                 envVar.setName(e.getName());
                 envVar.setValue(e.getValue());
+                envVarList.add(envVar);
             }
             step.setEnv(envVarList);
             stepList.add(step);
@@ -157,13 +158,13 @@ public class CreateCustomTask extends BaseStep {
 
     private void logTektonTask() {
         consoleLogger.println("Creating Resource from Custom Config");
-        String l = String.format("Kind: %s\n" +
-                "Name: %s\n" +
-                "Namespace: %s\n" +
-                "Description: %s\n" +
-                "\tWorkspaces: %s \n"+
-                "\tParam: %s\n" +
-                "\tSteps: %s\n",
+        String l = String.format("Kind: %s%n" +
+                "Name: %s%n" +
+                "Namespace: %s%n" +
+                "Description: %s%n" +
+                "\tWorkspaces: %s %n"+
+                "\tParam: %s%n" +
+                "\tSteps: %s%n",
                 getKind(), getName(), getNamespace(), getDescription(), workspacesToString(), paramsToString(), stepsToString());
         consoleLogger.print(l);
     }
@@ -171,9 +172,9 @@ public class CreateCustomTask extends BaseStep {
     private String paramsToString(){
         StringBuilder sb = new StringBuilder();
         for (TektonStringParamSpec p: params) {
-            String s = String.format("\n\t\tParam Name: %s\n" +
-                    "\t\tParam Description: %s\n" +
-                    "\t\tParam Type: %s\n",p.getName(), p.getDescription(), p.getDefaultValue());
+            String s = String.format("%n\t\tParam Name: %s%n" +
+                    "\t\tParam Description: %s%n" +
+                    "\t\tParam Type: %s%n",p.getName(), p.getDescription(), p.getDefaultValue());
             sb.append(s);
         }
         return sb.toString();
@@ -182,9 +183,9 @@ public class CreateCustomTask extends BaseStep {
     private String workspacesToString(){
         StringBuilder sb = new StringBuilder();
         for (TektonWorkspaceDecl w: workspaces) {
-            String s = String.format("\n\t\tWorkspace Name: %s\n" +
-                    "\t\tWorkspace Description: %s\n" +
-                    "\t\tWorkspace MountPath: %s\n", w.getName(), w.getDescription(), w.getMountPath());
+            String s = String.format("%n\t\tWorkspace Name: %s%n" +
+                    "\t\tWorkspace Description: %s%n" +
+                    "\t\tWorkspace MountPath: %s%n", w.getName(), w.getDescription(), w.getMountPath());
             sb.append(s);
         }
         return sb.toString();
@@ -197,24 +198,24 @@ public class CreateCustomTask extends BaseStep {
             StringBuilder commandSb = new StringBuilder();
             StringBuilder envsSb = new StringBuilder();
 //            for (TektonArg a: s.getArgs()){
-//                String str = String.format("Arg: %s\n", a.getValue());
+//                String str = String.format("Arg: %s%n", a.getValue());
 //                argsSb.append(str);
 //            }
 //            for (TektonCommandI i: s.getCommand()){
-//                String str = String.format("commandI: %s\n", i.getValue());
+//                String str = String.format("commandI: %s%n", i.getValue());
 //                commandSb.append(str);
 //            }
             for (TektonEnv e: s.getEnvs()){
-                String str = String.format("\n\t\t\tEnv Name: %s\n" +
-                        "\t\t\tEnv Value: %s\n", e.getName(), e.getValue());
+                String str = String.format("%n\t\t\tEnv Name: %s%n" +
+                        "\t\t\tEnv Value: %s%n", e.getName(), e.getValue());
                 envsSb.append(str);
             }
-            String stepString = String.format("\n" +
-                    "\t\tStep Name: %s\n" +
-                    "\t\tStep Image: %s\n" +
-                    "\t\tStep Args: %s\n" +
-                    "\t\tStep Command: %s\n" +
-                    "\t\tStep Envs: %s\n", s.getName(), s.getImage(), argsSb.toString(), commandSb.toString(), envsSb.toString());
+            String stepString = String.format("%n" +
+                    "\t\tStep Name: %s%n" +
+                    "\t\tStep Image: %s%n" +
+                    "\t\tStep Args: %s%n" +
+                    "\t\tStep Command: %s%n" +
+                    "\t\tStep Envs: %s%n", s.getName(), s.getImage(), argsSb.toString(), commandSb.toString(), envsSb.toString());
             sb.append(stepString);
         }
         return sb.toString();
