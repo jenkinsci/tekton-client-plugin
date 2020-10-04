@@ -1,9 +1,9 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:st="jelly:stapler">
     <f:entry field="name" title="Name"> <f:textbox/> </f:entry>
+    <f:entry field="generateName" title="Generate name"> <f:textbox/> </f:entry>
     <f:entry field="namespace" title="Namespace"> <f:textbox/> </f:entry>
     <f:section title="Spec">
-        <f:entry field="description" title="Description"> <f:textbox/> </f:entry>
         <f:block>
             <f:entry title="Params">
                 <f:repeatableProperty field="params" add="Add Param"/>
@@ -14,10 +14,7 @@
                 <f:repeatableProperty field="workspaces" add="Add Workspace"/>
             </f:entry>
         </f:block>
-        <f:block>
-            <f:entry title="Steps">
-                <f:repeatableProperty field="steps" add="Add Step" minimum="1"/>
-            </f:entry>
-        </f:block>
+        <f:entry field="taskRef" title="Task Ref"> <f:textbox/> </f:entry>
+
     </f:section>
 </j:jelly>
