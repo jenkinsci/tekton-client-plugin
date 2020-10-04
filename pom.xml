@@ -10,7 +10,7 @@
 
     <groupId>org.waveywaves.jenkins.plugins</groupId>
     <artifactId>tekton-client</artifactId>
-    <version>1.0-alpha2-SNAPSHOT</version>
+    <version>1.0-alpha2</version>
     <name>Tekton Client Plugin</name>
     <description>Tekton is a Cloud Native CI/CD tool for Kubernetes. This plugin helps in the creation and manipulation of Tekton Resources on you Kubernetes cluster and helps drive your operations from your Jenkins Server itself without having to carry them out from the Command Line Interface or any other User Interface.</description>
     <packaging>hpi</packaging>
@@ -20,7 +20,7 @@
         <connection>scm:git:https://github.com/jenkinsci/tekton-client-plugin.git</connection>
         <developerConnection>scm:git:https://github.com/jenkinsci/tekton-client-plugin.git</developerConnection>
         <url>https://github.com/jenkinsci/tekton-client-plugin</url>
-        <tag>${scmTag}</tag>
+        <tag>tekton-client-1.0-alpha2</tag>
     </scm>
 
     <properties>
