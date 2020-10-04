@@ -5,26 +5,26 @@ import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-public final class TektonWorkspace extends AbstractDescribableImpl<TektonWorkspace> {
+public final class TektonWorkspaceBind extends AbstractDescribableImpl<TektonWorkspaceBind> {
     private final String name;
-    private final String description;
+    private final String claimName;
 
     @DataBoundConstructor
-    public TektonWorkspace(String name, String description) {
+    public TektonWorkspaceBind(String name, String claimName) {
         this.name = name;
-        this.description = description;
-    }
-
-    public String getDescription() {
-        return description;
+        this.claimName = claimName;
     }
 
     public String getName() {
         return name;
     }
 
+    public String getClaimName() {
+        return claimName;
+    }
+
     @Extension
-    public static class DescriptorImpl extends Descriptor<TektonWorkspace> {
+    public static class DescriptorImpl extends Descriptor<TektonWorkspaceBind> {
         @Override
         public String getDisplayName() {
             return "workspace";

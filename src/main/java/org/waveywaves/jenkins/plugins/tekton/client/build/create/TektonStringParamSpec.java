@@ -1,21 +1,19 @@
 package org.waveywaves.jenkins.plugins.tekton.client.build.create;
 
-import hudson.DescriptorExtensionList;
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
-import jenkins.model.Jenkins;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-public class TektonStringParam extends AbstractDescribableImpl<TektonStringParam> {
+public class TektonStringParamSpec extends AbstractDescribableImpl<TektonStringParamSpec> {
     private final String name;
     private final String description;
     private final String defaultValue;
 
     @DataBoundConstructor
-    public TektonStringParam(final String name,
-                       final String description,
-                       final String defaultValue) {
+    public TektonStringParamSpec(final String name,
+                                 final String description,
+                                 final String defaultValue) {
         this.name = name;
         this.description = description;
         this.defaultValue = defaultValue;
@@ -35,7 +33,7 @@ public class TektonStringParam extends AbstractDescribableImpl<TektonStringParam
 
 
     @Extension
-    public static class DescriptorImpl extends Descriptor<TektonStringParam> {
+    public static class DescriptorImpl extends Descriptor<TektonStringParamSpec> {
         public DescriptorImpl() {
             load();
         }

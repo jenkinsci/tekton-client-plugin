@@ -1,9 +1,9 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:st="jelly:stapler">
     <f:entry field="name" title="Name">
         <f:textbox/>
     </f:entry>
-    <f:entry field="description" title="Description">
+    <f:entry field="value" title="Value">
         <f:textbox/>
     </f:entry>
     <f:entry>
