@@ -9,8 +9,8 @@ public final class TektonCommandI extends AbstractDescribableImpl<TektonCommandI
     private final String value;
 
     @DataBoundConstructor
-    public TektonCommandI(String text) {
-        this.value = text;
+    public TektonCommandI(String value) {
+        this.value = value;
     }
 
     public String getValue() {

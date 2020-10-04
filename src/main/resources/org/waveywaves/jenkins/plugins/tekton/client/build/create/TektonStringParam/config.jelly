@@ -1,0 +1,15 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:st="jelly:stapler">
+    <f:entry field="name" title="Name">
+        <f:textbox/>
+    </f:entry>
+    <f:entry field="description" title="Description">
+        <f:textbox/>
+    </f:entry>
+    <f:entry field="defaultValue" title="default Value">
+        <f:textbox/>
+    </f:entry>
+    <f:entry>
+        <input type="button" value="${%Delete}" class="repeatable-delete" style="margin-left: 1em;" />
+    </f:entry>
+</j:jelly>

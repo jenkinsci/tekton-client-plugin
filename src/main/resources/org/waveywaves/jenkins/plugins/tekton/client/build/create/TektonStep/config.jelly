@@ -9,8 +9,8 @@
     <f:entry field="script" title="Script">
         <f:expandableTextbox />
     </f:entry>
-    <f:entry field="args" title="Args" >
-        <f:repeatableProperty field="args" add="Add arg"/>
+    <f:entry title="Args" >
+        <f:repeatableProperty field="args" add="Add arg" />
     </f:entry>
     <f:entry field="command" title="Command">
         <f:repeatableProperty field="command" add="Add command part"/>
