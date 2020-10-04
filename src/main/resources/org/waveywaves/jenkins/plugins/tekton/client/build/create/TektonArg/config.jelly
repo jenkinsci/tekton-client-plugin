@@ -4,6 +4,8 @@
         <f:textbox/>
     </f:entry>
     <f:entry>
-        <input type="button" value="${%Delete}" class="repeatable-delete" style="margin-left: 1em;" />
+        <div align="right">
+            <f:repeatableDeleteButton/>
+        </div>
     </f:entry>
 </j:jelly>

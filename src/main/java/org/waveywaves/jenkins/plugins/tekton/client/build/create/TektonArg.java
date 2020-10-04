@@ -9,8 +9,8 @@ public final class TektonArg extends AbstractDescribableImpl<TektonArg> {
     private final String value;
 
     @DataBoundConstructor
-    public TektonArg(String text) {
-        this.value = text;
+    public TektonArg(String value) {
+        this.value = value;
     }
 
     public String getValue() {

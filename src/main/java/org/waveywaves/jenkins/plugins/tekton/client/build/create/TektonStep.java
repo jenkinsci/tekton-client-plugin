@@ -5,9 +5,10 @@ import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import org.kohsuke.stapler.DataBoundConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public final class TektonStep extends AbstractDescribableImpl<TektonStep> {
+public class TektonStep extends AbstractDescribableImpl<TektonStep> {
     private final String name;
     private final String image;
 
@@ -46,40 +47,20 @@ public final class TektonStep extends AbstractDescribableImpl<TektonStep> {
         return args;
     }
 
-    public void setArgs(List<TektonArg> args) {
-        this.args = args;
-    }
-
     public List<TektonCommandI> getCommand() {
         return command;
-    }
-
-    public void setCommand(List<TektonCommandI> command) {
-        this.command = command;
     }
 
     public String getScript() {
         return script;
     }
 
-    public void setScript(String script) {
-        this.script = script;
-    }
-
     public Boolean getTty() {
         return tty;
     }
 
-    public void setTty(Boolean tty) {
-        this.tty = tty;
-    }
-
     public String getWorkingDir() {
         return workingDir;
-    }
-
-    public void setWorkingDir(String workingDir) {
-        this.workingDir = workingDir;
     }
 
     @Extension

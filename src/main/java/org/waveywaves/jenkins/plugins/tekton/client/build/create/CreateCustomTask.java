@@ -32,14 +32,14 @@ public class CreateCustomTask extends BaseStep {
     // Spec
     private String description;
     private List<TektonStep> steps;
-    private List<TektonParam> params;
+    private List<TektonStringParam> params;
     private List<TektonWorkspace> workspaces;
 
     @DataBoundConstructor
     public CreateCustomTask(final String name,
                             final String namespace,
                             final String description,
-                            final List<TektonParam> params,
+                            final List<TektonStringParam> params,
                             final List<TektonWorkspace> workspaces,
                             final List<TektonStep> steps){
         super();
@@ -56,7 +56,7 @@ public class CreateCustomTask extends BaseStep {
     public String getName() { return this.name; }
     public String getNamespace() { return this.namespace; }
     public String getDescription() { return this.description; }
-    public List<TektonParam> getParams() { return this.params; }
+    public List<TektonStringParam> getParams() { return this.params; }
     public List<TektonStep> getSteps() { return this.steps; }
     public List<TektonWorkspace> getWorkspaces() { return this.workspaces; }
 
@@ -68,28 +68,44 @@ public class CreateCustomTask extends BaseStep {
                 "Name: %s\n" +
                 "Namespace: %s\n" +
                 "Description: %s\n" +
-                "Param: %s\n", getKind(), getName(), getNamespace(), getDescription(), paramsToString());
+                "Param: %s\n" +
+                "Steps: %s\n",
+                getKind(), getName(), getNamespace(), getDescription(), paramsToString(), stepsToString());
         consoleLogger.print(l);
     }
 
     private String paramsToString(){
         StringBuilder sb = new StringBuilder();
 
-        for (TektonParam p: params) {
-            TektonParam.Param param = p.getParam();
+        for (TektonStringParam p: params) {
             String s = String.format("Param Name: %s\n" +
                     "Param Description: %s\n" +
-                    "Param Type: %s\n",p.getName(), p.getDescription(), param.getClass());
+                    "Param Type: %s\n",p.getName(), p.getDescription(), p.getDefaultValue());
             sb.append(s);
-
-            if (param.getClass().equals(TektonParam.StringParam.class)){
-                sb.append(String.format("Param Value: %s\n", ((TektonParam.StringParam) param).getValue()));
-            }
-            if (param.getClass().equals(TektonParam.ArrayParam.class)){
-
-            }
         }
+        return sb.toString();
+    }
 
+    private String stepsToString(){
+        StringBuilder sb = new StringBuilder();
+        for (TektonStep s: steps) {
+            StringBuilder argsSb = new StringBuilder();
+            StringBuilder commandSb = new StringBuilder();
+            for (TektonArg a: s.getArgs()){
+                String str = String.format("Arg: %s\n", a.getValue());
+                argsSb.append(str);
+            }
+            for (TektonCommandI i: s.getCommand()){
+                String str = String.format("commandI: %s\n", i.getValue());
+                commandSb.append(str);
+            }
+            String stepString = String.format("\n" +
+                    "Step Name: %s\n" +
+                    "Step Image: %s\n" +
+                    "Step Args: %s\n" +
+                    "Step Command: %s\n", s.getName(), s.getImage(), argsSb.toString(), commandSb.toString());
+            sb.append(stepString);
+        }
         return sb.toString();
     }
 
