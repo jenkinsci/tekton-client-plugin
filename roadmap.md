@@ -1,14 +1,13 @@
+
 # Road to v1.0
 
-## Basics
-- Support all Tekton Pipeline Resource currently present
-- Ability to delete all resources
-- YAML Syntax Highlighting
-- JSON Support + Syntax Highlighting
-- TaskRun/PipelineRun output streaming to Jenkins Console
+## Basic Usage
+- Creation and Deletion of Tekton Typed Resources (using provided YAML, JSON or a Url)
+- Create Resources from Scratch using UI 
+- Ability for editing Tekton Resource after importing from YAML/JSON  
+- YAML and JSON Syntax Highlighting
+- Stream TaskRun/PipelineRun output to Jenkins Console
 
 ## Features
-- Interactive Definition in creation of resources.
-    - Create Tekton resources interactively using Jelly Config.
 - [Tekton Catalog](https://github.com/tektoncd/catalog) Support
-    - Users should be able to choose a task available in the catalog from a dropdown and edit it based on their necessity and use it.
+    - Users should be able to choose a task available in the catalog from a dropdown during the Creation of resources and edit it based on their necessity for use.
