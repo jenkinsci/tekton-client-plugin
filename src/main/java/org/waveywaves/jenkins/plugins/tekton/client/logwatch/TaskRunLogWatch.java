@@ -1,7 +1,6 @@
 package org.waveywaves.jenkins.plugins.tekton.client.logwatch;
 
 import io.fabric8.kubernetes.api.model.Container;
-import io.fabric8.kubernetes.api.model.DoneablePod;
 import io.fabric8.kubernetes.api.model.OwnerReference;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -51,7 +50,7 @@ public class TaskRunLogWatch implements Runnable{
 
         if (!podName.isEmpty() && taskRunPod != null){
             Predicate<Pod> succeededState = i -> (i.getStatus().getPhase().equals("Succeeded"));
-            PodResource<Pod, DoneablePod> pr = kubernetesClient.pods().inNamespace(taskRunPod.getMetadata().getNamespace()).withName(podName);
+            PodResource<Pod> pr = kubernetesClient.pods().inNamespace(taskRunPod.getMetadata().getNamespace()).withName(podName);
             try {
                 pr.waitUntilCondition(succeededState,60, TimeUnit.MINUTES);
             } catch ( InterruptedException e) {

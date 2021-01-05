@@ -31,7 +31,8 @@
         <revision>1.0-alpha1</revision>
         <changelist>SNAPSHOT</changelist>
         <jenkins-test-harness.version>2.34</jenkins-test-harness.version>
-        <kubernetes-server-mock.version>4.10.3</kubernetes-server-mock.version>
+        <kubernetes-server-mock.version>5.0.0</kubernetes-server-mock.version>
+        <tekton-client.version>5.0.0</tekton-client.version>
         <maven-surefire-plugin.version>2.22.1</maven-surefire-plugin.version>
         <mockwebserver.version>0.1.8</mockwebserver.version>
         <junit-jupiter-engine.version>5.6.2</junit-jupiter-engine.version>
@@ -61,7 +62,7 @@
         <dependency>
             <groupId>io.fabric8</groupId>
             <artifactId>tekton-client</artifactId>
-            <version>${kubernetes-server-mock.version}</version>
+            <version>${tekton-client.version}</version>
         </dependency>
         <dependency>
             <groupId>io.fabric8</groupId>

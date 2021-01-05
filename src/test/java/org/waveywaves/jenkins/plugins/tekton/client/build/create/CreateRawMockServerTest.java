@@ -1,6 +1,6 @@
 package org.waveywaves.jenkins.plugins.tekton.client.build.create;
 
-import io.fabric8.kubernetes.api.model.apiextensions.CustomResourceDefinition;
+import io.fabric8.kubernetes.api.model.apiextensions.v1beta1.CustomResourceDefinition;
 import io.fabric8.kubernetes.client.KubernetesClient;
 
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
@@ -9,7 +9,6 @@ import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
 
 import io.fabric8.tekton.pipeline.v1beta1.*;
-import io.fabric8.tekton.resource.v1alpha1.DoneablePipelineResource;
 import io.fabric8.tekton.resource.v1alpha1.PipelineResource;
 import io.fabric8.tekton.resource.v1alpha1.PipelineResourceBuilder;
 import io.fabric8.tekton.resource.v1alpha1.PipelineResourceList;
@@ -38,9 +37,9 @@ public class CreateRawMockServerTest {
 
         KubernetesClient client = server.getClient();
         InputStream crdAsInputStream = getClass().getResourceAsStream("/task-crd.yaml");
-        CustomResourceDefinition taskCrd = client.customResourceDefinitions().load(crdAsInputStream).get();
-        MixedOperation<Task, TaskList, DoneableTask, Resource<Task, DoneableTask>> taskClient = client
-                .customResources(CustomResourceDefinitionContext.fromCrd(taskCrd), Task.class, TaskList.class, DoneableTask.class);
+        CustomResourceDefinition taskCrd = client.apiextensions().v1beta1().customResourceDefinitions().load(crdAsInputStream).get();
+        MixedOperation<Task, TaskList, Resource<Task>> taskClient = client
+                .customResources(CustomResourceDefinitionContext.fromCrd(taskCrd), Task.class, TaskList.class);
 
         // Mocked Responses
         TaskBuilder taskBuilder = new TaskBuilder()
@@ -51,9 +50,9 @@ public class CreateRawMockServerTest {
         TaskList taskList = new TaskList();
         taskList.setItems(tList);
 
-        server.expect().post().withPath("/apis/tekton.dev/v1/namespaces/test/tasks")
+        server.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
                 .andReturn(HttpURLConnection.HTTP_CREATED, testTask).once();
-        server.expect().get().withPath("/apis/tekton.dev/v1/namespaces/test/tasks")
+        server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
                 .andReturn(HttpURLConnection.HTTP_OK, taskList).once();
 
         // When
@@ -80,9 +79,9 @@ public class CreateRawMockServerTest {
 
         KubernetesClient client = server.getClient();
         InputStream crdAsInputStream = getClass().getResourceAsStream("/taskrun-crd.yaml");
-        CustomResourceDefinition taskRunCrd = client.customResourceDefinitions().load(crdAsInputStream).get();
-        MixedOperation<TaskRun, TaskRunList, DoneableTaskRun, Resource<TaskRun, DoneableTaskRun>> taskRunClient = client
-                .customResources(CustomResourceDefinitionContext.fromCrd(taskRunCrd), TaskRun.class, TaskRunList.class, DoneableTaskRun.class);
+        CustomResourceDefinition taskRunCrd = client.apiextensions().v1beta1().customResourceDefinitions().load(crdAsInputStream).get();
+        MixedOperation<TaskRun, TaskRunList, Resource<TaskRun>> taskRunClient = client
+                .customResources(CustomResourceDefinitionContext.fromCrd(taskRunCrd), TaskRun.class, TaskRunList.class);
 
         // Mocked Responses
         TaskRunBuilder taskRunBuilder = new TaskRunBuilder()
@@ -93,9 +92,9 @@ public class CreateRawMockServerTest {
         TaskRunList taskRunList = new TaskRunList();
         taskRunList.setItems(trList);
 
-        server.expect().post().withPath("/apis/tekton.dev/v1/namespaces/test/taskruns")
+        server.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/taskruns")
                 .andReturn(HttpURLConnection.HTTP_CREATED, testTaskRun).once();
-        server.expect().get().withPath("/apis/tekton.dev/v1/namespaces/test/taskruns")
+        server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/taskruns")
                 .andReturn(HttpURLConnection.HTTP_OK, taskRunList).once();
 
         // When
@@ -126,9 +125,9 @@ public class CreateRawMockServerTest {
 
         KubernetesClient client = server.getClient();
         InputStream crdAsInputStream = getClass().getResourceAsStream("/pipeline-crd.yaml");
-        CustomResourceDefinition pipelineCrd = client.customResourceDefinitions().load(crdAsInputStream).get();
-        MixedOperation<Pipeline, PipelineList, DoneablePipeline, Resource<Pipeline, DoneablePipeline>> pipelineClient = client
-                .customResources(CustomResourceDefinitionContext.fromCrd(pipelineCrd), Pipeline.class, PipelineList.class, DoneablePipeline.class);
+        CustomResourceDefinition pipelineCrd = client.apiextensions().v1beta1().customResourceDefinitions().load(crdAsInputStream).get();
+        MixedOperation<Pipeline, PipelineList, Resource<Pipeline>> pipelineClient = client
+                .customResources(CustomResourceDefinitionContext.fromCrd(pipelineCrd), Pipeline.class, PipelineList.class);
 
         // Mocked Responses
         PipelineBuilder pipelineBuilder = new PipelineBuilder()
@@ -139,9 +138,9 @@ public class CreateRawMockServerTest {
         PipelineList pipelineList = new PipelineList();
         pipelineList.setItems(pList);
 
-        server.expect().post().withPath("/apis/tekton.dev/v1/namespaces/test/pipelines")
+        server.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelines")
                 .andReturn(HttpURLConnection.HTTP_CREATED, testPipeline).once();
-        server.expect().get().withPath("/apis/tekton.dev/v1/namespaces/test/pipelines")
+        server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelines")
                 .andReturn(HttpURLConnection.HTTP_OK, pipelineList).once();
 
         // When
@@ -167,9 +166,9 @@ public class CreateRawMockServerTest {
 
         KubernetesClient client = server.getClient();
         InputStream crdAsInputStream = getClass().getResourceAsStream("/pipeline-crd.yaml");
-        CustomResourceDefinition pipelineRunCrd = client.customResourceDefinitions().load(crdAsInputStream).get();
-        MixedOperation<PipelineRun, PipelineRunList, DoneablePipelineRun, Resource<PipelineRun, DoneablePipelineRun>> pipelineRunClient = client
-                .customResources(CustomResourceDefinitionContext.fromCrd(pipelineRunCrd), PipelineRun.class, PipelineRunList.class, DoneablePipelineRun.class);
+        CustomResourceDefinition pipelineRunCrd = client.apiextensions().v1beta1().customResourceDefinitions().load(crdAsInputStream).get();
+        MixedOperation<PipelineRun, PipelineRunList, Resource<PipelineRun>> pipelineRunClient = client
+                .customResources(CustomResourceDefinitionContext.fromCrd(pipelineRunCrd), PipelineRun.class, PipelineRunList.class);
 
         // Mocked Responses
         PipelineRunBuilder pipelineRunBuilder = new PipelineRunBuilder()
@@ -180,9 +179,9 @@ public class CreateRawMockServerTest {
         PipelineRunList pipelineRunList = new PipelineRunList();
         pipelineRunList.setItems(prList);
 
-        server.expect().post().withPath("/apis/tekton.dev/v1/namespaces/test/pipelines")
+        server.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelines")
                 .andReturn(HttpURLConnection.HTTP_CREATED, testPipelineRun).once();
-        server.expect().get().withPath("/apis/tekton.dev/v1/namespaces/test/pipelines")
+        server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelines")
                 .andReturn(HttpURLConnection.HTTP_OK, pipelineRunList).once();
 
         // When
@@ -213,9 +212,9 @@ public class CreateRawMockServerTest {
 
         KubernetesClient client = server.getClient();
         InputStream crdAsInputStream = getClass().getResourceAsStream("/resource-crd.yaml");
-        CustomResourceDefinition pipelineResCrd = client.customResourceDefinitions().load(crdAsInputStream).get();
-        MixedOperation<PipelineResource, PipelineResourceList, DoneablePipelineResource, Resource<PipelineResource, DoneablePipelineResource>> pipelineResourceClient = client
-                .customResources(CustomResourceDefinitionContext.fromCrd(pipelineResCrd), PipelineResource.class, PipelineResourceList.class, DoneablePipelineResource.class);
+        CustomResourceDefinition pipelineResCrd = client.apiextensions().v1beta1().customResourceDefinitions().load(crdAsInputStream).get();
+        MixedOperation<PipelineResource, PipelineResourceList, Resource<PipelineResource>> pipelineResourceClient = client
+                .customResources(CustomResourceDefinitionContext.fromCrd(pipelineResCrd), PipelineResource.class, PipelineResourceList.class);
 
         // Mocked Responses
         PipelineResourceBuilder pipelineResourceBuilder = new PipelineResourceBuilder()

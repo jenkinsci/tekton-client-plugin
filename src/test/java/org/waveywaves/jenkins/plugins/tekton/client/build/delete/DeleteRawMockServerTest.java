@@ -1,13 +1,12 @@
 package org.waveywaves.jenkins.plugins.tekton.client.build.delete;
 
-import io.fabric8.kubernetes.api.model.apiextensions.CustomResourceDefinition;
+import io.fabric8.kubernetes.api.model.apiextensions.v1beta1.CustomResourceDefinition;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
 import io.fabric8.tekton.pipeline.v1beta1.*;
-import io.fabric8.tekton.resource.v1alpha1.DoneablePipelineResource;
 import io.fabric8.tekton.resource.v1alpha1.PipelineResource;
 import io.fabric8.tekton.resource.v1alpha1.PipelineResourceBuilder;
 import io.fabric8.tekton.resource.v1alpha1.PipelineResourceList;
@@ -40,9 +39,9 @@ public class DeleteRawMockServerTest {
 
         KubernetesClient client = server.getClient();
         InputStream crdAsInputStream = getClass().getResourceAsStream("/task-crd.yaml");
-        CustomResourceDefinition taskCrd = client.customResourceDefinitions().load(crdAsInputStream).get();
-        MixedOperation<Task, TaskList, DoneableTask, Resource<Task, DoneableTask>> taskClient = client
-                .customResources(CustomResourceDefinitionContext.fromCrd(taskCrd), Task.class, TaskList.class, DoneableTask.class);
+        CustomResourceDefinition taskCrd = client.apiextensions().v1beta1().customResourceDefinitions().load(crdAsInputStream).get();
+        MixedOperation<Task, TaskList, Resource<Task>> taskClient = client
+                .customResources(CustomResourceDefinitionContext.fromCrd(taskCrd), Task.class, TaskList.class);
 
         // Mocked Responses
         TaskBuilder taskBuilder = new TaskBuilder()
@@ -53,13 +52,13 @@ public class DeleteRawMockServerTest {
         TaskList taskList = new TaskList();
         taskList.setItems(tList);
 
-        server.expect().post().withPath("/apis/tekton.dev/v1/namespaces/test/tasks")
+        server.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
                 .andReturn(HttpURLConnection.HTTP_CREATED, testTask).once();
-        server.expect().get().withPath("/apis/tekton.dev/v1/namespaces/test/tasks")
+        server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
                 .andReturn(HttpURLConnection.HTTP_OK, taskList).once();
-        server.expect().delete().withPath("/apis/tekton.dev/v1/namespaces/test/tasks/"+TEST_TASK)
+        server.expect().delete().withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks/"+TEST_TASK)
                 .andReturn(HttpURLConnection.HTTP_OK, testTask).once();
-        server.expect().get().withPath("/apis/tekton.dev/v1/namespaces/test/tasks")
+        server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
                 .andReturn(HttpURLConnection.HTTP_OK, new TaskList()).once();
 
 
@@ -98,9 +97,9 @@ public class DeleteRawMockServerTest {
 
         KubernetesClient client = server.getClient();
         InputStream crdAsInputStream = getClass().getResourceAsStream("/task-crd.yaml");
-        CustomResourceDefinition taskCrd = client.customResourceDefinitions().load(crdAsInputStream).get();
-        MixedOperation<Task, TaskList, DoneableTask, Resource<Task, DoneableTask>> taskClient = client
-                .customResources(CustomResourceDefinitionContext.fromCrd(taskCrd), Task.class, TaskList.class, DoneableTask.class);
+        CustomResourceDefinition taskCrd = client.apiextensions().v1beta1().customResourceDefinitions().load(crdAsInputStream).get();
+        MixedOperation<Task, TaskList, Resource<Task>> taskClient = client
+                .customResources(CustomResourceDefinitionContext.fromCrd(taskCrd), Task.class, TaskList.class);
 
         // Mocked Responses
         TaskBuilder taskBuilder = new TaskBuilder()
@@ -111,13 +110,13 @@ public class DeleteRawMockServerTest {
         TaskList taskList = new TaskList();
         taskList.setItems(tList);
 
-        server.expect().post().withPath("/apis/tekton.dev/v1/namespaces/test/tasks")
+        server.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
                 .andReturn(HttpURLConnection.HTTP_CREATED, testTask).once();
-        server.expect().get().withPath("/apis/tekton.dev/v1/namespaces/test/tasks")
+        server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
                 .andReturn(HttpURLConnection.HTTP_OK, taskList).once();
-        server.expect().delete().withPath("/apis/tekton.dev/v1/namespaces/test/tasks/"+TEST_TASK1)
+        server.expect().delete().withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks/"+TEST_TASK1)
                 .andReturn(HttpURLConnection.HTTP_OK, testTask).once();
-        server.expect().get().withPath("/apis/tekton.dev/v1/namespaces/test/tasks")
+        server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
                 .andReturn(HttpURLConnection.HTTP_OK, new TaskList()).once();
 
         // for Task 2
@@ -129,13 +128,13 @@ public class DeleteRawMockServerTest {
         taskList = new TaskList();
         taskList.setItems(tList);
 
-        server.expect().post().withPath("/apis/tekton.dev/v1/namespaces/test/tasks")
+        server.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
                 .andReturn(HttpURLConnection.HTTP_CREATED, testTask).once();
-        server.expect().get().withPath("/apis/tekton.dev/v1/namespaces/test/tasks")
+        server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
                 .andReturn(HttpURLConnection.HTTP_OK, taskList).once();
-        server.expect().delete().withPath("/apis/tekton.dev/v1/namespaces/test/tasks/"+TEST_TASK2)
+        server.expect().delete().withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks/"+TEST_TASK2)
                 .andReturn(HttpURLConnection.HTTP_OK, testTask).once();
-        server.expect().get().withPath("/apis/tekton.dev/v1/namespaces/test/tasks")
+        server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
                 .andReturn(HttpURLConnection.HTTP_OK, new TaskList()).once();
 
 
@@ -175,9 +174,9 @@ public class DeleteRawMockServerTest {
 
         KubernetesClient client = server.getClient();
         InputStream crdAsInputStream = getClass().getResourceAsStream("/taskrun-crd.yaml");
-        CustomResourceDefinition taskRunCrd = client.customResourceDefinitions().load(crdAsInputStream).get();
-        MixedOperation<TaskRun, TaskRunList, DoneableTaskRun, Resource<TaskRun, DoneableTaskRun>> taskRunClient = client
-                .customResources(CustomResourceDefinitionContext.fromCrd(taskRunCrd), TaskRun.class, TaskRunList.class, DoneableTaskRun.class);
+        CustomResourceDefinition taskRunCrd = client.apiextensions().v1beta1().customResourceDefinitions().load(crdAsInputStream).get();
+        MixedOperation<TaskRun, TaskRunList, Resource<TaskRun>> taskRunClient = client
+                .customResources(CustomResourceDefinitionContext.fromCrd(taskRunCrd), TaskRun.class, TaskRunList.class);
 
         // Mocked Responses
         TaskRunBuilder taskRunBuilder = new TaskRunBuilder()
@@ -188,13 +187,13 @@ public class DeleteRawMockServerTest {
         TaskRunList taskRunList = new TaskRunList();
         taskRunList.setItems(trList);
 
-        server.expect().post().withPath("/apis/tekton.dev/v1/namespaces/test/taskruns")
+        server.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/taskruns")
                 .andReturn(HttpURLConnection.HTTP_CREATED, testTaskRun).once();
-        server.expect().get().withPath("/apis/tekton.dev/v1/namespaces/test/taskruns")
+        server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/taskruns")
                 .andReturn(HttpURLConnection.HTTP_OK, taskRunList).once();
-        server.expect().delete().withPath("/apis/tekton.dev/v1/namespaces/test/taskruns/"+TEST_TASKRUN)
+        server.expect().delete().withPath("/apis/tekton.dev/v1beta1/namespaces/test/taskruns/"+TEST_TASKRUN)
                 .andReturn(HttpURLConnection.HTTP_OK, testTaskRun).once();
-        server.expect().get().withPath("/apis/tekton.dev/v1/namespaces/test/taskruns")
+        server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/taskruns")
                 .andReturn(HttpURLConnection.HTTP_OK, new TaskList()).once();
 
 
@@ -238,9 +237,9 @@ public class DeleteRawMockServerTest {
 
         KubernetesClient client = server.getClient();
         InputStream crdAsInputStream = getClass().getResourceAsStream("/taskrun-crd.yaml");
-        CustomResourceDefinition taskRunCrd = client.customResourceDefinitions().load(crdAsInputStream).get();
-        MixedOperation<TaskRun, TaskRunList, DoneableTaskRun, Resource<TaskRun, DoneableTaskRun>> taskRunClient = client
-                .customResources(CustomResourceDefinitionContext.fromCrd(taskRunCrd), TaskRun.class, TaskRunList.class, DoneableTaskRun.class);
+        CustomResourceDefinition taskRunCrd = client.apiextensions().v1beta1().customResourceDefinitions().load(crdAsInputStream).get();
+        MixedOperation<TaskRun, TaskRunList, Resource<TaskRun>> taskRunClient = client
+                .customResources(CustomResourceDefinitionContext.fromCrd(taskRunCrd), TaskRun.class, TaskRunList.class);
 
         // Mocked Responses
         TaskRunBuilder taskRunBuilder = new TaskRunBuilder()
@@ -251,13 +250,13 @@ public class DeleteRawMockServerTest {
         TaskRunList taskRunList = new TaskRunList();
         taskRunList.setItems(trList);
 
-        server.expect().post().withPath("/apis/tekton.dev/v1/namespaces/test/taskruns")
+        server.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/taskruns")
                 .andReturn(HttpURLConnection.HTTP_CREATED, testTaskRun).once();
-        server.expect().get().withPath("/apis/tekton.dev/v1/namespaces/test/taskruns")
+        server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/taskruns")
                 .andReturn(HttpURLConnection.HTTP_OK, taskRunList).once();
-        server.expect().delete().withPath("/apis/tekton.dev/v1/namespaces/test/taskruns/"+TEST_TASKRUN1)
+        server.expect().delete().withPath("/apis/tekton.dev/v1beta1/namespaces/test/taskruns/"+TEST_TASKRUN1)
                 .andReturn(HttpURLConnection.HTTP_OK, testTaskRun).once();
-        server.expect().get().withPath("/apis/tekton.dev/v1/namespaces/test/taskruns")
+        server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/taskruns")
                 .andReturn(HttpURLConnection.HTTP_OK, new TaskList()).once();
 
         // TaskRun 2
@@ -269,13 +268,13 @@ public class DeleteRawMockServerTest {
         taskRunList = new TaskRunList();
         taskRunList.setItems(trList);
 
-        server.expect().post().withPath("/apis/tekton.dev/v1/namespaces/test/taskruns")
+        server.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/taskruns")
                 .andReturn(HttpURLConnection.HTTP_CREATED, testTaskRun).once();
-        server.expect().get().withPath("/apis/tekton.dev/v1/namespaces/test/taskruns")
+        server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/taskruns")
                 .andReturn(HttpURLConnection.HTTP_OK, taskRunList).once();
-        server.expect().delete().withPath("/apis/tekton.dev/v1/namespaces/test/taskruns/"+TEST_TASKRUN2)
+        server.expect().delete().withPath("/apis/tekton.dev/v1beta1/namespaces/test/taskruns/"+TEST_TASKRUN2)
                 .andReturn(HttpURLConnection.HTTP_OK, testTaskRun).once();
-        server.expect().get().withPath("/apis/tekton.dev/v1/namespaces/test/taskruns")
+        server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/taskruns")
                 .andReturn(HttpURLConnection.HTTP_OK, new TaskList()).once();
 
 
@@ -325,9 +324,9 @@ public class DeleteRawMockServerTest {
 
         KubernetesClient client = server.getClient();
         InputStream crdAsInputStream = getClass().getResourceAsStream("/pipeline-crd.yaml");
-        CustomResourceDefinition pipelineCrd = client.customResourceDefinitions().load(crdAsInputStream).get();
-        MixedOperation<Pipeline, PipelineList, DoneablePipeline, Resource<Pipeline, DoneablePipeline>> pipelineClient = client
-                .customResources(CustomResourceDefinitionContext.fromCrd(pipelineCrd), Pipeline.class, PipelineList.class, DoneablePipeline.class);
+        CustomResourceDefinition pipelineCrd = client.apiextensions().v1beta1().customResourceDefinitions().load(crdAsInputStream).get();
+        MixedOperation<Pipeline, PipelineList, Resource<Pipeline>> pipelineClient = client
+                .customResources(CustomResourceDefinitionContext.fromCrd(pipelineCrd), Pipeline.class, PipelineList.class);
 
         // Mocked Responses
         PipelineBuilder pipelineBuilder = new PipelineBuilder()
@@ -338,13 +337,13 @@ public class DeleteRawMockServerTest {
         PipelineList pipelineList = new PipelineList();
         pipelineList.setItems(pList);
 
-        server.expect().post().withPath("/apis/tekton.dev/v1/namespaces/test/pipelines")
+        server.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelines")
                 .andReturn(HttpURLConnection.HTTP_CREATED, testPipeline).once();
-        server.expect().get().withPath("/apis/tekton.dev/v1/namespaces/test/pipelines")
+        server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelines")
                 .andReturn(HttpURLConnection.HTTP_OK, pipelineList).once();
-        server.expect().delete().withPath("/apis/tekton.dev/v1/namespaces/test/pipelines/"+TEST_PIPELINE)
+        server.expect().delete().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelines/"+TEST_PIPELINE)
                 .andReturn(HttpURLConnection.HTTP_OK, testPipeline).once();
-        server.expect().get().withPath("/apis/tekton.dev/v1/namespaces/test/pipelines")
+        server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelines")
                 .andReturn(HttpURLConnection.HTTP_OK, new PipelineList()).once();
 
 
@@ -384,9 +383,9 @@ public class DeleteRawMockServerTest {
 
         KubernetesClient client = server.getClient();
         InputStream crdAsInputStream = getClass().getResourceAsStream("/pipeline-crd.yaml");
-        CustomResourceDefinition pipelineCrd = client.customResourceDefinitions().load(crdAsInputStream).get();
-        MixedOperation<Pipeline, PipelineList, DoneablePipeline, Resource<Pipeline, DoneablePipeline>> pipelineClient = client
-                .customResources(CustomResourceDefinitionContext.fromCrd(pipelineCrd), Pipeline.class, PipelineList.class, DoneablePipeline.class);
+        CustomResourceDefinition pipelineCrd = client.apiextensions().v1beta1().customResourceDefinitions().load(crdAsInputStream).get();
+        MixedOperation<Pipeline, PipelineList, Resource<Pipeline>> pipelineClient = client
+                .customResources(CustomResourceDefinitionContext.fromCrd(pipelineCrd), Pipeline.class, PipelineList.class);
 
         // Mocked Responses
         PipelineBuilder pipelineBuilder = new PipelineBuilder()
@@ -397,13 +396,13 @@ public class DeleteRawMockServerTest {
         PipelineList pipelineList = new PipelineList();
         pipelineList.setItems(pList);
 
-        server.expect().post().withPath("/apis/tekton.dev/v1/namespaces/test/pipelines")
+        server.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelines")
                 .andReturn(HttpURLConnection.HTTP_CREATED, testPipeline).once();
-        server.expect().get().withPath("/apis/tekton.dev/v1/namespaces/test/pipelines")
+        server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelines")
                 .andReturn(HttpURLConnection.HTTP_OK, pipelineList).once();
-        server.expect().delete().withPath("/apis/tekton.dev/v1/namespaces/test/pipelines/"+TEST_PIPELINE1)
+        server.expect().delete().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelines/"+TEST_PIPELINE1)
                 .andReturn(HttpURLConnection.HTTP_OK, testPipeline).once();
-        server.expect().get().withPath("/apis/tekton.dev/v1/namespaces/test/pipelines")
+        server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelines")
                 .andReturn(HttpURLConnection.HTTP_OK, new PipelineList()).once();
 
         // Pipeline 2
@@ -415,13 +414,13 @@ public class DeleteRawMockServerTest {
         pipelineList = new PipelineList();
         pipelineList.setItems(pList);
 
-        server.expect().post().withPath("/apis/tekton.dev/v1/namespaces/test/pipelines")
+        server.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelines")
                 .andReturn(HttpURLConnection.HTTP_CREATED, testPipeline).once();
-        server.expect().get().withPath("/apis/tekton.dev/v1/namespaces/test/pipelines")
+        server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelines")
                 .andReturn(HttpURLConnection.HTTP_OK, pipelineList).once();
-        server.expect().delete().withPath("/apis/tekton.dev/v1/namespaces/test/pipelines/"+TEST_PIPELINE2)
+        server.expect().delete().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelines/"+TEST_PIPELINE2)
                 .andReturn(HttpURLConnection.HTTP_OK, testPipeline).once();
-        server.expect().get().withPath("/apis/tekton.dev/v1/namespaces/test/pipelines")
+        server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelines")
                 .andReturn(HttpURLConnection.HTTP_OK, new PipelineList()).once();
 
 
@@ -461,9 +460,9 @@ public class DeleteRawMockServerTest {
 
         KubernetesClient client = server.getClient();
         InputStream crdAsInputStream = getClass().getResourceAsStream("/pipelinerun-crd.yaml");
-        CustomResourceDefinition pipelineRunCrd = client.customResourceDefinitions().load(crdAsInputStream).get();
-        MixedOperation<PipelineRun, PipelineRunList, DoneablePipelineRun, Resource<PipelineRun, DoneablePipelineRun>> pipelineRunClient = client
-                .customResources(CustomResourceDefinitionContext.fromCrd(pipelineRunCrd), PipelineRun.class, PipelineRunList.class, DoneablePipelineRun.class);
+        CustomResourceDefinition pipelineRunCrd = client.apiextensions().v1beta1().customResourceDefinitions().load(crdAsInputStream).get();
+        MixedOperation<PipelineRun, PipelineRunList, Resource<PipelineRun>> pipelineRunClient = client
+                .customResources(CustomResourceDefinitionContext.fromCrd(pipelineRunCrd), PipelineRun.class, PipelineRunList.class);
 
         // Mocked Responses
         PipelineRunBuilder pipelineRunBuilder = new PipelineRunBuilder()
@@ -474,13 +473,13 @@ public class DeleteRawMockServerTest {
         PipelineRunList pipelineRunList = new PipelineRunList();
         pipelineRunList.setItems(pList);
 
-        server.expect().post().withPath("/apis/tekton.dev/v1/namespaces/test/pipelineruns")
+        server.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns")
                 .andReturn(HttpURLConnection.HTTP_CREATED, testPipelineRun).once();
-        server.expect().get().withPath("/apis/tekton.dev/v1/namespaces/test/pipelineruns")
+        server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns")
                 .andReturn(HttpURLConnection.HTTP_OK, pipelineRunList).once();
-        server.expect().delete().withPath("/apis/tekton.dev/v1/namespaces/test/pipelineruns/"+TEST_PIPELINERUN)
+        server.expect().delete().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns/"+TEST_PIPELINERUN)
                 .andReturn(HttpURLConnection.HTTP_OK, testPipelineRun).once();
-        server.expect().get().withPath("/apis/tekton.dev/v1/namespaces/test/pipelineruns")
+        server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns")
                 .andReturn(HttpURLConnection.HTTP_OK, new PipelineRunList()).once();
 
 
@@ -525,9 +524,9 @@ public class DeleteRawMockServerTest {
 
         KubernetesClient client = server.getClient();
         InputStream crdAsInputStream = getClass().getResourceAsStream("/pipelinerun-crd.yaml");
-        CustomResourceDefinition pipelineRunCrd = client.customResourceDefinitions().load(crdAsInputStream).get();
-        MixedOperation<PipelineRun, PipelineRunList, DoneablePipelineRun, Resource<PipelineRun, DoneablePipelineRun>> pipelineRunClient = client
-                .customResources(CustomResourceDefinitionContext.fromCrd(pipelineRunCrd), PipelineRun.class, PipelineRunList.class, DoneablePipelineRun.class);
+        CustomResourceDefinition pipelineRunCrd = client.apiextensions().v1beta1().customResourceDefinitions().load(crdAsInputStream).get();
+        MixedOperation<PipelineRun, PipelineRunList, Resource<PipelineRun>> pipelineRunClient = client
+                .customResources(CustomResourceDefinitionContext.fromCrd(pipelineRunCrd), PipelineRun.class, PipelineRunList.class);
 
         // Mocked Responses
         PipelineRunBuilder pipelineRunBuilder = new PipelineRunBuilder()
@@ -538,13 +537,13 @@ public class DeleteRawMockServerTest {
         PipelineRunList pipelineRunList = new PipelineRunList();
         pipelineRunList.setItems(pList);
 
-        server.expect().post().withPath("/apis/tekton.dev/v1/namespaces/test/pipelineruns")
+        server.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns")
                 .andReturn(HttpURLConnection.HTTP_CREATED, testPipelineRun).once();
-        server.expect().get().withPath("/apis/tekton.dev/v1/namespaces/test/pipelineruns")
+        server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns")
                 .andReturn(HttpURLConnection.HTTP_OK, pipelineRunList).once();
-        server.expect().delete().withPath("/apis/tekton.dev/v1/namespaces/test/pipelineruns/"+TEST_PIPELINERUN1)
+        server.expect().delete().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns/"+TEST_PIPELINERUN1)
                 .andReturn(HttpURLConnection.HTTP_OK, testPipelineRun).once();
-        server.expect().get().withPath("/apis/tekton.dev/v1/namespaces/test/pipelineruns")
+        server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns")
                 .andReturn(HttpURLConnection.HTTP_OK, new PipelineRunList()).once();
 
         // PipelineRun 2
@@ -556,13 +555,13 @@ public class DeleteRawMockServerTest {
         pipelineRunList = new PipelineRunList();
         pipelineRunList.setItems(pList);
 
-        server.expect().post().withPath("/apis/tekton.dev/v1/namespaces/test/pipelineruns")
+        server.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns")
                 .andReturn(HttpURLConnection.HTTP_CREATED, testPipelineRun).once();
-        server.expect().get().withPath("/apis/tekton.dev/v1/namespaces/test/pipelineruns")
+        server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns")
                 .andReturn(HttpURLConnection.HTTP_OK, pipelineRunList).once();
-        server.expect().delete().withPath("/apis/tekton.dev/v1/namespaces/test/pipelineruns/"+TEST_PIPELINERUN2)
+        server.expect().delete().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns/"+TEST_PIPELINERUN2)
                 .andReturn(HttpURLConnection.HTTP_OK, testPipelineRun).once();
-        server.expect().get().withPath("/apis/tekton.dev/v1/namespaces/test/pipelineruns")
+        server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns")
                 .andReturn(HttpURLConnection.HTTP_OK, new PipelineRunList()).once();
 
 
@@ -612,9 +611,9 @@ public class DeleteRawMockServerTest {
 
         KubernetesClient client = server.getClient();
         InputStream crdAsInputStream = getClass().getResourceAsStream("/resource-crd.yaml");
-        CustomResourceDefinition pipelineResourceCrd = client.customResourceDefinitions().load(crdAsInputStream).get();
-        MixedOperation<PipelineResource, PipelineResourceList, DoneablePipelineResource, Resource<PipelineResource, DoneablePipelineResource>> pipelineResourceClient = client
-                .customResources(CustomResourceDefinitionContext.fromCrd(pipelineResourceCrd), PipelineResource.class, PipelineResourceList.class, DoneablePipelineResource.class);
+        CustomResourceDefinition pipelineResourceCrd = client.apiextensions().v1beta1().customResourceDefinitions().load(crdAsInputStream).get();
+        MixedOperation<PipelineResource, PipelineResourceList, Resource<PipelineResource>> pipelineResourceClient = client
+                .customResources(CustomResourceDefinitionContext.fromCrd(pipelineResourceCrd), PipelineResource.class, PipelineResourceList.class);
 
         // Mocked Responses
         PipelineResourceBuilder pipelineResourceBuilder = new PipelineResourceBuilder()
@@ -670,9 +669,9 @@ public class DeleteRawMockServerTest {
 
         KubernetesClient client = server.getClient();
         InputStream crdAsInputStream = getClass().getResourceAsStream("/resource-crd.yaml");
-        CustomResourceDefinition pipelineResourceCrd = client.customResourceDefinitions().load(crdAsInputStream).get();
-        MixedOperation<PipelineResource, PipelineResourceList, DoneablePipelineResource, Resource<PipelineResource, DoneablePipelineResource>> pipelineResourceClient = client
-                .customResources(CustomResourceDefinitionContext.fromCrd(pipelineResourceCrd), PipelineResource.class, PipelineResourceList.class, DoneablePipelineResource.class);
+        CustomResourceDefinition pipelineResourceCrd = client.apiextensions().v1beta1().customResourceDefinitions().load(crdAsInputStream).get();
+        MixedOperation<PipelineResource, PipelineResourceList, Resource<PipelineResource>> pipelineResourceClient = client
+                .customResources(CustomResourceDefinitionContext.fromCrd(pipelineResourceCrd), PipelineResource.class, PipelineResourceList.class);
 
         // Mocked Responses
         PipelineResourceBuilder pipelineResourceBuilder = new PipelineResourceBuilder()
