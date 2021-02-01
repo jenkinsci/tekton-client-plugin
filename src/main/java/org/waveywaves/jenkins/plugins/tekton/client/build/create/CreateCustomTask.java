@@ -3,7 +3,9 @@ package org.waveywaves.jenkins.plugins.tekton.client.build.create;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
-import hudson.model.*;
+import hudson.model.AbstractProject;
+import hudson.model.Run;
+import hudson.model.TaskListener;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
@@ -82,8 +84,11 @@ public class CreateCustomTask extends BaseStep {
 
         TaskSpec spec =  new TaskSpec();
         spec.setDescription(getDescription());
+        if(this.params != null)
         spec.setParams(paramsToParamSpecList());
+        if(this.workspaces != null)
         spec.setWorkspaces(workspacesToWorkspaceDeclarationList());
+        if(this.steps != null)
         spec.setSteps(stepsToStepList());
 
         TaskBuilder taskBuilder = new TaskBuilder();
@@ -105,21 +110,23 @@ public class CreateCustomTask extends BaseStep {
 
     private List<ParamSpec> paramsToParamSpecList() {
         List<ParamSpec> paramList = new ArrayList<>();
-        for (TektonStringParamSpec p: this.params) {
-            ParamSpec paramSpec = new ParamSpec();
-            paramSpec.setType("string");
-            paramSpec.setName(p.getName());
-            String desc = p.getDescription();
-            if (!desc.isEmpty()) {
-                paramSpec.setDescription(desc);
+        if(params != null) {
+            for (TektonStringParamSpec p: params) {
+                ParamSpec paramSpec = new ParamSpec();
+                paramSpec.setType("string");
+                paramSpec.setName(p.getName());
+                String desc = p.getDescription();
+                if (!desc.isEmpty()) {
+                    paramSpec.setDescription(desc);
+                }
+                String defaultValue = p.getDefaultValue();
+                if (!defaultValue.isEmpty()) {
+                    ArrayOrString s = new ArrayOrString();
+                    s.setStringVal(defaultValue);
+                    paramSpec.setDefault(s);
+                }
+                paramList.add(paramSpec);
             }
-            String defaultValue = p.getDefaultValue();
-            if (!defaultValue.isEmpty()) {
-                ArrayOrString s = new ArrayOrString();
-                s.setStringVal(defaultValue);
-                paramSpec.setDefault(s);
-            }
-            paramList.add(paramSpec);
         }
         return paramList;
     }
@@ -130,6 +137,8 @@ public class CreateCustomTask extends BaseStep {
             WorkspaceDeclaration wsd = new WorkspaceDeclaration();
             wsd.setName(w.getName());
             wsd.setMountPath(w.getMountPath());
+            wsd.setDescription(w.getDescription());
+            wsd.setReadOnly(w.getReadOnly());
             wsdList.add(wsd);
         }
         return wsdList;
@@ -141,14 +150,16 @@ public class CreateCustomTask extends BaseStep {
             Step step = new Step();
             step.setName(s.getName());
             step.setImage(s.getImage());
-            step.setWorkingDir(s.getWorkingDir());
-            step.setScript(s.getScript());
+            if(s.getWorkingDir() != null) step.setWorkingDir(s.getWorkingDir());
+            if(s.getScript() != null) step.setScript(s.getScript());
             List<EnvVar> envVarList = new ArrayList<>();
-            for (TektonEnv e : s.getEnvs()){
-                EnvVar envVar = new EnvVar();
-                envVar.setName(e.getName());
-                envVar.setValue(e.getValue());
-                envVarList.add(envVar);
+            if(s.getEnvs() != null ) {
+                for (TektonEnv e : s.getEnvs()){
+                    EnvVar envVar = new EnvVar();
+                    if(e.getName() != null) envVar.setName(e.getName());
+                    if(e.getValue() != null) envVar.setValue(e.getValue());
+                    envVarList.add(envVar);
+                }
             }
             step.setEnv(envVarList);
             stepList.add(step);
@@ -171,22 +182,27 @@ public class CreateCustomTask extends BaseStep {
 
     private String paramsToString(){
         StringBuilder sb = new StringBuilder();
-        for (TektonStringParamSpec p: params) {
-            String s = String.format("%n\t\tParam Name: %s%n" +
-                    "\t\tParam Description: %s%n" +
-                    "\t\tParam Type: %s%n",p.getName(), p.getDescription(), p.getDefaultValue());
-            sb.append(s);
+        if(params != null) {
+            for (TektonStringParamSpec p : params) {
+                String s = String.format("%n\t\tParam Name: %s%n" +
+                        "\t\tParam Description: %s%n" +
+                        "\t\tParam Type: %s%n", p.getName(), p.getDescription(), p.getDefaultValue());
+                sb.append(s);
+            }
         }
         return sb.toString();
     }
 
     private String workspacesToString(){
         StringBuilder sb = new StringBuilder();
-        for (TektonWorkspaceDecl w: workspaces) {
-            String s = String.format("%n\t\tWorkspace Name: %s%n" +
-                    "\t\tWorkspace Description: %s%n" +
-                    "\t\tWorkspace MountPath: %s%n", w.getName(), w.getDescription(), w.getMountPath());
-            sb.append(s);
+        consoleLogger.println((this.workspaces == null));
+        if(this.workspaces != null) {
+            for (TektonWorkspaceDecl w : this.workspaces) {
+                String s = String.format("%n\t\tWorkspace Name: %s%n" +
+                        "\t\tWorkspace Description: %s%n" +
+                        "\t\tWorkspace MountPath: %s%n", w.getName(), w.getDescription(), w.getMountPath());
+                sb.append(s);
+            }
         }
         return sb.toString();
     }
@@ -197,14 +213,6 @@ public class CreateCustomTask extends BaseStep {
             StringBuilder argsSb = new StringBuilder();
             StringBuilder commandSb = new StringBuilder();
             StringBuilder envsSb = new StringBuilder();
-//            for (TektonArg a: s.getArgs()){
-//                String str = String.format("Arg: %s%n", a.getValue());
-//                argsSb.append(str);
-//            }
-//            for (TektonCommandI i: s.getCommand()){
-//                String str = String.format("commandI: %s%n", i.getValue());
-//                commandSb.append(str);
-//            }
             for (TektonEnv e: s.getEnvs()){
                 String str = String.format("%n\t\t\tEnv Name: %s%n" +
                         "\t\t\tEnv Value: %s%n", e.getName(), e.getValue());

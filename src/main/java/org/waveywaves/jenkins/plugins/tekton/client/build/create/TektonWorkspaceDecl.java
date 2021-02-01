@@ -9,12 +9,14 @@ public final class TektonWorkspaceDecl extends AbstractDescribableImpl<TektonWor
     private final String name;
     private final String description;
     private final String mountPath;
+    private final Boolean readOnly;
 
     @DataBoundConstructor
-    public TektonWorkspaceDecl(String name, String description, String mountPath) {
+    public TektonWorkspaceDecl(String name, String description, String mountPath, Boolean readOnly) {
         this.name = name;
         this.description = description;
         this.mountPath = mountPath;
+        this.readOnly = readOnly;
     }
 
     public String getName() {
@@ -27,6 +29,10 @@ public final class TektonWorkspaceDecl extends AbstractDescribableImpl<TektonWor
 
     public String getMountPath() {
         return mountPath;
+    }
+
+    public Boolean getReadOnly() {
+        return readOnly;
     }
 
     @Extension

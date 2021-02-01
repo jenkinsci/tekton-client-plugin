@@ -9,6 +9,9 @@
     <f:entry field="mountPath" title="Mount Path">
         <f:textbox/>
     </f:entry>
+    <f:entry field="readOnly" title="ReadOnly">
+        <f:checkbox checked="false" field="readOnly" />
+    </f:entry>
     <f:entry>
         <div align="right">
             <f:repeatableDeleteButton/>
