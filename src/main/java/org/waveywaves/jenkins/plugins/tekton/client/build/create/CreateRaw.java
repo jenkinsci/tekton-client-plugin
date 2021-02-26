@@ -187,6 +187,20 @@ public class CreateRaw extends BaseStep {
     @Override
     public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws InterruptedException, IOException {
         consoleLogger = listener.getLogger();
+
+        // lets make sure the tekton client is not empty
+        if (tektonClient == null) {
+            setTektonClient(TektonUtils.getTektonClient());
+            if (tektonClient == null) {
+                throw new IOException("no tektonClient");
+            }
+        }
+        if (kubernetesClient == null) {
+            setKubernetesClient(TektonUtils.getKubernetesClient());
+            if (kubernetesClient == null) {
+                throw new IOException("no kubernetesClient");
+            }
+        }
         runCreate();
     }
 
@@ -212,7 +226,9 @@ public class CreateRaw extends BaseStep {
                 if (kind.size() > 1){
                     logger.info("Multiple Objects in YAML not supported yet");
                 } else {
-                    createdResourceName = createWithResourceSpecificClient(kind.get(0), new ByteArrayInputStream(data));
+                    TektonResourceType resourceType = kind.get(0);
+                    logger.info("creating kind " + resourceType.name());
+                    createdResourceName = createWithResourceSpecificClient(resourceType, new ByteArrayInputStream(data));
                 }
             }
         } catch (Exception e) {
@@ -222,7 +238,7 @@ public class CreateRaw extends BaseStep {
     }
 
     /**
-     * Performs any conversion on the Tekton resources before we apply it to Kubernetes 
+     * Performs any conversion on the Tekton resources before we apply it to Kubernetes
      */
     private byte[] convertTektonData(File inputFile, byte[] data) throws Exception {
         if (enableCatalog) {
