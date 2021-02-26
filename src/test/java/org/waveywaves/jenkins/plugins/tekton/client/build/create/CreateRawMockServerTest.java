@@ -24,6 +24,8 @@ import java.util.List;
 
 
 public class CreateRawMockServerTest {
+    public static final boolean EnableCatalog = false;
+
     @Rule
     public KubernetesServer server = new KubernetesServer();
 
@@ -56,7 +58,7 @@ public class CreateRawMockServerTest {
                 .andReturn(HttpURLConnection.HTTP_OK, taskList).once();
 
         // When
-        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTaskYaml);
+        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTaskYaml, EnableCatalog);
 
         createRaw.setTektonClient(client);
         createRaw.setTaskClient(taskClient);
@@ -98,7 +100,7 @@ public class CreateRawMockServerTest {
                 .andReturn(HttpURLConnection.HTTP_OK, taskRunList).once();
 
         // When
-        CreateRaw createRaw = new CreateRaw(testTaskRunYaml, CreateRaw.InputType.YAML.toString()){
+        CreateRaw createRaw = new CreateRaw(testTaskRunYaml, CreateRaw.InputType.YAML.toString(), EnableCatalog){
             @Override
             public void streamTaskRunLogsToConsole(TaskRun taskRun) {
                 return;
@@ -144,7 +146,7 @@ public class CreateRawMockServerTest {
                 .andReturn(HttpURLConnection.HTTP_OK, pipelineList).once();
 
         // When
-        CreateRaw createRaw = new CreateRaw(testPipelineYaml, CreateRaw.InputType.YAML.toString());
+        CreateRaw createRaw = new CreateRaw(testPipelineYaml, CreateRaw.InputType.YAML.toString(), EnableCatalog);
         createRaw.setTektonClient(client);
         createRaw.setPipelineClient(pipelineClient);
         String createdPipelineName = createRaw.createPipeline(
@@ -185,7 +187,7 @@ public class CreateRawMockServerTest {
                 .andReturn(HttpURLConnection.HTTP_OK, pipelineRunList).once();
 
         // When
-        CreateRaw createRaw = new CreateRaw(testPipelineRunYaml, CreateRaw.InputType.YAML.toString()){
+        CreateRaw createRaw = new CreateRaw(testPipelineRunYaml, CreateRaw.InputType.YAML.toString(), EnableCatalog){
             @Override
             public void streamPipelineRunLogsToConsole(PipelineRun pipelineRun) {
                 return;
@@ -231,7 +233,7 @@ public class CreateRawMockServerTest {
                 .andReturn(HttpURLConnection.HTTP_OK, pipelineResourceList).once();
 
         // When
-        CreateRaw createRaw = new CreateRaw(testPipelineResourceYaml, CreateRaw.InputType.YAML.toString());
+        CreateRaw createRaw = new CreateRaw(testPipelineResourceYaml, CreateRaw.InputType.YAML.toString(), EnableCatalog);
         createRaw.setTektonClient(client);
         createRaw.setPipelineResourceClient(pipelineResourceClient);
         String createdResourceName = createRaw.createPipelineResource(

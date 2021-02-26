@@ -1,5 +1,8 @@
 package org.waveywaves.jenkins.plugins.tekton.client.build.create;
 
+import com.google.common.io.Files;
+import com.google.common.io.LineReader;
+import com.google.common.io.Resources;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -15,18 +18,22 @@ import io.fabric8.tekton.resource.v1alpha1.PipelineResource;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
+import org.waveywaves.jenkins.plugins.tekton.client.LogUtils;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils.TektonResourceType;
 import org.waveywaves.jenkins.plugins.tekton.client.build.BaseStep;
 
 import javax.annotation.Nonnull;
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 
 import org.waveywaves.jenkins.plugins.tekton.client.logwatch.PipelineRunLogWatch;
@@ -38,13 +45,15 @@ public class CreateRaw extends BaseStep {
 
     private String input;
     private String inputType;
+    private boolean enableCatalog;
     private PrintStream consoleLogger;
 
     @DataBoundConstructor
-    public CreateRaw(String input, String inputType) {
+    public CreateRaw(String input, String inputType, boolean enableCatalog) {
         super();
         this.inputType = inputType;
         this.input = input;
+        this.enableCatalog = enableCatalog;
 
         setKubernetesClient(TektonUtils.getKubernetesClient());
         setTektonClient(TektonUtils.getTektonClient());
@@ -55,6 +64,10 @@ public class CreateRaw extends BaseStep {
     }
     protected String getInputType(){
         return this.inputType;
+    }
+
+    protected boolean isEnableCatalog() {
+        return enableCatalog;
     }
 
     protected String createWithResourceSpecificClient(TektonResourceType resourceType, InputStream inputStream) {
@@ -175,48 +188,66 @@ public class CreateRaw extends BaseStep {
 
     protected String runCreate() {
         URL url = null;
-        InputStream inputStreamForKind = null;
-        InputStream inputStreamForData = null;
+        byte[] data = null;
         String inputData = this.getInput();
         String inputType = this.getInputType();
         String createdResourceName = "";
         try {
             if (inputType.equals(InputType.URL.toString())) {
                 url = new URL(inputData);
-                inputStreamForKind = TektonUtils.urlToByteArrayStream(url);
-                inputStreamForData = url.openStream();
+                data = Resources.toByteArray(url);
 
             } else if (inputType.equals(InputType.YAML.toString())) {
-                inputStreamForKind = new ByteArrayInputStream(inputData.getBytes(StandardCharsets.UTF_8));
-                inputStreamForData = new ByteArrayInputStream(inputData.getBytes(StandardCharsets.UTF_8));
+                data = inputData.getBytes(StandardCharsets.UTF_8);
             }
-            if (inputStreamForKind != null) {
-                List<TektonResourceType> kind = TektonUtils.getKindFromInputStream(inputStreamForKind, this.getInputType());
+            if (data != null) {
+                List<TektonResourceType> kind = TektonUtils.getKindFromInputStream(new ByteArrayInputStream(data), this.getInputType());
                 if (kind.size() > 1){
                     logger.info("Multiple Objects in YAML not supported yet");
                 } else {
-                    createdResourceName = createWithResourceSpecificClient(kind.get(0), inputStreamForData);
+                    if (enableCatalog) {
+                        logger.info("processing the tekton catalog");
+                        data = processTektonCatalog(data);
+                    }
+
+                    createdResourceName = createWithResourceSpecificClient(kind.get(0), new ByteArrayInputStream(data));
                 }
             }
         } catch (Exception e) {
-            logger.warning("possible URL related Exception has occurred "+e.toString());
-        } finally {
-            if (inputStreamForKind != null) {
-                try {
-                    inputStreamForKind.close();
-                } catch (IOException e) {
-                    logger.warning("IOException occurred "+e.toString());
-                }
-            }
-            if (inputStreamForData != null) {
-                try {
-                    inputStreamForData.close();
-                } catch (IOException e) {
-                    logger.warning("IOException occurred "+e.toString());
-                }
-            }
+            logger.warning("possible URL related Exception has occurred " + e.toString());
         }
         return createdResourceName;
+    }
+
+    private byte[] processTektonCatalog(byte[] data) throws Exception {
+        File dir = Files.createTempDir();
+        File file = new File(dir, "input.yaml");
+        File outputFile = new File(dir, "output.yaml");
+        Files.write(data, file);
+
+        logger.info("saved file: " + file.getPath());
+
+        // TODO we should download the jx-pipeline binary
+        // from: https://github.com/jenkins-x/jx-pipeline
+        // and cache it somewhere useful
+        ProcessBuilder builder = new ProcessBuilder();
+        builder.command("jx-pipeline", "effective", "-b", "-f", file.getPath(), "-o", outputFile.getPath());
+        Process process = builder.start();
+        int exitCode = process.waitFor();
+
+        LogUtils.logStream(process.getInputStream(), logger, false);
+        LogUtils.logStream(process.getErrorStream(), logger, true);
+        if (exitCode != 0) {
+            throw new Exception("failed to apply tekton catalog to file " + file.getPath());
+        }
+
+        logger.info("generated file: " + outputFile.getPath());
+
+        data = Files.toByteArray(outputFile);
+
+        // TODO lets remove the temporary files....
+
+        return data;
     }
 
     @Extension
