@@ -36,6 +36,7 @@
         <maven-surefire-plugin.version>2.22.1</maven-surefire-plugin.version>
         <mockwebserver.version>0.1.8</mockwebserver.version>
         <junit-jupiter-engine.version>5.6.2</junit-jupiter-engine.version>
+        <jx-pipeline.version>0.0.110</jx-pipeline.version>
     </properties>
 
     <licenses>
@@ -112,4 +113,62 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>download-binaries</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>3.0.0</version>
+                        <executions>
+                            <execution>
+                                <phase>generate-resources</phase>
+                                <configuration>
+
+                                    <target>
+                                        <echo message="downloading the jx-pipeline binaries"/>
+
+                                        <delete>
+                                            <fileset dir="target/jxp"/>
+                                            <fileset dir="src/main/resources/org/waveywaves/jenkins/plugins/tekton/client/jxp"/>
+                                        </delete>
+
+                                        <mkdir dir="target/jxp"/>
+                                        <mkdir dir="src/main/resources/org/waveywaves/jenkins/plugins/tekton/client/jxp/mac"/>
+
+                                        <get src="https://github.com/jenkins-x/jx-pipeline/releases/download/v${jx-pipeline.version}/jx-pipeline-darwin-amd64.tar.gz"
+                                             dest="target/jxp/mac.tar.gz"/>
+                                        <get src="https://github.com/jenkins-x/jx-pipeline/releases/download/v${jx-pipeline.version}/jx-pipeline-linux-amd64.tar.gz"
+                                             dest="target/jxp/linux.tar.gz"/>
+                                        <get src="https://github.com/jenkins-x/jx-pipeline/releases/download/v${jx-pipeline.version}/jx-pipeline-windows-amd64.zip"
+                                             dest="target/jxp/windows.zip"/>
+
+                                        <untar compression="gzip" src="target/jxp/mac.tar.gz"
+                                               dest="src/main/resources/org/waveywaves/jenkins/plugins/tekton/client/jxp/mac"/>
+                                        <untar compression="gzip" src="target/jxp/linux.tar.gz"
+                                               dest="src/main/resources/org/waveywaves/jenkins/plugins/tekton/client/jxp/linux"/>
+                                        <unzip src="target/jxp/windows.zip"
+                                               dest="src/main/resources/org/waveywaves/jenkins/plugins/tekton/client/jxp/windows"/>
+
+                                        <!-- lets remove any docs we don't need -->
+                                        <delete>
+                                            <fileset dir="src/main/resources/org/waveywaves/jenkins/plugins/tekton/client/jxp"
+                                                     includes="**/*.md"/>
+                                        </delete>
+                                    </target>
+
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
