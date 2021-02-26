@@ -14,7 +14,7 @@ public class CreateRawTest {
                 "metadata:\n" +
                 "  name: testTask\n";
         CreateRaw createRaw = new CreateRawMock(testTaskYaml, CreateRaw.InputType.YAML.toString(), EnableCatalog);
-        String created = createRaw.runCreate();
+        String created = createRaw.runCreate(null);
         assert created.equals(TektonUtils.TektonResourceType.task.toString());
     }
 
@@ -25,7 +25,7 @@ public class CreateRawTest {
                 "metadata:\n" +
                 "  generateName: home-is-set-\n";
         CreateRaw createRaw = new CreateRawMock(testTaskRunYaml, CreateRaw.InputType.YAML.toString(), EnableCatalog);
-        String created = createRaw.runCreate();
+        String created = createRaw.runCreate(null);
         assert created.equals(TektonUtils.TektonResourceType.taskrun.toString());
     }
 
@@ -36,7 +36,7 @@ public class CreateRawTest {
                 "metadata:\n" +
                 "  name: testPipeline\n";
         CreateRaw createRaw = new CreateRawMock(testPipelineYaml, CreateRaw.InputType.YAML.toString(), EnableCatalog);
-        String created = createRaw.runCreate();
+        String created = createRaw.runCreate(null);
         assert created.equals(TektonUtils.TektonResourceType.pipeline.toString());
     }
 
@@ -47,7 +47,7 @@ public class CreateRawTest {
                 "metadata:\n" +
                 "  name: testPipelineRun\n";
         CreateRaw createRaw = new CreateRawMock(testPipelineRunYaml, CreateRaw.InputType.YAML.toString(), EnableCatalog);
-        String created = createRaw.runCreate();
+        String created = createRaw.runCreate(null);
         assert created.equals(TektonUtils.TektonResourceType.pipelinerun.toString());
     }
 
@@ -58,7 +58,7 @@ public class CreateRawTest {
                 "metadata:\n" +
                 "  name: testPipelineResource\n";
         CreateRaw createRaw = new CreateRawMock(testPipelineResourceYaml, CreateRaw.InputType.YAML.toString(), EnableCatalog);
-        String created = createRaw.runCreate();
+        String created = createRaw.runCreate(null);
         assert created.equals(TektonUtils.TektonResourceType.pipelineresource.toString());
     }
 }

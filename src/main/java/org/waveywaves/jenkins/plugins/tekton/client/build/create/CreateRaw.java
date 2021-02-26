@@ -45,8 +45,6 @@ import java.util.logging.Logger;
 public class CreateRaw extends BaseStep {
     private static final Logger logger = Logger.getLogger(CreateRaw.class.getName());
 
-    private static final boolean deleteTemporaryFiles = true;
-
     private String input;
     private String inputType;
     private boolean enableCatalog;
@@ -201,10 +199,10 @@ public class CreateRaw extends BaseStep {
                 throw new IOException("no kubernetesClient");
             }
         }
-        runCreate();
+        runCreate(workspace);
     }
 
-    protected String runCreate() {
+    protected String runCreate(FilePath workspace) {
         URL url = null;
         byte[] data = null;
         File inputFile = null;
@@ -217,10 +215,10 @@ public class CreateRaw extends BaseStep {
                 data = Resources.toByteArray(url);
             } else if (inputType.equals(InputType.YAML.toString())) {
                 data = inputData.getBytes(StandardCharsets.UTF_8);
-            } else if (inputType.equals(InputType.File.toString())) {
+            } else if (inputType.equals(InputType.FILE.toString())) {
                 inputFile = new File(inputData);
             }
-            data = convertTektonData(inputFile, data);
+            data = convertTektonData(workspace ,inputFile, data);
             if (data != null) {
                 List<TektonResourceType> kind = TektonUtils.getKindFromInputStream(new ByteArrayInputStream(data), this.getInputType());
                 if (kind.size() > 1){
@@ -233,6 +231,7 @@ public class CreateRaw extends BaseStep {
             }
         } catch (Exception e) {
             logger.warning("possible URL related Exception has occurred " + e.toString());
+            e.printStackTrace();
         }
         return createdResourceName;
     }
@@ -240,10 +239,20 @@ public class CreateRaw extends BaseStep {
     /**
      * Performs any conversion on the Tekton resources before we apply it to Kubernetes
      */
-    private byte[] convertTektonData(File inputFile, byte[] data) throws Exception {
+    private byte[] convertTektonData(FilePath workspace, File inputFile, byte[] data) throws Exception {
         if (enableCatalog) {
+            // lets use the workspace relative path
+            if (workspace == null) {
+                throw new IOException("no workspace");
+            }
+
+            // lets work relative to the workspace
+            File dir = new File(workspace.getRemote());
+            if (inputFile != null) {
+                inputFile = new File(dir, inputFile.getPath());
+            }
             logger.info("processing the tekton catalog");
-            return processTektonCatalog(inputFile, data);
+            return processTektonCatalog(dir, inputFile, data);
         }
 
         if (data == null && inputFile != null) {
@@ -264,42 +273,33 @@ public class CreateRaw extends BaseStep {
      * @return the processed data
      * @throws Exception
      */
-    private byte[] processTektonCatalog(File file, byte[] data) throws Exception {
-        File dir = Files.createTempDir();
+    private byte[] processTektonCatalog(File dir, File file, byte[] data) throws Exception {
         boolean deleteInputFile = false;
         if (file == null) {
-            deleteInputFile = true;
-            file = new File(dir, "input.yaml");
+            file = File.createTempFile("tekton-input-", ".yaml", dir);
+            Files.write(data, file);
+            logger.info("saved file: " + file.getPath());
         }
-        File outputFile = new File(dir, "output.yaml");
-        Files.write(data, file);
 
-        logger.info("saved file: " + file.getPath());
+        File outputFile = File.createTempFile("tekton-effective-", ".yaml", dir);
 
+        String filePath = file.getPath();
         String binary = ToolUtils.getJXPipelineBinary();
+
         ProcessBuilder builder = new ProcessBuilder();
-        builder.command(binary, "-b", "-f", file.getPath(), "-o", outputFile.getPath());
+        builder.command(binary, "-b", "--add-defaults", "-f", filePath, "-o", outputFile.getPath());
         Process process = builder.start();
         int exitCode = process.waitFor();
 
         LogUtils.logStream(process.getInputStream(), logger, false);
         LogUtils.logStream(process.getErrorStream(), logger, true);
         if (exitCode != 0) {
-            throw new Exception("failed to apply tekton catalog to file " + file.getPath());
+            throw new Exception("failed to apply tekton catalog to file " + filePath);
         }
 
         logger.info("generated file: " + outputFile.getPath());
 
         data = Files.toByteArray(outputFile);
-
-        // lets remove the temporary files
-        if (deleteTemporaryFiles) {
-            if (deleteInputFile) {
-                file.delete();
-            }
-            outputFile.delete();
-            dir.delete();
-        }
         return data;
     }
 
@@ -314,6 +314,7 @@ public class CreateRaw extends BaseStep {
 
         public ListBoxModel doFillInputTypeItems(@QueryParameter(value = "input") final String input){
             ListBoxModel items =  new ListBoxModel();
+            items.add(InputType.FILE.toString());
             items.add(InputType.URL.toString());
             items.add(InputType.YAML.toString());
             return items;

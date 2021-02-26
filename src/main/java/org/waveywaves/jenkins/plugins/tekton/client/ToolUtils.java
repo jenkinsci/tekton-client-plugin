@@ -31,7 +31,7 @@ import java.util.logging.Logger;
 public class ToolUtils {
     private static final Logger logger = Logger.getLogger(ToolUtils.class.getName());
 
-    public static String jxPipelineFile;
+    public static String jxPipelineFile = System.getenv("JX_PIPELINE_EFFECTIVE_PATH");
 
     /**
      * @return the file name location of the jx-pipeline-effective binary

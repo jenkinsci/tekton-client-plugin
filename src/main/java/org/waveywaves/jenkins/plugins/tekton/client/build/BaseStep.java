@@ -29,7 +29,7 @@ public abstract class BaseStep extends Builder implements SimpleBuildStep {
     public enum InputType {
         URL,
         YAML,
-        File,
+        FILE,
         Interactive
     }
 
