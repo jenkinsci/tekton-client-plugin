@@ -21,6 +21,7 @@ import org.kohsuke.stapler.QueryParameter;
 import org.waveywaves.jenkins.plugins.tekton.client.LogUtils;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils.TektonResourceType;
+import org.waveywaves.jenkins.plugins.tekton.client.ToolUtils;
 import org.waveywaves.jenkins.plugins.tekton.client.build.BaseStep;
 
 import javax.annotation.Nonnull;
@@ -227,11 +228,10 @@ public class CreateRaw extends BaseStep {
 
         logger.info("saved file: " + file.getPath());
 
-        // TODO we should download the jx-pipeline binary
-        // from: https://github.com/jenkins-x/jx-pipeline
-        // and cache it somewhere useful
+
+        String binary = ToolUtils.getJXPipelineBinary();
         ProcessBuilder builder = new ProcessBuilder();
-        builder.command("jx-pipeline", "effective", "-b", "-f", file.getPath(), "-o", outputFile.getPath());
+        builder.command(binary, "-b", "-f", file.getPath(), "-o", outputFile.getPath());
         Process process = builder.start();
         int exitCode = process.waitFor();
 
@@ -246,7 +246,6 @@ public class CreateRaw extends BaseStep {
         data = Files.toByteArray(outputFile);
 
         // TODO lets remove the temporary files....
-
         return data;
     }
 

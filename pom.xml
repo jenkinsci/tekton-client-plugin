@@ -36,7 +36,7 @@
         <maven-surefire-plugin.version>2.22.1</maven-surefire-plugin.version>
         <mockwebserver.version>0.1.8</mockwebserver.version>
         <junit-jupiter-engine.version>5.6.2</junit-jupiter-engine.version>
-        <jx-pipeline.version>0.0.110</jx-pipeline.version>
+        <jx-pipeline.version>0.0.112</jx-pipeline.version>
     </properties>
 
     <licenses>
@@ -115,6 +115,8 @@
     </build>
 
     <profiles>
+
+        <!-- optional profile to download the jx-pipeline-effective binaries for each platform -->
         <profile>
             <id>download-binaries</id>
             <build>
@@ -131,19 +133,17 @@
                                     <target>
                                         <echo message="downloading the jx-pipeline binaries"/>
 
-                                        <delete>
-                                            <fileset dir="target/jxp"/>
-                                            <fileset dir="src/main/resources/org/waveywaves/jenkins/plugins/tekton/client/jxp"/>
-                                        </delete>
+                                        <delete dir="target/jxp"/>
+                                        <delete dir="src/main/resources/org/waveywaves/jenkins/plugins/tekton/client/jxp"/>
 
                                         <mkdir dir="target/jxp"/>
                                         <mkdir dir="src/main/resources/org/waveywaves/jenkins/plugins/tekton/client/jxp/mac"/>
 
-                                        <get src="https://github.com/jenkins-x/jx-pipeline/releases/download/v${jx-pipeline.version}/jx-pipeline-darwin-amd64.tar.gz"
+                                        <get src="https://github.com/jenkins-x/jx-pipeline/releases/download/v${jx-pipeline.version}/jx-pipeline-effective-darwin-amd64.tar.gz"
                                              dest="target/jxp/mac.tar.gz"/>
-                                        <get src="https://github.com/jenkins-x/jx-pipeline/releases/download/v${jx-pipeline.version}/jx-pipeline-linux-amd64.tar.gz"
+                                        <get src="https://github.com/jenkins-x/jx-pipeline/releases/download/v${jx-pipeline.version}/jx-pipeline-effective-linux-amd64.tar.gz"
                                              dest="target/jxp/linux.tar.gz"/>
-                                        <get src="https://github.com/jenkins-x/jx-pipeline/releases/download/v${jx-pipeline.version}/jx-pipeline-windows-amd64.zip"
+                                        <get src="https://github.com/jenkins-x/jx-pipeline/releases/download/v${jx-pipeline.version}/jx-pipeline-effective-windows-amd64.zip"
                                              dest="target/jxp/windows.zip"/>
 
                                         <untar compression="gzip" src="target/jxp/mac.tar.gz"

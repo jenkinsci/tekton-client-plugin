@@ -33,7 +33,7 @@ Visit [the tutorial](docs/tutorial.md) for help with doing various things with t
 Before releasing you need to run the following command:
 
 ```bash 
-mvn package -P
+mvn package -P download-binaries
 ```
 
 This will then download the [jx-pipeline](https://github.com/jenkins-x/jx-pipeline/releases) binaries for each platform so they can be embedded inside the plugin.
