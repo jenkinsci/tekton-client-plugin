@@ -1,19 +1,23 @@
 package org.waveywaves.jenkins.plugins.tekton.client.build.create;
 
 import com.google.common.io.Files;
-import com.google.common.io.LineReader;
 import com.google.common.io.Resources;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
-import hudson.model.*;
+import hudson.model.AbstractProject;
+import hudson.model.Run;
+import hudson.model.TaskListener;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.tekton.client.TektonClient;
-import io.fabric8.tekton.pipeline.v1beta1.*;
+import io.fabric8.tekton.pipeline.v1beta1.Pipeline;
+import io.fabric8.tekton.pipeline.v1beta1.PipelineRun;
+import io.fabric8.tekton.pipeline.v1beta1.Task;
+import io.fabric8.tekton.pipeline.v1beta1.TaskRun;
 import io.fabric8.tekton.resource.v1alpha1.PipelineResource;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -23,26 +27,25 @@ import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils.TektonResourceType;
 import org.waveywaves.jenkins.plugins.tekton.client.ToolUtils;
 import org.waveywaves.jenkins.plugins.tekton.client.build.BaseStep;
+import org.waveywaves.jenkins.plugins.tekton.client.logwatch.PipelineRunLogWatch;
+import org.waveywaves.jenkins.plugins.tekton.client.logwatch.TaskRunLogWatch;
 
 import javax.annotation.Nonnull;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.concurrent.Executors;
 import java.util.logging.Logger;
-
-import org.waveywaves.jenkins.plugins.tekton.client.logwatch.PipelineRunLogWatch;
-import org.waveywaves.jenkins.plugins.tekton.client.logwatch.TaskRunLogWatch;
 
 @Symbol("createStep")
 public class CreateRaw extends BaseStep {
     private static final Logger logger = Logger.getLogger(CreateRaw.class.getName());
+
+    private static final boolean deleteTemporaryFiles = true;
 
     private String input;
     private String inputType;
@@ -190,6 +193,7 @@ public class CreateRaw extends BaseStep {
     protected String runCreate() {
         URL url = null;
         byte[] data = null;
+        File inputFile = null;
         String inputData = this.getInput();
         String inputType = this.getInputType();
         String createdResourceName = "";
@@ -197,20 +201,17 @@ public class CreateRaw extends BaseStep {
             if (inputType.equals(InputType.URL.toString())) {
                 url = new URL(inputData);
                 data = Resources.toByteArray(url);
-
             } else if (inputType.equals(InputType.YAML.toString())) {
                 data = inputData.getBytes(StandardCharsets.UTF_8);
+            } else if (inputType.equals(InputType.File.toString())) {
+                inputFile = new File(inputData);
             }
+            data = convertTektonData(inputFile, data);
             if (data != null) {
                 List<TektonResourceType> kind = TektonUtils.getKindFromInputStream(new ByteArrayInputStream(data), this.getInputType());
                 if (kind.size() > 1){
                     logger.info("Multiple Objects in YAML not supported yet");
                 } else {
-                    if (enableCatalog) {
-                        logger.info("processing the tekton catalog");
-                        data = processTektonCatalog(data);
-                    }
-
                     createdResourceName = createWithResourceSpecificClient(kind.get(0), new ByteArrayInputStream(data));
                 }
             }
@@ -220,14 +221,44 @@ public class CreateRaw extends BaseStep {
         return createdResourceName;
     }
 
-    private byte[] processTektonCatalog(byte[] data) throws Exception {
+    /**
+     * Performs any conversion on the Tekton resources before we apply it to Kubernetes 
+     */
+    private byte[] convertTektonData(File inputFile, byte[] data) throws Exception {
+        if (enableCatalog) {
+            logger.info("processing the tekton catalog");
+            return processTektonCatalog(inputFile, data);
+        }
+
+        if (data == null && inputFile != null) {
+            data = Files.toByteArray(inputFile);
+        }
+        return data;
+    }
+
+
+    /**
+     * Lets process any <code>image: uses:sourceURI</code> blocks in the tekton <code>Pipeline</code>,
+     * <code>PipelineRun</code>, <code>Task</code> or <code>TaskRun</code> resources so that we can reuse Tasks or Steps
+     * from Tekton Catalog or any other git repository.
+     *
+     * For background see: https://jenkins-x.io/blog/2021/02/25/gitops-pipelines/
+     * @param file optional file name to process
+     * @param data data to process if no file name is given
+     * @return the processed data
+     * @throws Exception
+     */
+    private byte[] processTektonCatalog(File file, byte[] data) throws Exception {
         File dir = Files.createTempDir();
-        File file = new File(dir, "input.yaml");
+        boolean deleteInputFile = false;
+        if (file == null) {
+            deleteInputFile = true;
+            file = new File(dir, "input.yaml");
+        }
         File outputFile = new File(dir, "output.yaml");
         Files.write(data, file);
 
         logger.info("saved file: " + file.getPath());
-
 
         String binary = ToolUtils.getJXPipelineBinary();
         ProcessBuilder builder = new ProcessBuilder();
@@ -245,7 +276,14 @@ public class CreateRaw extends BaseStep {
 
         data = Files.toByteArray(outputFile);
 
-        // TODO lets remove the temporary files....
+        // lets remove the temporary files
+        if (deleteTemporaryFiles) {
+            if (deleteInputFile) {
+                file.delete();
+            }
+            outputFile.delete();
+            dir.delete();
+        }
         return data;
     }
 
