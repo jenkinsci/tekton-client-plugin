@@ -2,6 +2,7 @@ package org.waveywaves.jenkins.plugins.tekton.client.build.create;
 
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
+import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -39,6 +40,7 @@ import java.io.PrintStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 @Symbol("createStep")
@@ -199,10 +201,11 @@ public class CreateRaw extends BaseStep {
                 throw new IOException("no kubernetesClient");
             }
         }
-        runCreate(workspace);
+        EnvVars envVars = run.getEnvironment(listener);
+        runCreate(workspace, envVars);
     }
 
-    protected String runCreate(FilePath workspace) {
+    protected String runCreate(FilePath workspace, EnvVars envVars) {
         URL url = null;
         byte[] data = null;
         File inputFile = null;
@@ -218,7 +221,7 @@ public class CreateRaw extends BaseStep {
             } else if (inputType.equals(InputType.FILE.toString())) {
                 inputFile = new File(inputData);
             }
-            data = convertTektonData(workspace ,inputFile, data);
+            data = convertTektonData(workspace ,envVars, inputFile, data);
             if (data != null) {
                 List<TektonResourceType> kind = TektonUtils.getKindFromInputStream(new ByteArrayInputStream(data), this.getInputType());
                 if (kind.size() > 1){
@@ -239,7 +242,7 @@ public class CreateRaw extends BaseStep {
     /**
      * Performs any conversion on the Tekton resources before we apply it to Kubernetes
      */
-    private byte[] convertTektonData(FilePath workspace, File inputFile, byte[] data) throws Exception {
+    private byte[] convertTektonData(FilePath workspace, EnvVars envVars, File inputFile, byte[] data) throws Exception {
         if (enableCatalog) {
             // lets use the workspace relative path
             if (workspace == null) {
@@ -252,7 +255,7 @@ public class CreateRaw extends BaseStep {
                 inputFile = new File(dir, inputFile.getPath());
             }
             logger.info("processing the tekton catalog");
-            return processTektonCatalog(dir, inputFile, data);
+            return processTektonCatalog(envVars, dir, inputFile, data);
         }
 
         if (data == null && inputFile != null) {
@@ -268,12 +271,14 @@ public class CreateRaw extends BaseStep {
      * from Tekton Catalog or any other git repository.
      *
      * For background see: https://jenkins-x.io/blog/2021/02/25/gitops-pipelines/
+     *
+     * @param envVars
      * @param file optional file name to process
      * @param data data to process if no file name is given
      * @return the processed data
      * @throws Exception
      */
-    private byte[] processTektonCatalog(File dir, File file, byte[] data) throws Exception {
+    private byte[] processTektonCatalog(EnvVars envVars, File dir, File file, byte[] data) throws Exception {
         boolean deleteInputFile = false;
         if (file == null) {
             file = File.createTempFile("tekton-input-", ".yaml", dir);
@@ -286,8 +291,15 @@ public class CreateRaw extends BaseStep {
         String filePath = file.getPath();
         String binary = ToolUtils.getJXPipelineBinary();
 
+        logger.info("using tekton pipeline binary " + binary);
+
         ProcessBuilder builder = new ProcessBuilder();
         builder.command(binary, "-b", "--add-defaults", "-f", filePath, "-o", outputFile.getPath());
+        if (envVars != null) {
+            for (Map.Entry<String, String> entry : envVars.entrySet()) {
+                builder.environment().put(entry.getKey(), entry.getValue());
+            }
+        }
         Process process = builder.start();
         int exitCode = process.waitFor();
 
