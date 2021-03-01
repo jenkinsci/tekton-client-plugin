@@ -36,7 +36,7 @@
         <maven-surefire-plugin.version>2.22.1</maven-surefire-plugin.version>
         <mockwebserver.version>0.1.8</mockwebserver.version>
         <junit-jupiter-engine.version>5.6.2</junit-jupiter-engine.version>
-        <jx-pipeline.version>0.0.113</jx-pipeline.version>
+        <jx-pipeline.version>0.0.114</jx-pipeline.version>
     </properties>
 
     <licenses>
@@ -71,7 +71,25 @@
             <version>${kubernetes-server-mock.version}</version>
             <scope>test</scope>
         </dependency>
+
+        <!-- test plugins for running locally via: mvn hpi:run -->
+        <dependency>
+          <groupId>org.jenkins-ci.plugins</groupId>
+          <artifactId>git</artifactId>
+        </dependency>
     </dependencies>
+
+    <dependencyManagement>
+      <dependencies>
+        <dependency>
+          <groupId>io.jenkins.tools.bom</groupId>
+          <artifactId>bom-2.176.x</artifactId>
+          <version>4</version>
+          <scope>import</scope>
+          <type>pom</type>
+        </dependency>
+      </dependencies>
+    </dependencyManagement>
 
     <repositories>
         <repository>
