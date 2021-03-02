@@ -22,9 +22,9 @@ public class LogUtils {
                 break;
             }
             if (error) {
-                logger.info(line);
-            } else {
                 logger.log(Level.WARNING, line);
+            } else {
+                logger.info(line);
             }
         }
     }

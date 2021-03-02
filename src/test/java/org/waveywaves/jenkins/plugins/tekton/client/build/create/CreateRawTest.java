@@ -1,8 +1,16 @@
 package org.waveywaves.jenkins.plugins.tekton.client.build.create;
 
+import hudson.EnvVars;
+import hudson.FilePath;
 import org.junit.Test;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
 import org.waveywaves.jenkins.plugins.tekton.client.build.create.mock.CreateRawMock;
+import org.waveywaves.jenkins.plugins.tekton.client.build.create.mock.FakeCreateRaw;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class CreateRawTest {
     public static final boolean EnableCatalog = false;
@@ -61,4 +69,29 @@ public class CreateRawTest {
         String created = createRaw.runCreate(null, null);
         assert created.equals(TektonUtils.TektonResourceType.pipelineresource.toString());
     }
+
+
+    @Test
+    public void testCreateRawWithTektonCatalog() throws Exception {
+        String testTaskYaml = "apiVersion: tekton.dev/v1beta1\n" +
+                "kind: Task\n" +
+                "metadata:\n" +
+                "  name: testTask\n";
+        FakeCreateRaw createRaw = new FakeCreateRaw(testTaskYaml, CreateRaw.InputType.YAML.toString(), true);
+
+        Path tmpDir = Files.createTempDirectory("");
+        FilePath workspace = new FilePath(tmpDir.toFile());
+
+        String cheese = "edam";
+        EnvVars envVars = new EnvVars("CHEESE", cheese);
+        createRaw.runCreate(workspace, envVars);
+
+        String created = createRaw.getLastResource();
+
+        String expectedYaml = testTaskYaml +
+                "  labels:\n" +
+                "    cheese: " + cheese + "\n";
+        assertThat(created).isEqualTo(expectedYaml);
+    }
+
 }
