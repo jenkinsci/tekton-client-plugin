@@ -51,7 +51,7 @@ public class CreateRaw extends BaseStep {
     private String inputType;
     private boolean enableCatalog;
     private PrintStream consoleLogger;
-    private ClassLoader toolClassLoader = ToolUtils.class.getClassLoader();
+    private ClassLoader toolClassLoader;
 
     @DataBoundConstructor
     public CreateRaw(String input, String inputType, boolean enableCatalog) {
@@ -64,6 +64,13 @@ public class CreateRaw extends BaseStep {
         setTektonClient(TektonUtils.getTektonClient());
     }
 
+
+    protected ClassLoader getToolClassLoader() {
+        if (toolClassLoader == null) {
+            toolClassLoader = ToolUtils.class.getClassLoader();
+        }
+        return toolClassLoader;
+    }
 
     /**
      * Only exposed for testing so that we can use a test class loader to load test tools
@@ -300,7 +307,7 @@ public class CreateRaw extends BaseStep {
         File outputFile = File.createTempFile("tekton-effective-", ".yaml", dir);
 
         String filePath = file.getPath();
-        String binary = ToolUtils.getJXPipelineBinary(toolClassLoader);
+        String binary = ToolUtils.getJXPipelineBinary(getToolClassLoader());
 
         logger.info("using tekton pipeline binary " + binary);
 
