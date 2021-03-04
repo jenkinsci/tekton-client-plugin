@@ -6,4 +6,7 @@
     <f:entry title="Input" field="input">
         <f:expandableTextbox />
     </f:entry>
+    <f:entry title="Enable Tekton Catalog" field="enableCatalog">
+        <f:checkbox name="enableCatalog"/>
+    </f:entry>
 </j:jelly>

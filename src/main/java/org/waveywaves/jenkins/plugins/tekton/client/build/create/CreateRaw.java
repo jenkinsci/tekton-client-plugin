@@ -1,36 +1,47 @@
 package org.waveywaves.jenkins.plugins.tekton.client.build.create;
 
+import com.google.common.io.Files;
+import com.google.common.io.Resources;
+import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
-import hudson.model.*;
+import hudson.model.AbstractProject;
+import hudson.model.Run;
+import hudson.model.TaskListener;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.tekton.client.TektonClient;
-import io.fabric8.tekton.pipeline.v1beta1.*;
+import io.fabric8.tekton.pipeline.v1beta1.Pipeline;
+import io.fabric8.tekton.pipeline.v1beta1.PipelineRun;
+import io.fabric8.tekton.pipeline.v1beta1.Task;
+import io.fabric8.tekton.pipeline.v1beta1.TaskRun;
 import io.fabric8.tekton.resource.v1alpha1.PipelineResource;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
+import org.waveywaves.jenkins.plugins.tekton.client.LogUtils;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils.TektonResourceType;
+import org.waveywaves.jenkins.plugins.tekton.client.ToolUtils;
 import org.waveywaves.jenkins.plugins.tekton.client.build.BaseStep;
+import org.waveywaves.jenkins.plugins.tekton.client.logwatch.PipelineRunLogWatch;
+import org.waveywaves.jenkins.plugins.tekton.client.logwatch.TaskRunLogWatch;
 
 import javax.annotation.Nonnull;
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
-
-import org.waveywaves.jenkins.plugins.tekton.client.logwatch.PipelineRunLogWatch;
-import org.waveywaves.jenkins.plugins.tekton.client.logwatch.TaskRunLogWatch;
 
 @Symbol("createStep")
 public class CreateRaw extends BaseStep {
@@ -38,16 +49,36 @@ public class CreateRaw extends BaseStep {
 
     private String input;
     private String inputType;
+    private boolean enableCatalog;
     private PrintStream consoleLogger;
+    private ClassLoader toolClassLoader;
 
     @DataBoundConstructor
-    public CreateRaw(String input, String inputType) {
+    public CreateRaw(String input, String inputType, boolean enableCatalog) {
         super();
         this.inputType = inputType;
         this.input = input;
+        this.enableCatalog = enableCatalog;
 
         setKubernetesClient(TektonUtils.getKubernetesClient());
         setTektonClient(TektonUtils.getTektonClient());
+    }
+
+
+    protected ClassLoader getToolClassLoader() {
+        if (toolClassLoader == null) {
+            toolClassLoader = ToolUtils.class.getClassLoader();
+        }
+        return toolClassLoader;
+    }
+
+    /**
+     * Only exposed for testing so that we can use a test class loader to load test tools
+     *
+     * @param toolClassLoader
+     */
+    protected void setToolClassLoader(ClassLoader toolClassLoader) {
+        this.toolClassLoader = toolClassLoader;
     }
 
     protected String getInput(){
@@ -55,6 +86,10 @@ public class CreateRaw extends BaseStep {
     }
     protected String getInputType(){
         return this.inputType;
+    }
+
+    protected boolean isEnableCatalog() {
+        return enableCatalog;
     }
 
     protected String createWithResourceSpecificClient(TektonResourceType resourceType, InputStream inputStream) {
@@ -170,53 +205,132 @@ public class CreateRaw extends BaseStep {
     @Override
     public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws InterruptedException, IOException {
         consoleLogger = listener.getLogger();
-        runCreate();
+
+        // lets make sure the tekton client is not empty
+        if (tektonClient == null) {
+            setTektonClient(TektonUtils.getTektonClient());
+            if (tektonClient == null) {
+                throw new IOException("no tektonClient");
+            }
+        }
+        if (kubernetesClient == null) {
+            setKubernetesClient(TektonUtils.getKubernetesClient());
+            if (kubernetesClient == null) {
+                throw new IOException("no kubernetesClient");
+            }
+        }
+        EnvVars envVars = run.getEnvironment(listener);
+        runCreate(workspace, envVars);
     }
 
-    protected String runCreate() {
+    protected String runCreate(FilePath workspace, EnvVars envVars) {
         URL url = null;
-        InputStream inputStreamForKind = null;
-        InputStream inputStreamForData = null;
+        byte[] data = null;
+        File inputFile = null;
         String inputData = this.getInput();
         String inputType = this.getInputType();
         String createdResourceName = "";
         try {
             if (inputType.equals(InputType.URL.toString())) {
                 url = new URL(inputData);
-                inputStreamForKind = TektonUtils.urlToByteArrayStream(url);
-                inputStreamForData = url.openStream();
-
+                data = Resources.toByteArray(url);
             } else if (inputType.equals(InputType.YAML.toString())) {
-                inputStreamForKind = new ByteArrayInputStream(inputData.getBytes(StandardCharsets.UTF_8));
-                inputStreamForData = new ByteArrayInputStream(inputData.getBytes(StandardCharsets.UTF_8));
+                data = inputData.getBytes(StandardCharsets.UTF_8);
+            } else if (inputType.equals(InputType.FILE.toString())) {
+                inputFile = new File(inputData);
             }
-            if (inputStreamForKind != null) {
-                List<TektonResourceType> kind = TektonUtils.getKindFromInputStream(inputStreamForKind, this.getInputType());
+            data = convertTektonData(workspace ,envVars, inputFile, data);
+            if (data != null) {
+                List<TektonResourceType> kind = TektonUtils.getKindFromInputStream(new ByteArrayInputStream(data), this.getInputType());
                 if (kind.size() > 1){
                     logger.info("Multiple Objects in YAML not supported yet");
                 } else {
-                    createdResourceName = createWithResourceSpecificClient(kind.get(0), inputStreamForData);
+                    TektonResourceType resourceType = kind.get(0);
+                    logger.info("creating kind " + resourceType.name());
+                    createdResourceName = createWithResourceSpecificClient(resourceType, new ByteArrayInputStream(data));
                 }
             }
         } catch (Exception e) {
-            logger.warning("possible URL related Exception has occurred "+e.toString());
-        } finally {
-            if (inputStreamForKind != null) {
-                try {
-                    inputStreamForKind.close();
-                } catch (IOException e) {
-                    logger.warning("IOException occurred "+e.toString());
-                }
-            }
-            if (inputStreamForData != null) {
-                try {
-                    inputStreamForData.close();
-                } catch (IOException e) {
-                    logger.warning("IOException occurred "+e.toString());
-                }
-            }
+            logger.warning("possible URL related Exception has occurred " + e.toString());
+            e.printStackTrace();
         }
         return createdResourceName;
+    }
+
+    /**
+     * Performs any conversion on the Tekton resources before we apply it to Kubernetes
+     */
+    private byte[] convertTektonData(FilePath workspace, EnvVars envVars, File inputFile, byte[] data) throws Exception {
+        if (enableCatalog) {
+            // lets use the workspace relative path
+            if (workspace == null) {
+                throw new IOException("no workspace");
+            }
+
+            // lets work relative to the workspace
+            File dir = new File(workspace.getRemote());
+            if (inputFile != null) {
+                inputFile = new File(dir, inputFile.getPath());
+            }
+            logger.info("processing the tekton catalog");
+            return processTektonCatalog(envVars, dir, inputFile, data);
+        }
+
+        if (data == null && inputFile != null) {
+            data = Files.toByteArray(inputFile);
+        }
+        return data;
+    }
+
+
+    /**
+     * Lets process any <code>image: uses:sourceURI</code> blocks in the tekton <code>Pipeline</code>,
+     * <code>PipelineRun</code>, <code>Task</code> or <code>TaskRun</code> resources so that we can reuse Tasks or Steps
+     * from Tekton Catalog or any other git repository.
+     *
+     * For background see: https://jenkins-x.io/blog/2021/02/25/gitops-pipelines/
+     *
+     * @param envVars
+     * @param file optional file name to process
+     * @param data data to process if no file name is given
+     * @return the processed data
+     * @throws Exception
+     */
+    private byte[] processTektonCatalog(EnvVars envVars, File dir, File file, byte[] data) throws Exception {
+        boolean deleteInputFile = false;
+        if (file == null) {
+            file = File.createTempFile("tekton-input-", ".yaml", dir);
+            Files.write(data, file);
+            logger.info("saved file: " + file.getPath());
+        }
+
+        File outputFile = File.createTempFile("tekton-effective-", ".yaml", dir);
+
+        String filePath = file.getPath();
+        String binary = ToolUtils.getJXPipelineBinary(getToolClassLoader());
+
+        logger.info("using tekton pipeline binary " + binary);
+
+        ProcessBuilder builder = new ProcessBuilder();
+        builder.command(binary, "-b", "--add-defaults", "-f", filePath, "-o", outputFile.getPath());
+        if (envVars != null) {
+            for (Map.Entry<String, String> entry : envVars.entrySet()) {
+                builder.environment().put(entry.getKey(), entry.getValue());
+            }
+        }
+        Process process = builder.start();
+        int exitCode = process.waitFor();
+
+        LogUtils.logStream(process.getInputStream(), logger, false);
+        LogUtils.logStream(process.getErrorStream(), logger, true);
+        if (exitCode != 0) {
+            throw new Exception("failed to apply tekton catalog to file " + filePath);
+        }
+
+        logger.info("generated file: " + outputFile.getPath());
+
+        data = Files.toByteArray(outputFile);
+        return data;
     }
 
     @Extension
@@ -230,6 +344,7 @@ public class CreateRaw extends BaseStep {
 
         public ListBoxModel doFillInputTypeItems(@QueryParameter(value = "input") final String input){
             ListBoxModel items =  new ListBoxModel();
+            items.add(InputType.FILE.toString());
             items.add(InputType.URL.toString());
             items.add(InputType.YAML.toString());
             return items;

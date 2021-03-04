@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+echo "fake jx-pipeline-effective binary"
+
+INPUTFILE="missing-input.yaml"
+OUTPUTFILE="missing-output.yaml"
+
+POSITIONAL=()
+while [[ $# -gt 0 ]]
+do
+key="$1"
+
+case $key in
+    -o|--out)
+    OUTPUTFILE="$2"
+    shift # past argument
+    shift # past value
+    ;;
+    -f|--file)
+    INPUTFILE="$2"
+    shift # past argument
+    shift # past value
+    ;;
+    *)    # unknown option
+    shift # past argument
+    ;;
+esac
+done
+
+echo "reading input file: $INPUTFILE"
+echo "writing output file: $OUTPUTFILE"
+
+cat $INPUTFILE > $OUTPUTFILE
+echo "  labels:" >> $OUTPUTFILE
+echo "    cheese: $CHEESE" >> $OUTPUTFILE

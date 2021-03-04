@@ -32,10 +32,11 @@
         <changelist>SNAPSHOT</changelist>
         <jenkins-test-harness.version>2.34</jenkins-test-harness.version>
         <kubernetes-server-mock.version>5.0.0</kubernetes-server-mock.version>
-        <tekton-client.version>5.0.0</tekton-client.version>
+        <tekton-client.version>5.1.1</tekton-client.version>
         <maven-surefire-plugin.version>2.22.1</maven-surefire-plugin.version>
         <mockwebserver.version>0.1.8</mockwebserver.version>
         <junit-jupiter-engine.version>5.6.2</junit-jupiter-engine.version>
+        <jx-pipeline.version>0.0.114</jx-pipeline.version>
     </properties>
 
     <licenses>
@@ -70,7 +71,31 @@
             <version>${kubernetes-server-mock.version}</version>
             <scope>test</scope>
         </dependency>
+
+        <!-- test plugins for running locally via: mvn hpi:run -->
+        <dependency>
+          <groupId>org.jenkins-ci.plugins</groupId>
+          <artifactId>git</artifactId>
+        </dependency>
+        <dependency>
+          <groupId>org.assertj</groupId>
+          <artifactId>assertj-core</artifactId>
+          <version>3.19.0</version>
+          <scope>test</scope>
+        </dependency>
     </dependencies>
+
+    <dependencyManagement>
+      <dependencies>
+        <dependency>
+          <groupId>io.jenkins.tools.bom</groupId>
+          <artifactId>bom-2.176.x</artifactId>
+          <version>4</version>
+          <scope>import</scope>
+          <type>pom</type>
+        </dependency>
+      </dependencies>
+    </dependencyManagement>
 
     <repositories>
         <repository>
@@ -112,4 +137,62 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+
+        <!-- optional profile to download the jx-pipeline-effective binaries for each platform -->
+        <profile>
+            <id>download-binaries</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>3.0.0</version>
+                        <executions>
+                            <execution>
+                                <phase>generate-resources</phase>
+                                <configuration>
+
+                                    <target>
+                                        <echo message="downloading the jx-pipeline binaries"/>
+
+                                        <delete dir="target/jxp"/>
+                                        <delete dir="src/main/resources/org/waveywaves/jenkins/plugins/tekton/client/jxp"/>
+
+                                        <mkdir dir="target/jxp"/>
+                                        <mkdir dir="src/main/resources/org/waveywaves/jenkins/plugins/tekton/client/jxp/mac"/>
+
+                                        <get src="https://github.com/jenkins-x/jx-pipeline/releases/download/v${jx-pipeline.version}/jx-pipeline-effective-darwin-amd64.tar.gz"
+                                             dest="target/jxp/mac.tar.gz"/>
+                                        <get src="https://github.com/jenkins-x/jx-pipeline/releases/download/v${jx-pipeline.version}/jx-pipeline-effective-linux-amd64.tar.gz"
+                                             dest="target/jxp/linux.tar.gz"/>
+                                        <get src="https://github.com/jenkins-x/jx-pipeline/releases/download/v${jx-pipeline.version}/jx-pipeline-effective-windows-amd64.zip"
+                                             dest="target/jxp/windows.zip"/>
+
+                                        <untar compression="gzip" src="target/jxp/mac.tar.gz"
+                                               dest="src/main/resources/org/waveywaves/jenkins/plugins/tekton/client/jxp/mac"/>
+                                        <untar compression="gzip" src="target/jxp/linux.tar.gz"
+                                               dest="src/main/resources/org/waveywaves/jenkins/plugins/tekton/client/jxp/linux"/>
+                                        <unzip src="target/jxp/windows.zip"
+                                               dest="src/main/resources/org/waveywaves/jenkins/plugins/tekton/client/jxp/windows"/>
+
+                                        <!-- lets remove any docs we don't need -->
+                                        <delete>
+                                            <fileset dir="src/main/resources/org/waveywaves/jenkins/plugins/tekton/client/jxp"
+                                                     includes="**/*.md"/>
+                                        </delete>
+                                    </target>
+
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
