@@ -24,8 +24,6 @@ public class TektonTaskResult extends AbstractDescribableImpl<TektonTaskResult> 
         return this.description;
     }
 
-
-
     @Extension
     public static class DescriptorImpl extends Descriptor<TektonTaskResult> {
         public DescriptorImpl() {
