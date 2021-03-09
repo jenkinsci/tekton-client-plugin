@@ -10,6 +10,11 @@
             </f:entry>
         </f:block>
         <f:block>
+            <f:entry title="Results">
+                <f:repeatableProperty field="results" add="Add Result"/>
+            </f:entry>
+        </f:block>
+        <f:block>
             <f:entry title="Workspaces">
                 <f:repeatableProperty field="workspaces" add="Add Workspace"/>
             </f:entry>

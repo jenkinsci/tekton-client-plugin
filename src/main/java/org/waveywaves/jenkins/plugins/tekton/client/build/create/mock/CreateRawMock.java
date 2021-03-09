@@ -28,14 +28,10 @@ public class CreateRawMock extends CreateRaw {
     }
 
     @Override
-    public String createPipelineRun(InputStream inputStream) {
-        return TektonUtils.TektonResourceType.pipelinerun.toString();
-    }
+    public String createPipelineRun(InputStream inputStream) { return TektonUtils.TektonResourceType.pipelinerun.toString(); }
 
     @Override
-    public String createPipelineResource(InputStream inputStream) {
-        return TektonUtils.TektonResourceType.pipelineresource.toString();
-    }
+    public String createPipelineResource(InputStream inputStream) { return TektonUtils.TektonResourceType.pipelineresource.toString(); }
 
     @Override
     public void streamTaskRunLogsToConsole(TaskRun taskRun) {

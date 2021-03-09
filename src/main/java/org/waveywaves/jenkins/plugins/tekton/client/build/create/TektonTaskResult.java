@@ -5,34 +5,37 @@ import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-public class TektonParam extends AbstractDescribableImpl<TektonParam> {
+public class TektonTaskResult extends AbstractDescribableImpl<TektonTaskResult> {
     private final String name;
-    private final String value;
+    private final String description;
 
     @DataBoundConstructor
-    public TektonParam(final String name,
-                       final String value) {
+    public TektonTaskResult(final String name,
+                            final String description) {
         this.name = name;
-        this.value = value;
+        this.description = description;
     }
 
     public String getName() {
         return this.name;
     }
 
-    public String getValue() {
-        return this.value;
+    public String getDescription() {
+        return this.description;
     }
 
+
+
     @Extension
-    public static class DescriptorImpl extends Descriptor<TektonParam> {
+    public static class DescriptorImpl extends Descriptor<TektonTaskResult> {
         public DescriptorImpl() {
             load();
         }
 
         @Override
         public String getDisplayName() {
-            return "param";
+            return "result";
         }
     }
+
 }

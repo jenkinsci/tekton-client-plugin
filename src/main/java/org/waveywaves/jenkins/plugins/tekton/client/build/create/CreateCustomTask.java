@@ -13,9 +13,11 @@ import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.tekton.client.TektonClient;
 import io.fabric8.tekton.pipeline.v1beta1.*;
+import net.sf.json.JSONObject;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.StaplerRequest;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
 import org.waveywaves.jenkins.plugins.tekton.client.build.BaseStep;
 
@@ -39,6 +41,7 @@ public class CreateCustomTask extends BaseStep {
     private String description;
     private List<TektonStep> steps;
     private List<TektonStringParamSpec> params;
+    private List<TektonTaskResult> results;
     private List<TektonWorkspaceDecl> workspaces;
     private List<TektonEnv> envs;
 
@@ -47,6 +50,7 @@ public class CreateCustomTask extends BaseStep {
                             final String namespace,
                             final String description,
                             final List<TektonStringParamSpec> params,
+                            final List<TektonTaskResult> results,
                             final List<TektonWorkspaceDecl> workspaces,
                             final List<TektonStep> steps,
                             final List<TektonEnv> envs){
@@ -56,6 +60,7 @@ public class CreateCustomTask extends BaseStep {
         this.namespace = namespace;
         this.description = description;
         this.params = params;
+        this.results = results;
         this.steps = steps;
         this.workspaces = workspaces;
         this.envs = envs;
@@ -66,6 +71,7 @@ public class CreateCustomTask extends BaseStep {
     public String getNamespace() { return this.namespace; }
     public String getDescription() { return this.description; }
     public List<TektonStringParamSpec> getParams() { return this.params; }
+    public List<TektonTaskResult> getResults() { return this.results; }
     public List<TektonStep> getSteps() { return this.steps; }
     public List<TektonWorkspaceDecl> getWorkspaces() { return this.workspaces; }
     public List<TektonEnv> getEnvs() { return this.envs; }
@@ -84,12 +90,10 @@ public class CreateCustomTask extends BaseStep {
 
         TaskSpec spec =  new TaskSpec();
         spec.setDescription(getDescription());
-        if(this.params != null)
-        spec.setParams(paramsToParamSpecList());
-        if(this.workspaces != null)
-        spec.setWorkspaces(workspacesToWorkspaceDeclarationList());
-        if(this.steps != null)
-        spec.setSteps(stepsToStepList());
+        if(this.params != null) spec.setParams(paramsToParamSpecList());
+        if(this.results != null) spec.setResults(resultsToResultList());
+        if(this.workspaces != null) spec.setWorkspaces(workspacesToWorkspaceDeclarationList());
+        if(this.steps != null) spec.setSteps(stepsToStepList());
 
         TaskBuilder taskBuilder = new TaskBuilder();
         taskBuilder.withApiVersion("tekton.dev/v1beta1");
@@ -129,6 +133,16 @@ public class CreateCustomTask extends BaseStep {
             }
         }
         return paramList;
+    }
+
+    private List<TaskResult> resultsToResultList() {
+        List<TaskResult> taskResults = new ArrayList<>();
+        for (TektonTaskResult r: this.results){
+            TaskResult tr = new TaskResult();
+            tr.setName(r.getName());
+            tr.setDescription(r.getDescription());
+        }
+        return taskResults;
     }
 
     public List<WorkspaceDeclaration> workspacesToWorkspaceDeclarationList() {
@@ -256,6 +270,13 @@ public class CreateCustomTask extends BaseStep {
         @Override
         public String getDisplayName() {
             return "Tekton : Create Task";
+        }
+
+        @Override
+        public boolean configure(StaplerRequest req, JSONObject formData) {
+            req.bindJSON(this, formData); // Use stapler request to bind
+            save();
+            return true;
         }
     }
 }
