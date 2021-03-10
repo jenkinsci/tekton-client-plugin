@@ -43,7 +43,6 @@ public class CreateCustomTask extends BaseStep {
     private List<TektonStringParamSpec> params;
     private List<TektonTaskResult> results;
     private List<TektonWorkspaceDecl> workspaces;
-    private List<TektonEnv> envs;
 
     @DataBoundConstructor
     public CreateCustomTask(final String name,
@@ -52,8 +51,7 @@ public class CreateCustomTask extends BaseStep {
                             final List<TektonStringParamSpec> params,
                             final List<TektonTaskResult> results,
                             final List<TektonWorkspaceDecl> workspaces,
-                            final List<TektonStep> steps,
-                            final List<TektonEnv> envs){
+                            final List<TektonStep> steps){
         super();
         this.kind = TektonUtils.TektonResourceType.task.toString();
         this.name = name;
@@ -63,7 +61,6 @@ public class CreateCustomTask extends BaseStep {
         this.results = results;
         this.steps = steps;
         this.workspaces = workspaces;
-        this.envs = envs;
     }
 
     public String getKind() { return this.kind; }
@@ -74,7 +71,6 @@ public class CreateCustomTask extends BaseStep {
     public List<TektonTaskResult> getResults() { return this.results; }
     public List<TektonStep> getSteps() { return this.steps; }
     public List<TektonWorkspaceDecl> getWorkspaces() { return this.workspaces; }
-    public List<TektonEnv> getEnvs() { return this.envs; }
 
     @Override
     public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath filePath, @Nonnull Launcher launcher, @Nonnull TaskListener taskListener) throws InterruptedException, IOException {
@@ -83,33 +79,50 @@ public class CreateCustomTask extends BaseStep {
         runCreate();
     }
 
-    private void runCreate(){
-        ObjectMeta metadata = new ObjectMeta();
-        metadata.setName(getName());
-        metadata.setNamespace(getNamespace());
-
+    private TaskSpec getTaskSpec() {
         TaskSpec spec =  new TaskSpec();
-        spec.setDescription(getDescription());
+
+        if(!this.description.isEmpty()) spec.setDescription(getDescription());
         if(this.params != null) spec.setParams(paramsToParamSpecList());
         if(this.results != null) spec.setResults(resultsToResultList());
         if(this.workspaces != null) spec.setWorkspaces(workspacesToWorkspaceDeclarationList());
         if(this.steps != null) spec.setSteps(stepsToStepList());
 
+        return spec;
+    }
+
+    private TaskBuilder getTaskBuilder(ObjectMeta metadata, TaskSpec spec) {
         TaskBuilder taskBuilder = new TaskBuilder();
         taskBuilder.withApiVersion("tekton.dev/v1beta1");
         taskBuilder.withKind("Task");
         taskBuilder.withMetadata(metadata);
         taskBuilder.withSpec(spec);
 
-        Task task = taskBuilder.build();
+        return taskBuilder;
+    }
+
+    private ObjectMeta getObjectMeta() {
+        ObjectMeta metadata = new ObjectMeta();
+        metadata.setName(getName());
+        metadata.setNamespace(getNamespace());
+
+        return metadata;
+    }
+
+    private Task getTask() {
+        ObjectMeta metadata = getObjectMeta();
+        TaskSpec spec = getTaskSpec();
+        TaskBuilder taskBuilder = getTaskBuilder(metadata, spec);
+        return taskBuilder.build();
+    }
+
+    public Task runCreate(){
+        Task task = getTask();
         if (taskClient == null) {
             TektonClient tc = TektonUtils.getTektonClient();
             setTaskClient(tc.v1beta1().tasks());
         }
-        task = taskClient.create(task);
-        String resourceName = task.getMetadata().getName();
-
-        consoleLogger.print(String.format("Created Task with Name %s", resourceName));
+        return taskClient.create(task);
     }
 
     private List<ParamSpec> paramsToParamSpecList() {
