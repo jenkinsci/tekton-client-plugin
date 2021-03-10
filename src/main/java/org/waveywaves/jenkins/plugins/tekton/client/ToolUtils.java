@@ -15,7 +15,7 @@ import java.util.logging.Logger;
 public class ToolUtils {
     private static final Logger logger = Logger.getLogger(ToolUtils.class.getName());
 
-    public static String jxPipelineFile = System.getenv("JX_PIPELINE_EFFECTIVE_PATH");
+    private static String jxPipelineFile = System.getenv("JX_PIPELINE_EFFECTIVE_PATH");
 
     /**
      * @return the file name location of the jx-pipeline-effective binary
@@ -25,7 +25,10 @@ public class ToolUtils {
     public static synchronized String getJXPipelineBinary(ClassLoader classLoader) throws IOException {
         if (jxPipelineFile == null) {
             File f = File.createTempFile("jx-pipeline-effective-", "");
-            f.delete();
+            boolean success = f.delete();
+            if (!success) {
+                logger.log(Level.WARNING, "unable to delete temporary file " + f);
+            }
             f.deleteOnExit();
 
             String platform = "linux";
@@ -49,11 +52,12 @@ public class ToolUtils {
                 throw new IOException("failed to copy jx-pipeline-effective to " + path + " cause: " + e, e);
             }
 
-            try {
-                f.setExecutable(true);
-            } catch (Exception e) {
-                throw new IOException("failed make the file executable: " + path + " cause: " + e, e);
+
+            boolean chmodSuccess = f.setExecutable(true);
+            if (!chmodSuccess) {
+                throw new IOException("failed make the file executable: " + path);
             }
+
             jxPipelineFile = path;
 
             logger.info("saved jx-pipeline-effective binary to " + jxPipelineFile);
