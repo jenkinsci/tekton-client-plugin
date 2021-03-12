@@ -30,12 +30,6 @@ public class FakeCreateRaw extends CreateRawMock {
     @Override
     public String createPipeline(InputStream inputStream) {
         return createResource(inputStream);
-
-    }
-
-    @Override
-    public String createPipelineResource(InputStream inputStream) {
-        return createResource(inputStream);
     }
 
     @Override

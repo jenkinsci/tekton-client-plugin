@@ -13,7 +13,6 @@ Jenkins plugin to interact with [Tekton Pipelines](https://github.com/tektoncd/p
 - TaskRun
 - Pipeline
 - PipelineRun
-- PipelineResource
 
 ### Supported Actions on Resources
 - Create 

@@ -60,18 +60,6 @@ public class CreateRawTest {
     }
 
     @Test
-    public void runCreatePipelineResourceTest(){
-        String testPipelineResourceYaml = "apiVersion: tekton.dev/v1alpha1\n" +
-                "kind: PipelineResource\n" +
-                "metadata:\n" +
-                "  name: testPipelineResource\n";
-        CreateRaw createRaw = new CreateRawMock(testPipelineResourceYaml, CreateRaw.InputType.YAML.toString(), EnableCatalog);
-        String created = createRaw.runCreate(null, null);
-        assert created.equals(TektonUtils.TektonResourceType.pipelineresource.toString());
-    }
-
-
-    @Test
     public void testCreateRawWithTektonCatalog() throws Exception {
         String testTaskYaml = "apiVersion: tekton.dev/v1beta1\n" +
                 "kind: Task\n" +

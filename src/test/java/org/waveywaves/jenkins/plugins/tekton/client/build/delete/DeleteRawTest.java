@@ -39,11 +39,4 @@ public class DeleteRawTest {
         Boolean isDeleted = deleteRaw.runDelete();
         assert isDeleted.equals(true);
     }
-
-    @Test
-    public void runDeletePipelineResourceTest(){
-        DeleteRaw deleteRaw = new DeleteRawMock(TektonUtils.TektonResourceType.pipelineresource.toString(), deleteAllBlock);
-        Boolean isDeleted = deleteRaw.runDelete();
-        assert isDeleted.equals(true);
-    }
 }
