@@ -92,8 +92,6 @@ public class DeleteRaw extends BaseStep {
                 return deletePipeline();
             case pipelinerun:
                 return deletePipelineRun();
-            case pipelineresource:
-                return deletePipelineResource();
             default:
                 return false;
         }
@@ -179,26 +177,6 @@ public class DeleteRaw extends BaseStep {
         return isDeleted;
     }
 
-    public Boolean deletePipelineResource() {
-        if (pipelineResourceClient == null) {
-            TektonClient tc = (TektonClient) tektonClient;
-            setPipelineResourceClient(tc.v1alpha1().pipelineResources());
-        }
-        List<PipelineResource> pipelineResourceList = pipelineResourceClient.list().getItems();
-        Boolean isDeleted = false;
-        if (this.getResourceName() == null) {
-            return pipelineResourceClient.delete(pipelineResourceList);
-        }
-        for (PipelineResource pipelineResource : pipelineResourceList) {
-            String pipelineResourceName = pipelineResource.getMetadata().getName();
-            if (pipelineResourceName.equals(this.getResourceName())) {
-                isDeleted = pipelineResourceClient.delete(pipelineResource);
-                break;
-            }
-        }
-        return isDeleted;
-    }
-
     @Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
         public FormValidation doCheckResourceName(@QueryParameter(value = "resourceName") final String resourceName){
@@ -214,7 +192,6 @@ public class DeleteRaw extends BaseStep {
             items.add(TektonResourceType.taskrun.toString());
             items.add(TektonResourceType.pipeline.toString());
             items.add(TektonResourceType.pipelinerun.toString());
-            items.add(TektonResourceType.pipelineresource.toString());
             return items;
         }
 

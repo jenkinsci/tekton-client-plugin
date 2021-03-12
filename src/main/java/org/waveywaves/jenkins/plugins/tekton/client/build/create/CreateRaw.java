@@ -102,8 +102,6 @@ public class CreateRaw extends BaseStep {
                 return createPipeline(inputStream);
             case pipelinerun:
                 return createPipelineRun(inputStream);
-            case pipelineresource:
-                return createPipelineResource(inputStream);
             default:
                 return "";
         }
@@ -158,18 +156,6 @@ public class CreateRaw extends BaseStep {
         resourceName = pipelineRun.getMetadata().getName();
 
         streamPipelineRunLogsToConsole(pipelineRun);
-        return resourceName;
-    }
-
-    public String createPipelineResource(InputStream inputStream) {
-        if (pipelineResourceClient == null) {
-            TektonClient tc = (TektonClient) tektonClient;
-            setPipelineResourceClient(tc.v1alpha1().pipelineResources());
-        }
-        String resourceName;
-        PipelineResource pipelineRes = pipelineResourceClient.load(inputStream).get();
-        pipelineRes = pipelineResourceClient.create(pipelineRes);
-        resourceName = pipelineRes.getMetadata().getName();
         return resourceName;
     }
 

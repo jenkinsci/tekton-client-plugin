@@ -27,9 +27,4 @@ public class DeleteRawMock extends DeleteRaw {
     public Boolean deletePipelineRun() {
         return true;
     }
-
-    @Override
-    public Boolean deletePipelineResource() {
-        return true;
-    }
 }

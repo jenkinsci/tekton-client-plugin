@@ -203,45 +203,4 @@ public class CreateRawMockServerTest {
         assert createdPipelineName.equals("testPipelineRun");
         assert testPipelineRunList.getItems().size() == 1;
     }
-
-    @Test
-    public void testPipelineResourceCreate() {
-        // Given
-        String testPipelineResourceYaml = "apiVersion: tekton.dev/v1alpha1\n" +
-                "kind: PipelineResource\n" +
-                "metadata:\n" +
-                "  name: testPipelineResource\n";
-
-        KubernetesClient client = server.getClient();
-        InputStream crdAsInputStream = getClass().getResourceAsStream("/resource-crd.yaml");
-        CustomResourceDefinition pipelineResCrd = client.apiextensions().v1beta1().customResourceDefinitions().load(crdAsInputStream).get();
-        MixedOperation<PipelineResource, PipelineResourceList, Resource<PipelineResource>> pipelineResourceClient = client
-                .customResources(CustomResourceDefinitionContext.fromCrd(pipelineResCrd), PipelineResource.class, PipelineResourceList.class);
-
-        // Mocked Responses
-        PipelineResourceBuilder pipelineResourceBuilder = new PipelineResourceBuilder()
-                .withNewMetadata().withName("testPipelineResource").endMetadata();
-        List<PipelineResource> presList = new ArrayList<PipelineResource>();
-        PipelineResource testPipelineResource = pipelineResourceBuilder.build();
-        presList.add(testPipelineResource);
-        PipelineResourceList pipelineResourceList = new PipelineResourceList();
-        pipelineResourceList.setItems(presList);
-
-        server.expect().post().withPath("/apis/tekton.dev/v1alpha1/namespaces/test/pipelineresources")
-                .andReturn(HttpURLConnection.HTTP_CREATED, testPipelineResource).once();
-        server.expect().get().withPath("/apis/tekton.dev/v1alpha1/namespaces/test/pipelineresources")
-                .andReturn(HttpURLConnection.HTTP_OK, pipelineResourceList).once();
-
-        // When
-        CreateRaw createRaw = new CreateRaw(testPipelineResourceYaml, CreateRaw.InputType.YAML.toString(), EnableCatalog);
-        createRaw.setTektonClient(client);
-        createRaw.setPipelineResourceClient(pipelineResourceClient);
-        String createdResourceName = createRaw.createPipelineResource(
-                new ByteArrayInputStream(testPipelineResourceYaml.getBytes(StandardCharsets.UTF_8)));
-
-        // Then
-        PipelineResourceList testPipelineResourceList = pipelineResourceClient.list();
-        assert createdResourceName.equals("testPipelineResource");
-        assert testPipelineResourceList.getItems().size() == 1;
-    }
 }
