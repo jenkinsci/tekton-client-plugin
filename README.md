@@ -2,9 +2,9 @@
 
 [![Build Status](https://ci.jenkins.io/job/Plugins/job/tekton-client-plugin/job/master/badge/icon)](https://ci.jenkins.io/job/Plugins/job/tekton-client-plugin/job/master/)
 [![Contributors](https://img.shields.io/github/contributors/jenkinsci/tekton-client-plugin.svg)](https://github.com/jenkinsci/tekton-client-plugin/graphs/contributors)
-[![Jenkins Plugin](https://img.shields.io/jenkins/plugin/v/tekton-client-plugin.svg)](https://plugins.jenkins.io/tekton-client-plugin)
+[![Jenkins Plugin](https://img.shields.io/jenkins/plugin/v/tekton-client.svg)](https://plugins.jenkins.io/tekton-client)
 [![GitHub release](https://img.shields.io/github/release/jenkinsci/tekton-client-plugin.svg?label=changelog)](https://github.com/jenkinsci/tekton-client-plugin/releases/latest)
-[![Jenkins Plugin Installs](https://img.shields.io/jenkins/plugin/i/tekton-client-plugin.svg?color=blue)](https://plugins.jenkins.io/tekton-client-plugin)
+[![Jenkins Plugin Installs](https://img.shields.io/jenkins/plugin/i/tekton-client.svg?color=blue)](https://plugins.jenkins.io/tekton-client)
 [![Codecov](https://codecov.io/gh/jenkinsci/tekton-client-plugin/branch/master/graph/badge.svg)](https://codecov.io/gh/jenkinsci/tekton-client-plugin)
 
 
