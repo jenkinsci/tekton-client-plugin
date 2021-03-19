@@ -4,12 +4,10 @@ import hudson.tasks.Builder;
 import io.fabric8.kubernetes.client.Client;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
-import io.fabric8.tekton.client.TektonClient;
 import io.fabric8.tekton.pipeline.v1beta1.*;
 import io.fabric8.tekton.resource.v1alpha1.PipelineResource;
 import io.fabric8.tekton.resource.v1alpha1.PipelineResourceList;
 import jenkins.tasks.SimpleBuildStep;
-import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
 
 public abstract class BaseStep extends Builder implements SimpleBuildStep {
     protected transient Client tektonClient;
@@ -23,6 +21,8 @@ public abstract class BaseStep extends Builder implements SimpleBuildStep {
             pipelineClient;
     protected MixedOperation<PipelineRun, PipelineRunList, Resource<PipelineRun>>
             pipelineRunClient;
+
+    @edu.umd.cs.findbugs.annotations.SuppressFBWarnings("URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD")
     protected MixedOperation<PipelineResource, PipelineResourceList, Resource<PipelineResource>>
             pipelineResourceClient;
 
