@@ -66,6 +66,7 @@ jobs:
           kubectl apply --filename https://storage.googleapis.com/tekton-releases/pipeline/latest/release.yaml
 
       - name: Debug Installation
+        run: |
           kubectl get namespaces
           kubectl get all
 
