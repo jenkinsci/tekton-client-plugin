@@ -2,28 +2,14 @@
 name: cd
 on:
   workflow_dispatch:
-  check_run:
-    types:
-      - completed
+  push:
+    branches:
+      - master
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Verify CI status
-        uses: jenkins-infra/verify-ci-status-action@master
-        with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Release Drafter
-        uses: release-drafter/release-drafter@v5.15.0
-        with:
-          name: next
-          tag: next
-          version: next
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Check out
         uses: actions/checkout@v2.3.4
         with:
@@ -34,8 +20,30 @@ jobs:
         with:
           java-version: 1.8
 
+      - name: next release version
+        id: nextversion
+        uses: jenkins-x-plugins/jx-release-version@v2.2.5
+
+      - name: Wait for build to succeed
+        uses: fountainhead/action-wait-for-check@v1.0.0
+        id: wait-for-build
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          checkName: Jenkins
+
+      - name: Release Drafter
+        uses: release-drafter/release-drafter@v5.15.0
+        if: steps.wait-for-build.outputs.conclusion == 'success'
+        with:
+          name: next
+          tag: next
+          version: next
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Release
         uses: jenkins-infra/jenkins-maven-cd-action@master
+        if: steps.wait-for-build.outputs.conclusion == 'success'
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
