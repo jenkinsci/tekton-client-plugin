@@ -34,6 +34,10 @@ jobs:
         with:
           java-version: 1.8
 
+      - name: next release version
+        id: nextversion
+        uses: jenkins-x-plugins/jx-release-version@v2.2.5
+
       - name: Release
         uses: jenkins-infra/jenkins-maven-cd-action@master
         with:
