@@ -52,6 +52,8 @@ jobs:
           helm repo add jenkins https://charts.jenkins.io
           helm install --set 'controller.image=ghcr.io/jenkinsci/tekton-client-plugin,controller.tag=latest' jenkins jenkins/jenkins --wait || true
           kubectl get all
+          kubectl describe pod jenkins-0
+
             #        run: make install-tekton
             #      - name: Coverage
             #        run: make coverage
