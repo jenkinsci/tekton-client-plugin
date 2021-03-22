@@ -47,6 +47,12 @@ jobs:
         with:
           cluster_name: tekton-client-plugin
 
+      - name: Configuring and testing the Installation
+        run: |
+          kubectl cluster-info --context kind-kind
+          kind get kubeconfig --internal >$HOME/.kube/config
+          kubectl get nodes
+
       - name: Load image on the nodes of the cluster
         run: |
           kind load docker-image --name=kind jenkinsci/tekton-client-plugin:latest
