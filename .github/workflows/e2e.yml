@@ -47,6 +47,10 @@ jobs:
         with:
           cluster_name: tekton-client-plugin
 
+      - name: Load image on the nodes of the cluster
+        run: |
+          kind load docker-image --name=kind ghcr.io/jenkinsci/tekton-client-plugin:latest
+
       - name: Install Chart
         run: |
           helm repo add jenkins https://charts.jenkins.io
