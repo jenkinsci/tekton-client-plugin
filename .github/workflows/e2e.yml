@@ -16,7 +16,7 @@ jobs:
           java-version: 8
 
       - name: Build
-        run: mvn -DskipTests --quiet --no-transfer-progress verify
+        run: mvn --no-transfer-progress verify
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
