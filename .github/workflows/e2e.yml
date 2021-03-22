@@ -54,7 +54,7 @@ jobs:
 
       - name: Load image on the nodes of the cluster
         run: |
-          kind load docker-image --name=kind jenkinsci/tekton-client-plugin:latest
+          kind load docker-image --name=tekton-client-plugin jenkinsci/tekton-client-plugin:latest
 
       - name: Install Chart
         run: |
