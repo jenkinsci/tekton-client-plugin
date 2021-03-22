@@ -255,6 +255,10 @@ public class CreateRaw extends BaseStep {
 
             // lets work relative to the workspace
             File dir = new File(workspace.getRemote());
+
+            // lets make sure the dir exists
+            dir.mkdirs();
+
             if (inputFile != null) {
                 inputFile = new File(dir, inputFile.getPath());
             }
