@@ -71,4 +71,4 @@ jobs:
           kubectl get all
           curl -L -o tkn.tar.gz https://github.com/tektoncd/cli/releases/download/v0.17.0/tkn_0.17.0_Linux_x86_64.tar.gz
           tar xvfz tkn.tar.gz
-          tkn pipelinerun list
+          ./tkn pipelinerun list
