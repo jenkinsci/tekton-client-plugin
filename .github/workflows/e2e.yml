@@ -49,13 +49,10 @@ jobs:
       - name: Install Chart
         run: |
           helm repo add jenkins https://charts.jenkins.io
-          helm install jenkins jenkins/jenkins
-
+          helm install --set 'controller.image=ghcr.io/jenkinsci/tekton-client-plugin,controller.tag=latest' jenkins jenkins/jenkins
 
             #        run: make install-tekton
-
             #      - name: Coverage
             #        run: make coverage
-
             #      - name: Upload Coverage
             #        run: bash <(curl -s https://codecov.io/bash)
