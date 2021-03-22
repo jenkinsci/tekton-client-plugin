@@ -50,7 +50,6 @@ jobs:
       - name: Configuring and testing the Installation
         run: |
           kubectl cluster-info --context kind-tekton-client-plugin
-          kind get kubeconfig --internal >$HOME/.kube/config
           kubectl get nodes
 
       - name: Load image on the nodes of the cluster
