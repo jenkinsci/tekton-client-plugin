@@ -1,6 +1,8 @@
 ansicolor:0.7.5
+configuration-as-code:1.47
 git:4.7.0
 git-client:3.7.0
+kubernetes:1.29.2
 pipeline-build-step:2.13
 pipeline-github:2.7
 pipeline-graph-analysis:1.10
