@@ -59,7 +59,7 @@ jobs:
       - name: Install Chart
         run: |
           helm repo add jenkins https://charts.jenkins.io
-          helm install --set 'controller.image=jenkinsci/tekton-client-plugin,controller.tag=latest,controller.installPlugins=false,controller.ingress.enabled=true,controller.imagePullPolicy=Never' jenkins jenkins/jenkins --wait || true
+          helm install --set 'controller.image=jenkinsci/tekton-client-plugin,controller.tag=latest,controller.installPlugins=false,controller.ingress.enabled=true,controller.imagePullPolicy=Never' jenkins jenkins/jenkins --wait
           kubectl get all
           kubectl describe pod jenkins-0
 
