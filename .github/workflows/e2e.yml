@@ -56,12 +56,19 @@ jobs:
         run: |
           kind load docker-image --name=tekton-client-plugin jenkinsci/tekton-client-plugin:latest
 
-      - name: Install Chart
+      - name: Install Jenkins
         run: |
           helm repo add jenkins https://charts.jenkins.io
           helm install --set 'controller.image=jenkinsci/tekton-client-plugin,controller.tag=latest,controller.installPlugins=false,controller.ingress.enabled=true,controller.imagePullPolicy=Never' jenkins jenkins/jenkins --wait
+
+      - name: Install Tekton
+        run: |
+          kubectl apply --filename https://storage.googleapis.com/tekton-releases/pipeline/latest/release.yaml
+
+      - name: Debug Installation
+          kubectl get namespaces
           kubectl get all
-          kubectl describe pod jenkins-0
+
 
             #        run: make install-tekton
             #      - name: Coverage
