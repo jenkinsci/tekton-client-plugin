@@ -28,7 +28,7 @@ jobs:
           context: .
           push: false
           load: true
-          tags: ghcr.io/jenkinsci/tekton-client-plugin:latest
+          tags: jenkinsci/tekton-client-plugin:latest
 
       - name: Install Kubectl
         uses: azure/setup-kubectl@v1
@@ -49,12 +49,12 @@ jobs:
 
       - name: Load image on the nodes of the cluster
         run: |
-          kind load docker-image --name=kind ghcr.io/jenkinsci/tekton-client-plugin:latest
+          kind load docker-image --name=kind jenkinsci/tekton-client-plugin:latest
 
       - name: Install Chart
         run: |
           helm repo add jenkins https://charts.jenkins.io
-          helm install --set 'controller.image=ghcr.io/jenkinsci/tekton-client-plugin,controller.tag=latest,controller.installPlugins=false,controller.ingress.enabled=true' jenkins jenkins/jenkins --wait || true
+          helm install --set 'controller.image=jenkinsci/tekton-client-plugin,controller.tag=latest,controller.installPlugins=false,controller.ingress.enabled=true' jenkins jenkins/jenkins --wait || true
           kubectl get all
           kubectl describe pod jenkins-0
 
