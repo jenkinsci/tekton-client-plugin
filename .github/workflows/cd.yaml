@@ -34,6 +34,9 @@ jobs:
         with:
           java-version: 1.8
 
+      - name: Download tekton catalog binary
+        run: mvn generate-resources -P download-binaries
+        
       - name: Release
         uses: jenkins-infra/jenkins-maven-cd-action@master
         with:
