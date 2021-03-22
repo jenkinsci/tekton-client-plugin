@@ -26,7 +26,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: .
-          push: true
+          push: false
           tags: ghcr.io/jenkinsci/tekton-client-plugin:latest
 
       - name: Install Kubectl
@@ -41,16 +41,15 @@ jobs:
         with:
           python-version: 3.7
 
-      - name: Set up chart-testing
-        uses: helm/chart-testing-action@v2.0.1
-
       - name: Install Kind
         uses: helm/kind-action@v1.1.0
         with:
           cluster_name: tekton-client-plugin
 
-      - name: Run chart-testing (install)
-        run: ct install
+      - name: Install Chart
+        run: |
+          helm repo add jenkins https://charts.jenkins.io
+          helm install jenkins jenkins/jenkins
 
 
             #        run: make install-tekton
