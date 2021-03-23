@@ -46,23 +46,24 @@ jobs:
         if: steps.wait-for-build.outputs.conclusion == 'success'
         run: |
           set -euxo pipefail
-          #if [ $GITHUB_EVENT_NAME = check_run ]
-          #then
-          #  gh api /repos/$GITHUB_REPOSITORY/releases | jq -e -r '.[] | select(.draft == true and .name == "next") | .body' | egrep "$INTERESTING_CATEGORIES"
-          #fi
-
           echo $GITHUB_EVENT_NAME
-          # TODO should check if this is a merge to master here.
-          INTERESTING_CATEGORIES='[💥🚨🎉🐛⚠🚀👷]|:(boom|tada|construction_worker):'
-          CATEGORIES=$(gh api /repos/$GITHUB_REPOSITORY/releases | jq -e -r '.[] | select(.draft == true and .name == "next") | .body')
-          echo $CATEGORIES
+          if [ "${GITHUB_EVENT_NAME}" = "push" ]
+          then
+            INTERESTING_CATEGORIES='[💥🚨🎉🐛⚠🚀👷]|:(boom|tada|construction_worker):'
+            CATEGORIES=$(gh api /repos/$GITHUB_REPOSITORY/releases | jq -e -r '.[] | select(.draft == true and .name == "next") | .body')
+            echo $CATEGORIES
 
-          echo $CATEGORIES | egrep "$INTERESTING_CATEGORIES"
-          # TODO set an output based on the result of the egrep.
+            echo $CATEGORIES | egrep "$INTERESTING_CATEGORIES"
+            echo "::set-output name=should_release::false"
+          else
+            echo "::set-output name=should_release::true"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Release
         uses: jenkins-infra/jenkins-maven-cd-action@master
-        if: steps.wait-for-build.outputs.conclusion == 'success'
+        if: steps.interesting.outputs.should_release == 'true'
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
