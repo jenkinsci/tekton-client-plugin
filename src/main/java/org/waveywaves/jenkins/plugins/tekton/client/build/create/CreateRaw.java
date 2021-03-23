@@ -51,8 +51,8 @@ public class CreateRaw extends BaseStep {
     private String input;
     private String inputType;
     private boolean enableCatalog;
-    private PrintStream consoleLogger;
-    private ClassLoader toolClassLoader;
+    private transient PrintStream consoleLogger;
+    private transient ClassLoader toolClassLoader;
 
     @DataBoundConstructor
     public CreateRaw(String input, String inputType, boolean enableCatalog) {
@@ -82,14 +82,15 @@ public class CreateRaw extends BaseStep {
         this.toolClassLoader = toolClassLoader;
     }
 
-    protected String getInput(){
+    public String getInput() {
         return this.input;
     }
-    protected String getInputType(){
+
+    public String getInputType() {
         return this.inputType;
     }
 
-    protected boolean isEnableCatalog() {
+    public boolean isEnableCatalog() {
         return enableCatalog;
     }
 
