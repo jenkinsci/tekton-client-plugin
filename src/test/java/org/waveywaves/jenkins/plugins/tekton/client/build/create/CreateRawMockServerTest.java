@@ -25,6 +25,7 @@ import java.util.List;
 
 public class CreateRawMockServerTest {
     public static final boolean EnableCatalog = false;
+    public static String namespace;
 
     @Rule
     public KubernetesServer server = new KubernetesServer();
@@ -58,7 +59,7 @@ public class CreateRawMockServerTest {
                 .andReturn(HttpURLConnection.HTTP_OK, taskList).once();
 
         // When
-        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTaskYaml, EnableCatalog);
+        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTaskYaml, EnableCatalog, namespace);
 
         createRaw.setTektonClient(client);
         createRaw.setTaskClient(taskClient);
@@ -100,7 +101,7 @@ public class CreateRawMockServerTest {
                 .andReturn(HttpURLConnection.HTTP_OK, taskRunList).once();
 
         // When
-        CreateRaw createRaw = new CreateRaw(testTaskRunYaml, CreateRaw.InputType.YAML.toString(), EnableCatalog){
+        CreateRaw createRaw = new CreateRaw(testTaskRunYaml, CreateRaw.InputType.YAML.toString(), EnableCatalog, namespace) {
             @Override
             public void streamTaskRunLogsToConsole(TaskRun taskRun) {
                 return;
@@ -146,7 +147,7 @@ public class CreateRawMockServerTest {
                 .andReturn(HttpURLConnection.HTTP_OK, pipelineList).once();
 
         // When
-        CreateRaw createRaw = new CreateRaw(testPipelineYaml, CreateRaw.InputType.YAML.toString(), EnableCatalog);
+        CreateRaw createRaw = new CreateRaw(testPipelineYaml, CreateRaw.InputType.YAML.toString(), EnableCatalog, namespace);
         createRaw.setTektonClient(client);
         createRaw.setPipelineClient(pipelineClient);
         String createdPipelineName = createRaw.createPipeline(
@@ -187,7 +188,7 @@ public class CreateRawMockServerTest {
                 .andReturn(HttpURLConnection.HTTP_OK, pipelineRunList).once();
 
         // When
-        CreateRaw createRaw = new CreateRaw(testPipelineRunYaml, CreateRaw.InputType.YAML.toString(), EnableCatalog){
+        CreateRaw createRaw = new CreateRaw(testPipelineRunYaml, CreateRaw.InputType.YAML.toString(), EnableCatalog, namespace) {
             @Override
             public void streamPipelineRunLogsToConsole(PipelineRun pipelineRun) {
                 return;

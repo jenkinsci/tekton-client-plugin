@@ -25,6 +25,7 @@ import java.util.List;
 
 public class DeleteRawMockServerTest {
     public static final boolean EnableCatalog = false;
+    public static String namespace;
 
     @Rule
     public KubernetesServer server = new KubernetesServer();
@@ -64,7 +65,7 @@ public class DeleteRawMockServerTest {
 
 
         // When
-        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTaskYaml, EnableCatalog);
+        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTaskYaml, EnableCatalog, namespace);
         createRaw.setTektonClient(client);
         createRaw.setTaskClient(taskClient);
         createRaw.createTask(new ByteArrayInputStream(testTaskYaml.getBytes(StandardCharsets.UTF_8)));
@@ -140,13 +141,13 @@ public class DeleteRawMockServerTest {
 
 
         // When
-        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTask1Yaml, EnableCatalog);
+        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTask1Yaml, EnableCatalog, namespace);
         createRaw.setTektonClient(client);
         createRaw.setTaskClient(taskClient);
         createRaw.createTask(new ByteArrayInputStream(testTask1Yaml.getBytes(StandardCharsets.UTF_8)));
 
         // Task 2
-        createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTask2Yaml, EnableCatalog);
+        createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTask2Yaml, EnableCatalog, namespace);
         createRaw.setTektonClient(client);
         createRaw.setTaskClient(taskClient);
         createRaw.createTask(new ByteArrayInputStream(testTask2Yaml.getBytes(StandardCharsets.UTF_8)));
@@ -199,7 +200,7 @@ public class DeleteRawMockServerTest {
 
 
         // When
-        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTaskRunYaml, EnableCatalog){
+        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTaskRunYaml, EnableCatalog, namespace){
             @Override
             public void streamTaskRunLogsToConsole(TaskRun taskRun) {
                 return;
@@ -280,7 +281,7 @@ public class DeleteRawMockServerTest {
 
 
         // When
-        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTaskRun1Yaml, EnableCatalog){
+        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTaskRun1Yaml, EnableCatalog, namespace){
             @Override
             public void streamTaskRunLogsToConsole(TaskRun taskRun) {
                 return;
@@ -291,7 +292,7 @@ public class DeleteRawMockServerTest {
         createRaw.createTaskRun(new ByteArrayInputStream(testTaskRun1Yaml.getBytes(StandardCharsets.UTF_8)));
 
         // TaskRun 2
-        createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTaskRun2Yaml, EnableCatalog){
+        createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTaskRun2Yaml, EnableCatalog, namespace){
             @Override
             public void streamTaskRunLogsToConsole(TaskRun taskRun) {
                 return;
@@ -349,7 +350,7 @@ public class DeleteRawMockServerTest {
 
 
         // When
-        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testPipelineYaml, EnableCatalog);
+        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testPipelineYaml, EnableCatalog, namespace);
         createRaw.setTektonClient(client);
         createRaw.setPipelineClient(pipelineClient);
         createRaw.createPipeline(new ByteArrayInputStream(testPipelineYaml.getBytes(StandardCharsets.UTF_8)));
@@ -426,13 +427,13 @@ public class DeleteRawMockServerTest {
 
 
         // When
-        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testPipelineYaml1, EnableCatalog);
+        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testPipelineYaml1, EnableCatalog, namespace);
         createRaw.setTektonClient(client);
         createRaw.setPipelineClient(pipelineClient);
         createRaw.createPipeline(new ByteArrayInputStream(testPipelineYaml1.getBytes(StandardCharsets.UTF_8)));
 
         //Pipeline 2
-        createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testPipelineYaml2, EnableCatalog);
+        createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testPipelineYaml2, EnableCatalog, namespace);
         createRaw.setTektonClient(client);
         createRaw.setPipelineClient(pipelineClient);
         createRaw.createPipeline(new ByteArrayInputStream(testPipelineYaml2.getBytes(StandardCharsets.UTF_8)));
@@ -485,7 +486,7 @@ public class DeleteRawMockServerTest {
 
 
         // When
-        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testPipelineRunYaml, EnableCatalog){
+        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testPipelineRunYaml, EnableCatalog, namespace){
             @Override
             public void streamPipelineRunLogsToConsole(PipelineRun pipelineRun) {
                 return;
@@ -567,7 +568,7 @@ public class DeleteRawMockServerTest {
 
 
         // When
-        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testPipelineRun1Yaml, EnableCatalog){
+        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testPipelineRun1Yaml, EnableCatalog, namespace){
             @Override
             public void streamPipelineRunLogsToConsole(PipelineRun pipelineRun) {
                 return;
@@ -578,7 +579,7 @@ public class DeleteRawMockServerTest {
         createRaw.createPipelineRun(new ByteArrayInputStream(testPipelineRun1Yaml.getBytes(StandardCharsets.UTF_8)));
 
         // PipelineRun 2
-        createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testPipelineRun2Yaml, EnableCatalog){
+        createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testPipelineRun2Yaml, EnableCatalog, namespace){
             @Override
             public void streamPipelineRunLogsToConsole(PipelineRun pipelineRun) {
                 return;

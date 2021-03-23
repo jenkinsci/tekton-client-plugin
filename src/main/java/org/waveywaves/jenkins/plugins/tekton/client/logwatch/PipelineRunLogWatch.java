@@ -1,5 +1,6 @@
 package org.waveywaves.jenkins.plugins.tekton.client.logwatch;
 
+import com.google.common.base.Strings;
 import io.fabric8.kubernetes.api.model.*;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.tekton.client.TektonClient;
@@ -35,11 +36,13 @@ public class PipelineRunLogWatch implements Runnable {
     public void run() {
         String pipelineRunName = pipelineRun.getMetadata().getName();
         String pipelineRunUid = pipelineRun.getMetadata().getUid();
+        String ns = pipelineRun.getMetadata().getNamespace();
+
         List<PipelineTask> pipelineTasks = pipelineRun.getSpec().getPipelineSpec().getTasks();
 
         for (PipelineTask pt: pipelineTasks){
             String pipelineTaskName = pt.getName();
-            logger.info("streaming logs for PipelineTask " + pipelineRunName + "/" + pipelineTaskName);
+            logger.info("streaming logs for PipelineTask " + ns + "/" + pipelineRunName + "/" + pipelineTaskName);
             ListOptions lo = new ListOptions();
             String selector = String.format("%s=%s,%s=%s", pipelineTaskLabelName, pipelineTaskName, pipelineRunLabelName, pipelineRunName);
             lo.setLabelSelector(selector);
@@ -47,15 +50,18 @@ public class PipelineRunLogWatch implements Runnable {
             // the tekton operator may not have created the TasksRuns yet so lets wait a little bit for them to show up
             for (int i = 0; i < 60; i++) {
                 boolean taskComplete = false;
-                List<TaskRun> taskRunList = tektonClient.v1beta1().taskRuns().list(lo).getItems();
+                List<TaskRun> taskRunList = tektonClient.v1beta1().taskRuns().inNamespace(ns).list(lo).getItems();
                 for (TaskRun tr : taskRunList) {
                     String trName = tr.getMetadata().getName();
+                    if (Strings.isNullOrEmpty(tr.getMetadata().getNamespace())) {
+                        tr.getMetadata().setNamespace(ns);
+                    }
                     logger.info("streaming logs for TaskRun " + trName);
 
                     List<OwnerReference> ownerReferences = tr.getMetadata().getOwnerReferences();
                     for (OwnerReference or : ownerReferences) {
                         if (or.getUid().equals(pipelineRunUid)) {
-                            logger.info(String.format("Streaming logs for TaskRun %s owned by PipelineRun %s with selector %s", trName, pipelineRunName, selector));
+                            logger.info(String.format("Streaming logs for TaskRun %s/%s owned by PipelineRun %s with selector %s", ns, trName, pipelineRunName, selector));
                             TaskRunLogWatch logWatch = new TaskRunLogWatch(kubernetesClient, tr, consoleLogger);
                             Thread logWatchTask = new Thread(logWatch);
                             logWatchTask.start();

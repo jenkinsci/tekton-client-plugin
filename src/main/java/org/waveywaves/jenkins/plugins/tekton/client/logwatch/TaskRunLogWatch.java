@@ -1,5 +1,6 @@
 package org.waveywaves.jenkins.plugins.tekton.client.logwatch;
 
+import com.google.common.base.Strings;
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.OwnerReference;
 import io.fabric8.kubernetes.api.model.Pod;
@@ -30,7 +31,8 @@ public class TaskRunLogWatch implements Runnable{
 
     @Override
     public void run() {
-        List<Pod> pods = kubernetesClient.pods().list().getItems();
+        String ns = taskRun.getMetadata().getNamespace();
+        List<Pod> pods = kubernetesClient.pods().inNamespace(ns).list().getItems();
         Pod taskRunPod = null;
         String podName = "";
         for (Pod pod : pods) {
