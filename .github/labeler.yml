@@ -17,3 +17,7 @@ labels:
 
   - title: "docs.*"
     label: "documentation"
+
+  - files:
+      - ".github/workflows/.*"
+    label: "github_actions"
