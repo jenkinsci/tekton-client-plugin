@@ -15,6 +15,7 @@ import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils.TektonResourceTy
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -112,7 +113,7 @@ public class TaskRunLogWatch implements Runnable{
 
     protected void logMessage(String text) {
         try {
-            this.consoleLogger.write(text.getBytes());
+            this.consoleLogger.write(text.getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
             logger.warning("failed to log to console: " + e);
         }
