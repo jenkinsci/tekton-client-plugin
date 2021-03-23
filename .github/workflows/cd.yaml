@@ -41,6 +41,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Interesting
+        id: interesting
+        if: steps.wait-for-build.outputs.conclusion == 'success'
+        runs: |
+          set -euxo pipefail
+          INTERESTING_CATEGORIES='[💥🚨🎉🐛⚠🚀👷]|:(boom|tada|construction_worker):'
+          gh api /repos/$GITHUB_REPOSITORY/releases | jq -e -r '.[] | select(.draft == true and .name == "next") | .body' | egrep "$INTERESTING_CATEGORIES"
+
       - name: Release
         uses: jenkins-infra/jenkins-maven-cd-action@master
         if: steps.wait-for-build.outputs.conclusion == 'success'
