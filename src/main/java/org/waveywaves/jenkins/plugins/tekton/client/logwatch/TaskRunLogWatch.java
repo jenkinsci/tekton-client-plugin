@@ -26,8 +26,6 @@ import java.util.logging.Logger;
 public class TaskRunLogWatch implements Runnable{
     private static final Logger logger = Logger.getLogger(TaskRunLogWatch.class.getName());
 
-    protected static final HashSet<String> runningPhases = Sets.newHashSet("Running", "Succeeded",  "Failed");
-
     private KubernetesClient kubernetesClient;
     private TaskRun taskRun;
     OutputStream consoleLogger;
@@ -40,6 +38,7 @@ public class TaskRunLogWatch implements Runnable{
 
     @Override
     public void run() {
+        HashSet<String> runningPhases = Sets.newHashSet("Running", "Succeeded", "Failed");
         String ns = taskRun.getMetadata().getNamespace();
         List<Pod> pods = kubernetesClient.pods().inNamespace(ns).list().getItems();
         Pod taskRunPod = null;
