@@ -41,6 +41,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @Symbol("createStep")
@@ -255,6 +256,12 @@ public class CreateRaw extends BaseStep {
 
             // lets work relative to the workspace
             File dir = new File(workspace.getRemote());
+
+            // lets make sure the dir exists
+            if (dir.mkdirs()) {
+                logger.log(Level.FINE, "created workspace dir " + dir);
+            }
+
             if (inputFile != null) {
                 inputFile = new File(dir, inputFile.getPath());
             }
