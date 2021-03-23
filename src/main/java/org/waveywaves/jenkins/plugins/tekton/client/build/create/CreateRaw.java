@@ -1,5 +1,6 @@
 package org.waveywaves.jenkins.plugins.tekton.client.build.create;
 
+import com.google.common.base.Strings;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import hudson.EnvVars;
@@ -51,15 +52,17 @@ public class CreateRaw extends BaseStep {
     private String input;
     private String inputType;
     private boolean enableCatalog;
+    private String namespace;
     private transient PrintStream consoleLogger;
     private transient ClassLoader toolClassLoader;
 
     @DataBoundConstructor
-    public CreateRaw(String input, String inputType, boolean enableCatalog) {
+    public CreateRaw(String input, String inputType, boolean enableCatalog, String namespace) {
         super();
         this.inputType = inputType;
         this.input = input;
         this.enableCatalog = enableCatalog;
+        this.namespace = namespace;
 
         setKubernetesClient(TektonUtils.getKubernetesClient());
         setTektonClient(TektonUtils.getTektonClient());
@@ -94,6 +97,10 @@ public class CreateRaw extends BaseStep {
         return enableCatalog;
     }
 
+    public String getNamespace() {
+        return namespace;
+    }
+
     protected String createWithResourceSpecificClient(TektonResourceType resourceType, InputStream inputStream) {
         switch (resourceType) {
             case task:
@@ -116,7 +123,15 @@ public class CreateRaw extends BaseStep {
         }
         String resourceName;
         TaskRun taskrun = taskRunClient.load(inputStream).get();
-        taskrun = taskRunClient.create(taskrun);
+        if (!Strings.isNullOrEmpty(namespace) && Strings.isNullOrEmpty(taskrun.getMetadata().getNamespace())) {
+            taskrun.getMetadata().setNamespace(namespace);
+        }
+        String ns = taskrun.getMetadata().getNamespace();
+        if (Strings.isNullOrEmpty(ns)) {
+            taskrun = taskRunClient.create(taskrun);
+        } else {
+            taskrun = taskRunClient.inNamespace(ns).create(taskrun);
+        }
         resourceName = taskrun.getMetadata().getName();
 
         streamTaskRunLogsToConsole(taskrun);
@@ -130,7 +145,15 @@ public class CreateRaw extends BaseStep {
         }
         String resourceName;
         Task task = taskClient.load(inputStream).get();
-        task = taskClient.create(task);
+        if (!Strings.isNullOrEmpty(namespace) && Strings.isNullOrEmpty(task.getMetadata().getNamespace())) {
+            task.getMetadata().setNamespace(namespace);
+        }
+        String ns = task.getMetadata().getNamespace();
+        if (Strings.isNullOrEmpty(ns)) {
+            task = taskClient.create(task);
+        } else {
+            task = taskClient.inNamespace(ns).create(task);
+        }
         resourceName = task.getMetadata().getName();
         return resourceName;
     }
@@ -142,7 +165,15 @@ public class CreateRaw extends BaseStep {
         }
         String resourceName;
         Pipeline pipeline = pipelineClient.load(inputStream).get();
-        pipeline = pipelineClient.create(pipeline);
+        if (!Strings.isNullOrEmpty(namespace) && Strings.isNullOrEmpty(pipeline.getMetadata().getNamespace())) {
+            pipeline.getMetadata().setNamespace(namespace);
+        }
+        String ns = pipeline.getMetadata().getNamespace();
+        if (Strings.isNullOrEmpty(ns)) {
+            pipeline = pipelineClient.create(pipeline);
+        } else {
+            pipeline = pipelineClient.inNamespace(ns).create(pipeline);
+        }
         resourceName = pipeline.getMetadata().getName();
         return resourceName;
     }
@@ -154,7 +185,15 @@ public class CreateRaw extends BaseStep {
         }
         String resourceName;
         PipelineRun pipelineRun = pipelineRunClient.load(inputStream).get();
-        pipelineRun = pipelineRunClient.create(pipelineRun);
+        if (!Strings.isNullOrEmpty(namespace) && Strings.isNullOrEmpty(pipelineRun.getMetadata().getNamespace())) {
+            pipelineRun.getMetadata().setNamespace(namespace);
+        }
+        String ns = pipelineRun.getMetadata().getNamespace();
+        if (Strings.isNullOrEmpty(ns)) {
+            pipelineRun = pipelineRunClient.create(pipelineRun);
+        } else {
+            pipelineRun = pipelineRunClient.inNamespace(ns).create(pipelineRun);
+        }
         resourceName = pipelineRun.getMetadata().getName();
 
         streamPipelineRunLogsToConsole(pipelineRun);
@@ -227,7 +266,7 @@ public class CreateRaw extends BaseStep {
             } else if (inputType.equals(InputType.FILE.toString())) {
                 inputFile = new File(inputData);
             }
-            data = convertTektonData(workspace ,envVars, inputFile, data);
+            data = convertTektonData(workspace, envVars, inputFile, data);
             if (data != null) {
                 List<TektonResourceType> kind = TektonUtils.getKindFromInputStream(new ByteArrayInputStream(data), this.getInputType());
                 if (kind.size() > 1){
@@ -266,7 +305,7 @@ public class CreateRaw extends BaseStep {
             if (inputFile != null) {
                 inputFile = new File(dir, inputFile.getPath());
             }
-            logger.info("processing the tekton catalog");
+            logger.info("processing the tekton catalog at dir " + dir);
             return processTektonCatalog(envVars, dir, inputFile, data);
         }
 
