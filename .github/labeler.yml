@@ -1,0 +1,23 @@
+---
+version: 1
+labels:
+  - title: "feat.*"
+    label: "enhancement"
+
+  - title: "bug.*"
+    label: "bug"
+  - title: "fix.*"
+    label: "bug"
+
+  - title: "chore(deps).*"
+    label: "dependencies"
+
+  - title: "chore.*"
+    label: "chore"
+
+  - title: "docs.*"
+    label: "documentation"
+
+  - files:
+      - ".github/workflows/.*"
+    label: "github_actions"
