@@ -1,9 +1,11 @@
 package org.waveywaves.jenkins.plugins.tekton.client;
 
+import io.fabric8.kubernetes.client.ConfigBuilder;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.tekton.client.DefaultTektonClient;
 import io.fabric8.tekton.client.TektonClient;
+import org.waveywaves.jenkins.plugins.tekton.client.global.ClusterConfig;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -19,6 +21,8 @@ import java.util.logging.Logger;
 public class TektonUtils {
     private static final Logger logger = Logger.getLogger(TektonUtils.class.getName());
 
+    public static List<TektonClient> tektonClients = new ArrayList<>();
+    public static List<KubernetesClient> kubernetesClients = new ArrayList<>();
     private static TektonClient tektonClient;
     private static KubernetesClient kubernetesClient;
 
@@ -29,24 +33,37 @@ public class TektonUtils {
         pipelinerun
     }
 
-    public synchronized static void initializeKubeClients(String serverUrl) {
-        if (serverUrl != null && !serverUrl.isEmpty()) {
-            logger.info("ServerUrl has been passed to Tekton Client ");
+    public synchronized static void initializeKubeClients(List<ClusterConfig> clusterConfigs) {
+        tektonClients = new ArrayList<TektonClient>();
+        kubernetesClients = new ArrayList<KubernetesClient>();
+        if (clusterConfigs.size() > 0) {
+            for (ClusterConfig cc: clusterConfigs) {
+                ConfigBuilder configBuilder = new ConfigBuilder();
+                configBuilder.withMasterUrl(cc.getMasterUrl());
+                configBuilder.withNamespace(cc.getDefaultNamespace());
+                tektonClients.add(new DefaultTektonClient(configBuilder.build()));
+                kubernetesClients.add(new DefaultKubernetesClient(configBuilder.build()));
+            }
+        } else {
+            tektonClients.add(new DefaultTektonClient());
+            kubernetesClients.add(new DefaultKubernetesClient());
         }
         tektonClient = new DefaultTektonClient();
         kubernetesClient = new DefaultKubernetesClient();
-        String namespace = tektonClient.getNamespace();
-        logger.info("Running in namespace "+namespace);
     }
 
     public synchronized static void shutdownKubeClients() {
-        if (tektonClient != null) {
-            tektonClient.close();
-            tektonClient = null;
-        }
-        if (kubernetesClient != null) {
-            kubernetesClient.close();
-            kubernetesClient = null;
+        if (!tektonClients.isEmpty() && !kubernetesClients.isEmpty()) {
+            for (TektonClient c : tektonClients) {
+                if (c != null) {
+                    c.close();
+                }
+            }
+            for (KubernetesClient c : kubernetesClients) {
+                if (c != null) {
+                    c.close();
+                }
+            }
         }
     }
 
@@ -107,6 +124,14 @@ public class TektonUtils {
         return inputStream;
     }
 
+    public synchronized static List<TektonClient> getTektonClients(){
+        return tektonClients;
+    }
+
+    public synchronized static List<KubernetesClient> getKubernetesClients() {
+        return kubernetesClients;
+    }
+
     public synchronized static TektonClient getTektonClient(){
         return tektonClient;
     }
@@ -115,3 +140,4 @@ public class TektonUtils {
         return kubernetesClient;
     }
 }
+
