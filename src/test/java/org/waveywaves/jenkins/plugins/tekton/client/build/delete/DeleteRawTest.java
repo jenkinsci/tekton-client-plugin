@@ -11,7 +11,7 @@ public class DeleteRawTest {
     @Test
     public void runDeleteTaskTest(){
         deleteAllBlock = new DeleteRaw.DeleteAllBlock("test");
-        DeleteRaw deleteRaw = new DeleteRawMock(TektonUtils.TektonResourceType.task.toString(), deleteAllBlock);
+        DeleteRaw deleteRaw = new DeleteRawMock(TektonUtils.TektonResourceType.task.toString(), TektonUtils.DEFAULT_CLIENT_KEY, deleteAllBlock);
         Boolean isDeleted = deleteRaw.runDelete();
         assert isDeleted.equals(true);
     }
@@ -19,7 +19,7 @@ public class DeleteRawTest {
     @Test
     public void runDeleteTaskRunTest(){
         deleteAllBlock = new DeleteRaw.DeleteAllBlock("test");
-        DeleteRaw deleteRaw = new DeleteRawMock(TektonUtils.TektonResourceType.taskrun.toString(), deleteAllBlock);
+        DeleteRaw deleteRaw = new DeleteRawMock(TektonUtils.TektonResourceType.taskrun.toString(),TektonUtils.DEFAULT_CLIENT_KEY, deleteAllBlock);
         Boolean isDeleted = deleteRaw.runDelete();
         assert isDeleted.equals(true);
     }
@@ -27,7 +27,7 @@ public class DeleteRawTest {
     @Test
     public void runDeletePipelineTest(){
         deleteAllBlock = new DeleteRaw.DeleteAllBlock("test");
-        DeleteRaw deleteRaw = new DeleteRawMock(TektonUtils.TektonResourceType.pipeline.toString(), deleteAllBlock);
+        DeleteRaw deleteRaw = new DeleteRawMock(TektonUtils.TektonResourceType.pipeline.toString(),TektonUtils.DEFAULT_CLIENT_KEY, deleteAllBlock);
         Boolean isDeleted = deleteRaw.runDelete();
         assert isDeleted.equals(true);
     }
@@ -35,7 +35,7 @@ public class DeleteRawTest {
     @Test
     public void runDeletePipelineRunTest(){
         deleteAllBlock = new DeleteRaw.DeleteAllBlock("test");
-        DeleteRaw deleteRaw = new DeleteRawMock(TektonUtils.TektonResourceType.pipelinerun.toString(), deleteAllBlock);
+        DeleteRaw deleteRaw = new DeleteRawMock(TektonUtils.TektonResourceType.pipelinerun.toString(),TektonUtils.DEFAULT_CLIENT_KEY, deleteAllBlock);
         Boolean isDeleted = deleteRaw.runDelete();
         assert isDeleted.equals(true);
     }

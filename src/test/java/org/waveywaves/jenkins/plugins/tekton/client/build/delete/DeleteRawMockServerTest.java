@@ -65,14 +65,14 @@ public class DeleteRawMockServerTest {
 
 
         // When
-        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTaskYaml, EnableCatalog, namespace);
+        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTaskYaml, namespace, TektonUtils.DEFAULT_CLIENT_KEY, EnableCatalog);
         createRaw.setTektonClient(client);
         createRaw.setTaskClient(taskClient);
         createRaw.createTask(new ByteArrayInputStream(testTaskYaml.getBytes(StandardCharsets.UTF_8)));
 
         DeleteRaw.DeleteAllBlock deleteAllBlock = new DeleteRaw.DeleteAllBlock(TEST_TASK);
 
-        DeleteRaw deleteRaw = new DeleteRaw(TektonUtils.TektonResourceType.task.toString(), deleteAllBlock);
+        DeleteRaw deleteRaw = new DeleteRaw(TektonUtils.TektonResourceType.task.toString(), TektonUtils.DEFAULT_CLIENT_KEY, deleteAllBlock);
         deleteRaw.setTektonClient(client);
         deleteRaw.setTaskClient(taskClient);
         Boolean isTaskDeleted = deleteRaw.deleteTask();
@@ -141,20 +141,20 @@ public class DeleteRawMockServerTest {
 
 
         // When
-        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTask1Yaml, EnableCatalog, namespace);
+        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTask1Yaml,namespace, TektonUtils.DEFAULT_CLIENT_KEY, EnableCatalog);
         createRaw.setTektonClient(client);
         createRaw.setTaskClient(taskClient);
         createRaw.createTask(new ByteArrayInputStream(testTask1Yaml.getBytes(StandardCharsets.UTF_8)));
 
         // Task 2
-        createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTask2Yaml, EnableCatalog, namespace);
+        createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTask2Yaml, namespace, TektonUtils.DEFAULT_CLIENT_KEY, EnableCatalog);
         createRaw.setTektonClient(client);
         createRaw.setTaskClient(taskClient);
         createRaw.createTask(new ByteArrayInputStream(testTask2Yaml.getBytes(StandardCharsets.UTF_8)));
 
         DeleteRaw.DeleteAllBlock deleteAllBlock = new DeleteRaw.DeleteAllBlock(null);
 
-        DeleteRaw deleteRaw = new DeleteRaw(TektonUtils.TektonResourceType.task.toString(), deleteAllBlock);
+        DeleteRaw deleteRaw = new DeleteRaw(TektonUtils.TektonResourceType.task.toString(), TektonUtils.DEFAULT_CLIENT_KEY, deleteAllBlock);
         deleteRaw.setTektonClient(client);
         deleteRaw.setTaskClient(taskClient);
         Boolean isTaskDeleted = deleteRaw.deleteTask();
@@ -200,7 +200,7 @@ public class DeleteRawMockServerTest {
 
 
         // When
-        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTaskRunYaml, EnableCatalog, namespace){
+        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTaskRunYaml, namespace, TektonUtils.DEFAULT_CLIENT_KEY, EnableCatalog){
             @Override
             public void streamTaskRunLogsToConsole(TaskRun taskRun) {
                 return;
@@ -212,7 +212,7 @@ public class DeleteRawMockServerTest {
 
         DeleteRaw.DeleteAllBlock deleteAllBlock = new DeleteRaw.DeleteAllBlock(TEST_TASKRUN);
 
-        DeleteRaw deleteRaw = new DeleteRaw(TektonUtils.TektonResourceType.taskrun.toString(), deleteAllBlock);
+        DeleteRaw deleteRaw = new DeleteRaw(TektonUtils.TektonResourceType.taskrun.toString(), TektonUtils.DEFAULT_CLIENT_KEY, deleteAllBlock);
         deleteRaw.setTektonClient(client);
         deleteRaw.setTaskRunClient(taskRunClient);
         Boolean isTaskRunDeleted = deleteRaw.deleteTaskRun();
@@ -281,7 +281,7 @@ public class DeleteRawMockServerTest {
 
 
         // When
-        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTaskRun1Yaml, EnableCatalog, namespace){
+        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTaskRun1Yaml, namespace, TektonUtils.DEFAULT_CLIENT_KEY, EnableCatalog){
             @Override
             public void streamTaskRunLogsToConsole(TaskRun taskRun) {
                 return;
@@ -292,7 +292,7 @@ public class DeleteRawMockServerTest {
         createRaw.createTaskRun(new ByteArrayInputStream(testTaskRun1Yaml.getBytes(StandardCharsets.UTF_8)));
 
         // TaskRun 2
-        createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTaskRun2Yaml, EnableCatalog, namespace){
+        createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTaskRun2Yaml, namespace, TektonUtils.DEFAULT_CLIENT_KEY, EnableCatalog){
             @Override
             public void streamTaskRunLogsToConsole(TaskRun taskRun) {
                 return;
@@ -304,7 +304,7 @@ public class DeleteRawMockServerTest {
 
         DeleteRaw.DeleteAllBlock deleteAllBlock = new DeleteRaw.DeleteAllBlock(null);
 
-        DeleteRaw deleteRaw = new DeleteRaw(TektonUtils.TektonResourceType.taskrun.toString(), deleteAllBlock);
+        DeleteRaw deleteRaw = new DeleteRaw(TektonUtils.TektonResourceType.taskrun.toString(), TektonUtils.DEFAULT_CLIENT_KEY, deleteAllBlock);
         deleteRaw.setTektonClient(client);
         deleteRaw.setTaskRunClient(taskRunClient);
         Boolean isTaskRunDeleted = deleteRaw.deleteTaskRun();
@@ -350,14 +350,14 @@ public class DeleteRawMockServerTest {
 
 
         // When
-        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testPipelineYaml, EnableCatalog, namespace);
+        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testPipelineYaml, namespace, TektonUtils.DEFAULT_CLIENT_KEY, EnableCatalog);
         createRaw.setTektonClient(client);
         createRaw.setPipelineClient(pipelineClient);
         createRaw.createPipeline(new ByteArrayInputStream(testPipelineYaml.getBytes(StandardCharsets.UTF_8)));
 
         DeleteRaw.DeleteAllBlock deleteAllBlock = new DeleteRaw.DeleteAllBlock(TEST_PIPELINE);
 
-        DeleteRaw deleteRaw = new DeleteRaw(TektonUtils.TektonResourceType.pipeline.toString(), deleteAllBlock);
+        DeleteRaw deleteRaw = new DeleteRaw(TektonUtils.TektonResourceType.pipeline.toString(), TektonUtils.DEFAULT_CLIENT_KEY, deleteAllBlock);
         deleteRaw.setTektonClient(client);
         deleteRaw.setPipelineClient(pipelineClient);
         Boolean isPipelineDeleted = deleteRaw.deletePipeline();
@@ -427,20 +427,20 @@ public class DeleteRawMockServerTest {
 
 
         // When
-        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testPipelineYaml1, EnableCatalog, namespace);
+        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testPipelineYaml1, namespace, TektonUtils.DEFAULT_CLIENT_KEY, EnableCatalog);
         createRaw.setTektonClient(client);
         createRaw.setPipelineClient(pipelineClient);
         createRaw.createPipeline(new ByteArrayInputStream(testPipelineYaml1.getBytes(StandardCharsets.UTF_8)));
 
         //Pipeline 2
-        createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testPipelineYaml2, EnableCatalog, namespace);
+        createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testPipelineYaml2, namespace, TektonUtils.DEFAULT_CLIENT_KEY, EnableCatalog);
         createRaw.setTektonClient(client);
         createRaw.setPipelineClient(pipelineClient);
         createRaw.createPipeline(new ByteArrayInputStream(testPipelineYaml2.getBytes(StandardCharsets.UTF_8)));
 
         DeleteRaw.DeleteAllBlock deleteAllBlock = new DeleteRaw.DeleteAllBlock(null);
 
-        DeleteRaw deleteRaw = new DeleteRaw(TektonUtils.TektonResourceType.pipeline.toString(), deleteAllBlock);
+        DeleteRaw deleteRaw = new DeleteRaw(TektonUtils.TektonResourceType.pipeline.toString(), TektonUtils.DEFAULT_CLIENT_KEY, deleteAllBlock);
         deleteRaw.setTektonClient(client);
         deleteRaw.setPipelineClient(pipelineClient);
         Boolean isPipelineDeleted = deleteRaw.deletePipeline();
@@ -486,7 +486,7 @@ public class DeleteRawMockServerTest {
 
 
         // When
-        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testPipelineRunYaml, EnableCatalog, namespace){
+        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testPipelineRunYaml, namespace, TektonUtils.DEFAULT_CLIENT_KEY, EnableCatalog){
             @Override
             public void streamPipelineRunLogsToConsole(PipelineRun pipelineRun) {
                 return;
@@ -498,7 +498,7 @@ public class DeleteRawMockServerTest {
 
         DeleteRaw.DeleteAllBlock deleteAllBlock = new DeleteRaw.DeleteAllBlock(TEST_PIPELINERUN);
 
-        DeleteRaw deleteRaw = new DeleteRaw(TektonUtils.TektonResourceType.pipelinerun.toString(), deleteAllBlock);
+        DeleteRaw deleteRaw = new DeleteRaw(TektonUtils.TektonResourceType.pipelinerun.toString(), TektonUtils.DEFAULT_CLIENT_KEY, deleteAllBlock);
         deleteRaw.setTektonClient(client);
         deleteRaw.setPipelineRunClient(pipelineRunClient);
         Boolean isPipelineRunDeleted = deleteRaw.deletePipelineRun();
@@ -568,7 +568,7 @@ public class DeleteRawMockServerTest {
 
 
         // When
-        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testPipelineRun1Yaml, EnableCatalog, namespace){
+        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testPipelineRun1Yaml, namespace, TektonUtils.DEFAULT_CLIENT_KEY, EnableCatalog){
             @Override
             public void streamPipelineRunLogsToConsole(PipelineRun pipelineRun) {
                 return;
@@ -579,7 +579,7 @@ public class DeleteRawMockServerTest {
         createRaw.createPipelineRun(new ByteArrayInputStream(testPipelineRun1Yaml.getBytes(StandardCharsets.UTF_8)));
 
         // PipelineRun 2
-        createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testPipelineRun2Yaml, EnableCatalog, namespace){
+        createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testPipelineRun2Yaml, namespace, TektonUtils.DEFAULT_CLIENT_KEY, EnableCatalog){
             @Override
             public void streamPipelineRunLogsToConsole(PipelineRun pipelineRun) {
                 return;
@@ -591,7 +591,7 @@ public class DeleteRawMockServerTest {
 
         DeleteRaw.DeleteAllBlock deleteAllBlock = new DeleteRaw.DeleteAllBlock(null);
 
-        DeleteRaw deleteRaw = new DeleteRaw(TektonUtils.TektonResourceType.pipelinerun.toString(), deleteAllBlock);
+        DeleteRaw deleteRaw = new DeleteRaw(TektonUtils.TektonResourceType.pipelinerun.toString(), TektonUtils.DEFAULT_CLIENT_KEY, deleteAllBlock);
         deleteRaw.setTektonClient(client);
         deleteRaw.setPipelineRunClient(pipelineRunClient);
         Boolean isPipelineRunDeleted = deleteRaw.deletePipelineRun();
