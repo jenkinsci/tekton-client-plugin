@@ -5,8 +5,6 @@ labels:
     title: "^WIP:.*"
   - label: "in progress"
     title: "^wip:.*"
-  - label: "in progress"
-    mergeable: false
 
   - title: "feat.*"
     label: "enhancement"
