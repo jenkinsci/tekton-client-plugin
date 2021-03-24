@@ -1,6 +1,13 @@
 ---
 version: 1
 labels:
+  - label: "in progress"
+    title: "^WIP:.*"
+  - label: "in progress"
+    title: "^wip:.*"
+  - label: "in progress"
+    mergeable: false
+
   - title: "feat.*"
     label: "enhancement"
 
@@ -10,6 +17,9 @@ labels:
     label: "bug"
 
   - title: "chore(deps).*"
+    label: "dependencies"
+
+  - branch: "^dependabot/.*"
     label: "dependencies"
 
   - title: "chore.*"
