@@ -42,6 +42,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -51,21 +52,24 @@ public class CreateRaw extends BaseStep {
 
     private String input;
     private String inputType;
-    private boolean enableCatalog;
     private String namespace;
+    private String clusterName;
+    private boolean enableCatalog;
+
     private transient PrintStream consoleLogger;
     private transient ClassLoader toolClassLoader;
 
     @DataBoundConstructor
-    public CreateRaw(String input, String inputType, boolean enableCatalog, String namespace) {
+    public CreateRaw(String input, String inputType, String namespace, String clusterName, boolean enableCatalog) {
         super();
         this.inputType = inputType;
         this.input = input;
         this.enableCatalog = enableCatalog;
         this.namespace = namespace;
+        this.clusterName = clusterName;
 
-        setKubernetesClient(TektonUtils.getKubernetesClient());
-        setTektonClient(TektonUtils.getTektonClient());
+        setKubernetesClient(TektonUtils.getKubernetesClient(clusterName));
+        setTektonClient(TektonUtils.getTektonClient(clusterName));
     }
 
 
@@ -235,13 +239,13 @@ public class CreateRaw extends BaseStep {
 
         // lets make sure the tekton client is not empty
         if (tektonClient == null) {
-            setTektonClient(TektonUtils.getTektonClient());
+            setTektonClient(TektonUtils.getTektonClient(this.clusterName));
             if (tektonClient == null) {
                 throw new IOException("no tektonClient");
             }
         }
         if (kubernetesClient == null) {
-            setKubernetesClient(TektonUtils.getKubernetesClient());
+            setKubernetesClient(TektonUtils.getKubernetesClient(this.clusterName));
             if (kubernetesClient == null) {
                 throw new IOException("no kubernetesClient");
             }
@@ -375,11 +379,19 @@ public class CreateRaw extends BaseStep {
             return FormValidation.ok();
         }
 
-        public ListBoxModel doFillInputTypeItems(@QueryParameter(value = "input") final String input){
+        public ListBoxModel doFillInputTypeItems(@QueryParameter(value = "inputType") final String inputType){
             ListBoxModel items =  new ListBoxModel();
             items.add(InputType.FILE.toString());
             items.add(InputType.URL.toString());
             items.add(InputType.YAML.toString());
+            return items;
+        }
+
+        public ListBoxModel doFillClusterNameItems(@QueryParameter(value = "clusterName") final String clusterName){
+            ListBoxModel items =  new ListBoxModel();
+            for (String cn: TektonUtils.getTektonClientMap().keySet()){
+                items.add(cn);
+            }
             return items;
         }
 

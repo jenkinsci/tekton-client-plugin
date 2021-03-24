@@ -7,7 +7,10 @@
         <f:expandableTextbox />
     </f:entry>
     <f:entry title="Namespace" field="namespace">
-        <f:expandableTextbox />
+        <f:textbox />
+    </f:entry>
+    <f:entry title="Cluster Name" field="clusterName">
+        <f:select name="clusterName"></f:select>
     </f:entry>
     <f:entry title="Enable Tekton Catalog" field="enableCatalog">
         <f:checkbox name="enableCatalog"/>

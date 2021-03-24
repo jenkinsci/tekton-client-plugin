@@ -3,6 +3,9 @@
     <f:entry name="resourceType" title="Tekton Resource Type" field="resourceType">
         <f:select name="resourceType"></f:select>
     </f:entry>
+    <f:entry title="Cluster Name" field="clusterName">
+        <f:select name="inputType"></f:select>
+    </f:entry>
     <f:block>
         <f:optionalBlock
             name="deleteAllStatus"

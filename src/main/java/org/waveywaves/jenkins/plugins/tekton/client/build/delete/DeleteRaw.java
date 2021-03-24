@@ -34,13 +34,14 @@ public class DeleteRaw extends BaseStep {
     private static final Logger logger = Logger.getLogger(DeleteRaw.class.getName());
     private String resourceType;
     private String resourceName;
+    private String clusterName;
 
     @DataBoundConstructor
-    public DeleteRaw(String resourceType, DeleteAllBlock deleteAllStatus) {
+    public DeleteRaw(String resourceType, String clusterName, DeleteAllBlock deleteAllStatus) {
         super();
         this.resourceType = resourceType;
         this.resourceName = deleteAllStatus != null ? deleteAllStatus.resourceName : null;
-        setTektonClient(TektonUtils.getTektonClient());
+        setTektonClient(TektonUtils.getTektonClient(clusterName));
     }
 
     public static class DeleteAllBlock {
@@ -192,6 +193,14 @@ public class DeleteRaw extends BaseStep {
             items.add(TektonResourceType.taskrun.toString());
             items.add(TektonResourceType.pipeline.toString());
             items.add(TektonResourceType.pipelinerun.toString());
+            return items;
+        }
+
+        public ListBoxModel doFillClusterNameItems(@QueryParameter(value = "clusterName") final String clusterName){
+            ListBoxModel items =  new ListBoxModel();
+            for (String cn: TektonUtils.getTektonClientMap().keySet()){
+                items.add(cn);
+            }
             return items;
         }
 

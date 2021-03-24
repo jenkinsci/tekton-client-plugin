@@ -3,6 +3,9 @@
     <f:entry field="name" title="Name"> <f:textbox/> </f:entry>
     <f:entry field="generateName" title="Generate name"> <f:textbox/> </f:entry>
     <f:entry field="namespace" title="Namespace"> <f:textbox/> </f:entry>
+    <f:entry title="Cluster Name" field="clusterName">
+        <f:select name="inputType"></f:select>
+    </f:entry>
     <f:section title="Spec">
         <f:block>
             <f:entry title="Params">

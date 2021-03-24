@@ -15,16 +15,16 @@ import java.io.InputStream;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 public class TektonUtils {
     private static final Logger logger = Logger.getLogger(TektonUtils.class.getName());
-
-    public static List<TektonClient> tektonClients = new ArrayList<>();
-    public static List<KubernetesClient> kubernetesClients = new ArrayList<>();
-    private static TektonClient tektonClient;
-    private static KubernetesClient kubernetesClient;
+    public static String DEFAULT_CLIENT_KEY = "default";
+    public static Map<String,TektonClient> tektonClientMap = new HashMap<>();
+    public static Map<String,KubernetesClient> kubernetesClientMap = new HashMap<>();
 
     public enum TektonResourceType {
         task,
@@ -34,32 +34,38 @@ public class TektonUtils {
     }
 
     public synchronized static void initializeKubeClients(List<ClusterConfig> clusterConfigs) {
-        tektonClients = new ArrayList<TektonClient>();
-        kubernetesClients = new ArrayList<KubernetesClient>();
+        tektonClientMap = new HashMap<>();
+        kubernetesClientMap = new HashMap<>();
+
+        logger.info("Initializing Kube and Tekton Clients");
         if (clusterConfigs.size() > 0) {
             for (ClusterConfig cc: clusterConfigs) {
                 ConfigBuilder configBuilder = new ConfigBuilder();
                 configBuilder.withMasterUrl(cc.getMasterUrl());
                 configBuilder.withNamespace(cc.getDefaultNamespace());
-                tektonClients.add(new DefaultTektonClient(configBuilder.build()));
-                kubernetesClients.add(new DefaultKubernetesClient(configBuilder.build()));
+
+                TektonClient tektonClient = new DefaultTektonClient(configBuilder.build());
+                KubernetesClient kubernetesClient = new DefaultKubernetesClient(configBuilder.build());
+
+                tektonClientMap.put(cc.getName(), tektonClient);
+                kubernetesClientMap.put(cc.getName(), kubernetesClient);
+                logger.info("Added Clients for " + cc.getName());
             }
         } else {
-            tektonClients.add(new DefaultTektonClient());
-            kubernetesClients.add(new DefaultKubernetesClient());
+            tektonClientMap.put(DEFAULT_CLIENT_KEY, new DefaultTektonClient());
+            kubernetesClientMap.put(DEFAULT_CLIENT_KEY, new DefaultKubernetesClient());
+            logger.info("Added Default Clients");
         }
-        tektonClient = new DefaultTektonClient();
-        kubernetesClient = new DefaultKubernetesClient();
     }
 
     public synchronized static void shutdownKubeClients() {
-        if (!tektonClients.isEmpty() && !kubernetesClients.isEmpty()) {
-            for (TektonClient c : tektonClients) {
+        if (!tektonClientMap.isEmpty() && !kubernetesClientMap.isEmpty()) {
+            for (TektonClient c : tektonClientMap.values()) {
                 if (c != null) {
                     c.close();
                 }
             }
-            for (KubernetesClient c : kubernetesClients) {
+            for (KubernetesClient c : kubernetesClientMap.values()) {
                 if (c != null) {
                     c.close();
                 }
@@ -124,20 +130,20 @@ public class TektonUtils {
         return inputStream;
     }
 
-    public synchronized static List<TektonClient> getTektonClients(){
-        return tektonClients;
+    public synchronized static Map<String,TektonClient> getTektonClientMap(){
+        return tektonClientMap;
     }
 
-    public synchronized static List<KubernetesClient> getKubernetesClients() {
-        return kubernetesClients;
+    public synchronized static Map<String,KubernetesClient> getKubernetesClientMap() {
+        return kubernetesClientMap;
     }
 
-    public synchronized static TektonClient getTektonClient(){
-        return tektonClient;
+    public synchronized static TektonClient getTektonClient(String name){
+        return tektonClientMap.get(name);
     }
 
-    public synchronized static KubernetesClient getKubernetesClient() {
-        return kubernetesClient;
+    public synchronized static KubernetesClient getKubernetesClient(String name) {
+        return kubernetesClientMap.get(name);
     }
 }
 

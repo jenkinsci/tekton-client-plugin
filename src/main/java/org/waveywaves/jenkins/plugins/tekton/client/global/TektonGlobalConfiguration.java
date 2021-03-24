@@ -17,7 +17,7 @@ import static java.util.logging.Level.SEVERE;
 @Extension
 public class TektonGlobalConfiguration extends GlobalConfiguration {
     private static final Logger logger = Logger.getLogger(TektonGlobalConfiguration.class.getName());
-    private List<ClusterConfig> clusterConfigs = new ArrayList<>();
+    private transient List<ClusterConfig> clusterConfigs = new ArrayList<>();
 
     public TektonGlobalConfiguration(){
         load();
@@ -39,9 +39,9 @@ public class TektonGlobalConfiguration extends GlobalConfiguration {
     @Override
     public boolean configure(final StaplerRequest req, final JSONObject formData) {
         Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
-        setClusterConfigs(req.bindJSONToList(ClusterConfig.class, formData.get("configurations")));
+         setClusterConfigs(req.bindJSONToList(ClusterConfig.class, formData.get("clusterConfigs")));
         save();
-        return false;
+        return true;
     }
 
     public synchronized void configChange() {
@@ -55,6 +55,4 @@ public class TektonGlobalConfiguration extends GlobalConfiguration {
             logger.log(SEVERE, "Failed to configure Tekton Client Plugin: " + exceptionOrCause);
         }
     }
-
-
 }
