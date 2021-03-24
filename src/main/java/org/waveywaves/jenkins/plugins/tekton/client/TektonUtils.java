@@ -22,9 +22,9 @@ import java.util.logging.Logger;
 
 public class TektonUtils {
     private static final Logger logger = Logger.getLogger(TektonUtils.class.getName());
-    public static String DEFAULT_CLIENT_KEY = "default";
-    public static Map<String,TektonClient> tektonClientMap = new HashMap<>();
-    public static Map<String,KubernetesClient> kubernetesClientMap = new HashMap<>();
+    public static final String DEFAULT_CLIENT_KEY = "default";
+    private static Map<String,TektonClient> tektonClientMap = new HashMap<>();
+    private static Map<String,KubernetesClient> kubernetesClientMap = new HashMap<>();
 
     public enum TektonResourceType {
         task,
