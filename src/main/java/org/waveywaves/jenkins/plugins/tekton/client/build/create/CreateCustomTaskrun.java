@@ -9,6 +9,7 @@ import hudson.model.TaskListener;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.PersistentVolumeClaimVolumeSource;
 import io.fabric8.tekton.client.TektonClient;
@@ -29,7 +30,7 @@ import java.util.logging.Logger;
 @Symbol("customCreateTaskrun")
 public class CreateCustomTaskrun extends BaseStep {
     private static final Logger logger = Logger.getLogger(CreateCustomTaskrun.class.getName());
-
+    private String clusterName;
     private PrintStream consoleLogger;
     private String kind;
     // ObjectMeta
@@ -45,6 +46,7 @@ public class CreateCustomTaskrun extends BaseStep {
     public CreateCustomTaskrun(final String name,
                                final String generateName,
                                final String namespace,
+                               final String clusterName,
                                final List<TektonWorkspaceBind> workspaces,
                                final List<TektonParam> params,
                                final String taskRef){
@@ -56,6 +58,7 @@ public class CreateCustomTaskrun extends BaseStep {
         this.taskRef = taskRef;
         this.workspaces = workspaces;
         this.params = params;
+        this.clusterName = clusterName;
     }
 
     public String getKind() { return this.kind; }
@@ -97,7 +100,7 @@ public class CreateCustomTaskrun extends BaseStep {
 
         TaskRun taskRun = taskRunBuilder.build();
         if (taskClient == null) {
-            TektonClient tc = TektonUtils.getTektonClient();
+            TektonClient tc = TektonUtils.getTektonClient(clusterName);
             setTaskRunClient(tc.v1beta1().taskRuns());
         }
         taskRun = taskRunClient.create(taskRun);
@@ -160,6 +163,14 @@ public class CreateCustomTaskrun extends BaseStep {
                 return FormValidation.error("Namespace not provided");
             }
             return FormValidation.ok();
+        }
+
+        public ListBoxModel doFillClusterNameItems(@QueryParameter(value = "clusterName") final String clusterName){
+            ListBoxModel items =  new ListBoxModel();
+            for (String cn: TektonUtils.getTektonClientMap().keySet()){
+                items.add(cn);
+            }
+            return items;
         }
 
         @Override

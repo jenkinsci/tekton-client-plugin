@@ -8,8 +8,8 @@ import org.waveywaves.jenkins.plugins.tekton.client.build.create.CreateRaw;
 import java.io.InputStream;
 
 public class CreateRawMock extends CreateRaw {
-    public CreateRawMock(String input, String inputType, boolean enableCatalog, String namespace) {
-        super(input, inputType, enableCatalog, namespace);
+    public CreateRawMock(String input, String inputType, String namespace,  String clusterName, boolean enableCatalog) {
+        super(input, inputType, namespace, clusterName, enableCatalog);
     }
 
     @Override
