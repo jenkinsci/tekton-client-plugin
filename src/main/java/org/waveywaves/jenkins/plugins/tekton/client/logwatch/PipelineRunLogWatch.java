@@ -6,7 +6,9 @@ import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.tekton.client.TektonClient;
 import io.fabric8.tekton.pipeline.v1beta1.*;
 
+import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
@@ -62,7 +64,7 @@ public class PipelineRunLogWatch implements Runnable {
                     for (OwnerReference or : ownerReferences) {
                         if (or.getUid().equals(pipelineRunUid)) {
                             logger.info(String.format("Streaming logs for TaskRun %s/%s owned by PipelineRun %s with selector %s", ns, trName, pipelineRunName, selector));
-                            TaskRunLogWatch logWatch = new TaskRunLogWatch(kubernetesClient, tr, consoleLogger);
+                            TaskRunLogWatch logWatch = new TaskRunLogWatch(kubernetesClient, tektonClient, tr, consoleLogger);
                             Thread logWatchTask = new Thread(logWatch);
                             logWatchTask.start();
                             try {
@@ -88,6 +90,14 @@ public class PipelineRunLogWatch implements Runnable {
                     e.printStackTrace();
                 }
             }
+        }
+    }
+
+    protected void logMessage(String text) {
+        try {
+            this.consoleLogger.write(text.getBytes(StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            logger.warning("failed to log to console: " + e);
         }
     }
 }
