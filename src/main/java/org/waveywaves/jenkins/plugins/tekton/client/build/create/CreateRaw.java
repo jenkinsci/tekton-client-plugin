@@ -66,8 +66,8 @@ public class CreateRaw extends BaseStep {
         this.namespace = namespace;
         this.clusterName = clusterName;
 
-        setKubernetesClient(TektonUtils.getKubernetesClient(clusterName));
-        setTektonClient(TektonUtils.getTektonClient(clusterName));
+        setKubernetesClient(TektonUtils.getKubernetesClient(getClusterName()));
+        setTektonClient(TektonUtils.getTektonClient(getClusterName()));
     }
 
 
@@ -87,6 +87,7 @@ public class CreateRaw extends BaseStep {
         this.toolClassLoader = toolClassLoader;
     }
 
+    // the getters must be public to work with the Configure page...
     public String getInput() {
         return this.input;
     }
@@ -101,6 +102,13 @@ public class CreateRaw extends BaseStep {
 
     public String getNamespace() {
         return namespace;
+    }
+
+    public String getClusterName() {
+        if (Strings.isNullOrEmpty(clusterName)) {
+            clusterName = TektonUtils.DEFAULT_CLIENT_KEY;
+        }
+        return clusterName;
     }
 
     protected String createWithResourceSpecificClient(TektonResourceType resourceType, InputStream inputStream) {
@@ -205,9 +213,10 @@ public class CreateRaw extends BaseStep {
     public void streamTaskRunLogsToConsole(TaskRun taskRun) {
         synchronized (consoleLogger) {
             KubernetesClient kc = (KubernetesClient) kubernetesClient;
+            TektonClient tc = (TektonClient) tektonClient;
             Thread logWatchTask = null;
             try {
-                TaskRunLogWatch logWatch = new TaskRunLogWatch(kc, taskRun, consoleLogger);
+                TaskRunLogWatch logWatch = new TaskRunLogWatch(kc, tc, taskRun, consoleLogger);
                 logWatchTask = new Thread(logWatch);
                 logWatchTask.start();
                 logWatchTask.join();
@@ -235,25 +244,20 @@ public class CreateRaw extends BaseStep {
     public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws InterruptedException, IOException {
         consoleLogger = listener.getLogger();
 
-        // lets make sure the tekton client is not empty
+        String clusterName = getClusterName();
+        logger.info("connecting using cluster name " + clusterName);
+
+        // lets make sure the clients are not empty
         if (tektonClient == null) {
-            TektonClient client = TektonUtils.getTektonClient(this.clusterName);
-            if (client == null) {
-                client = TektonUtils.getTektonClient(TektonUtils.DEFAULT_CLIENT_KEY);
-            }
-            setTektonClient(client);
+            setTektonClient(TektonUtils.getTektonClient(clusterName));
             if (this.tektonClient == null) {
-                throw new IOException("no tektonClient");
+                throw new IOException("no tektonClient for cluster " + clusterName);
             }
         }
         if (kubernetesClient == null) {
-            KubernetesClient client = TektonUtils.getKubernetesClient(this.clusterName);
-            if (client == null) {
-                client = TektonUtils.getKubernetesClient(TektonUtils.DEFAULT_CLIENT_KEY);
-            }
-            setKubernetesClient(client);
+            setKubernetesClient(TektonUtils.getKubernetesClient(clusterName));
             if (this.kubernetesClient == null) {
-                throw new IOException("no kubernetesClient");
+                throw new IOException("no kubernetesClient for cluster " + clusterName);
             }
         }
         EnvVars envVars = run.getEnvironment(listener);

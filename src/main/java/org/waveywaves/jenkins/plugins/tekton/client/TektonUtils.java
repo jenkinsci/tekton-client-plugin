@@ -51,7 +51,9 @@ public class TektonUtils {
                 kubernetesClientMap.put(cc.getName(), kubernetesClient);
                 logger.info("Added Clients for " + cc.getName());
             }
-        } else {
+        }
+
+        if (!tektonClientMap.containsKey(DEFAULT_CLIENT_KEY)) {
             tektonClientMap.put(DEFAULT_CLIENT_KEY, new DefaultTektonClient());
             kubernetesClientMap.put(DEFAULT_CLIENT_KEY, new DefaultKubernetesClient());
             logger.info("Added Default Clients");
