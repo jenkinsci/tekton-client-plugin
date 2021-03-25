@@ -20,7 +20,6 @@ import io.fabric8.tekton.pipeline.v1beta1.Pipeline;
 import io.fabric8.tekton.pipeline.v1beta1.PipelineRun;
 import io.fabric8.tekton.pipeline.v1beta1.Task;
 import io.fabric8.tekton.pipeline.v1beta1.TaskRun;
-import io.fabric8.tekton.resource.v1alpha1.PipelineResource;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -42,7 +41,6 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -239,14 +237,22 @@ public class CreateRaw extends BaseStep {
 
         // lets make sure the tekton client is not empty
         if (tektonClient == null) {
-            setTektonClient(TektonUtils.getTektonClient(this.clusterName));
-            if (tektonClient == null) {
+            TektonClient client = TektonUtils.getTektonClient(this.clusterName);
+            if (client == null) {
+                client = TektonUtils.getTektonClient(TektonUtils.DEFAULT_CLIENT_KEY);
+            }
+            setTektonClient(client);
+            if (this.tektonClient == null) {
                 throw new IOException("no tektonClient");
             }
         }
         if (kubernetesClient == null) {
-            setKubernetesClient(TektonUtils.getKubernetesClient(this.clusterName));
-            if (kubernetesClient == null) {
+            KubernetesClient client = TektonUtils.getKubernetesClient(this.clusterName);
+            if (client == null) {
+                client = TektonUtils.getKubernetesClient(TektonUtils.DEFAULT_CLIENT_KEY);
+            }
+            setKubernetesClient(client);
+            if (this.kubernetesClient == null) {
                 throw new IOException("no kubernetesClient");
             }
         }
