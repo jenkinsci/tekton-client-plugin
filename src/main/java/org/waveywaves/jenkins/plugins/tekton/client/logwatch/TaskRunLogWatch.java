@@ -1,15 +1,17 @@
 package org.waveywaves.jenkins.plugins.tekton.client.logwatch;
 
-import com.google.common.base.Strings;
 import com.google.common.collect.Sets;
+import io.fabric8.knative.internal.pkg.apis.Condition;
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ContainerState;
 import io.fabric8.kubernetes.api.model.ContainerStateTerminated;
 import io.fabric8.kubernetes.api.model.ContainerStatus;
 import io.fabric8.kubernetes.api.model.OwnerReference;
 import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.PodStatus;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.PodResource;
+import io.fabric8.tekton.client.TektonClient;
 import io.fabric8.tekton.pipeline.v1beta1.TaskRun;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils.TektonResourceType;
 
@@ -27,11 +29,13 @@ public class TaskRunLogWatch implements Runnable{
     private static final Logger logger = Logger.getLogger(TaskRunLogWatch.class.getName());
 
     private KubernetesClient kubernetesClient;
+    private TektonClient tektonClient;
     private TaskRun taskRun;
     OutputStream consoleLogger;
 
-    public TaskRunLogWatch(KubernetesClient kubernetesClient, TaskRun taskRun, OutputStream consoleLogger) {
+    public TaskRunLogWatch(KubernetesClient kubernetesClient, TektonClient tektonClient, TaskRun taskRun, OutputStream consoleLogger) {
         this.kubernetesClient = kubernetesClient;
+        this.tektonClient = tektonClient;
         this.taskRun = taskRun;
         this.consoleLogger = consoleLogger;
     }
@@ -69,14 +73,14 @@ public class TaskRunLogWatch implements Runnable{
             } catch ( InterruptedException e) {
                 logger.warning("Interrupted Exception Occurred");
             }
-            logger.info("\npod " + podName + " running:");
+            logMessage("\npod " + podName + " running:");
             List<String> taskRunContainerNames = new ArrayList<String>();
             for (Container c : taskRunPod.getSpec().getContainers()) {
                 taskRunContainerNames.add(c.getName());
             }
             for (String containerName : taskRunContainerNames) {
                 // lets write a little header per container
-                logMessage("\n\n" + containerName + ":\n");
+                logMessage("\n\n" + containerName + ":");
 
                 // wait for the container to start
                 logger.info("waiting for pod pod: " + ns + "/" + podName + " container: " + containerName + " to start:");
@@ -89,7 +93,7 @@ public class TaskRunLogWatch implements Runnable{
                             if (state != null) {
                                 ContainerStateTerminated terminatedState = state.getTerminated();
                                 if (terminatedState != null && terminatedState.getStartedAt() != null) {
-                                    logger.info("container " + containerName + " completed");
+                                    logMessage("container " + containerName + " completed");
                                     return true;
                                 }
                             }
@@ -106,15 +110,54 @@ public class TaskRunLogWatch implements Runnable{
 
                 pr.inContainer(containerName).watchLog(this.consoleLogger);
             }
+            logPodFailures(pr.get());
         } else {
-            logger.info("no pod could be found for TaskRun " + ns + "/" + taskRun.getMetadata().getName());
+            logMessage("no pod could be found for TaskRun " + ns + "/" + taskRun.getMetadata().getName());
+
+
+            // lets reload to get the latest status
+            taskRun = tektonClient.v1beta1().taskRuns().inNamespace(ns).withName(taskRun.getMetadata().getName()).get();
+            logTaskRunFailure(taskRun);
         }
+    }
+
+    /**
+     * Lets log any failures in the task run
+     *
+     * @param taskRun the task run to log
+     */
+    protected void logTaskRunFailure(TaskRun taskRun) {
+        String name = taskRun.getMetadata().getName();
+        List<Condition> conditions = taskRun.getStatus().getConditions();
+        if (conditions == null || conditions.size() == 0) {
+            logMessage("TaskRun " + name + " has no status conditions");
+            return;
+        }
+
+        for (Condition condition : conditions) {
+            logMessage("TaskRun " + name + " " + condition.getType() + "/" + condition.getReason() + ": " + condition.getMessage());
+        }
+    }
+
+    /**
+     * Lets check if the pod completed successfully otherwise log a failure message
+     *
+     * @param pod the pod to log
+     */
+    protected void logPodFailures(Pod pod) {
+        String ns = pod.getMetadata().getNamespace();
+        String podName = pod.getMetadata().getName();
+        PodStatus status = pod.getStatus();
+        String phase = status.getPhase();
+        logMessage("pod " + ns + "/" + podName + " status: " + phase);
+
+        // TODO we could try diagnose more information from the failed pod to log
     }
 
 
     protected void logMessage(String text) {
         try {
-            this.consoleLogger.write(text.getBytes(StandardCharsets.UTF_8));
+            this.consoleLogger.write((text + "\n").getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
             logger.warning("failed to log to console: " + e);
         }
