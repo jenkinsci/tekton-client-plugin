@@ -36,7 +36,7 @@
         <maven-surefire-plugin.version>2.22.1</maven-surefire-plugin.version>
         <mockwebserver.version>0.1.8</mockwebserver.version>
         <junit-jupiter-engine.version>5.6.2</junit-jupiter-engine.version>
-        <jx-pipeline.version>0.0.115</jx-pipeline.version>
+        <jx-pipeline.version>0.0.118</jx-pipeline.version>
     </properties>
 
     <licenses>
@@ -72,26 +72,35 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- test plugins for running locally via: mvn hpi:run -->
-        <dependency>
-          <groupId>org.jenkins-ci.plugins</groupId>
-          <artifactId>git</artifactId>
-        </dependency>
-        <dependency>
-          <groupId>org.jenkins-ci.plugins.workflow</groupId>
-          <artifactId>workflow-aggregator</artifactId>
-          <version>2.6</version>
-        </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>jackson2-api</artifactId>
         </dependency>
 
+        <!-- test plugins for running locally via: mvn hpi:run -->
         <dependency>
-          <groupId>org.assertj</groupId>
-          <artifactId>assertj-core</artifactId>
-          <version>3.19.0</version>
-          <scope>test</scope>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>git</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins.workflow</groupId>
+            <artifactId>workflow-aggregator</artifactId>
+            <version>2.6</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>envinject</artifactId>
+            <version>2.3.0</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>3.19.0</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

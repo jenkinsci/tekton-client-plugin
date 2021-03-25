@@ -1,0 +1,12 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: release
+spec:
+  pipelineSpec:
+    tasks:
+    - name: from-build-pack
+      taskSpec:
+        steps:
+        - image: uses:jenkins-x/jx3-pipeline-catalog/tasks/git-clone/git-clone.yaml@versionStream
+        - image: uses:jenkins-x/jx3-pipeline-catalog/tasks/javascript/release.yaml@versionStream
