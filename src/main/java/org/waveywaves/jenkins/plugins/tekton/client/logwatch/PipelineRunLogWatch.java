@@ -19,6 +19,7 @@ public class PipelineRunLogWatch implements Runnable {
     private KubernetesClient kubernetesClient;
     private TektonClient tektonClient;
     private PipelineRun pipelineRun;
+    private Exception exception;
     OutputStream consoleLogger;
 
     ConcurrentHashMap<String, TaskRun> taskRunsOnWatch = new ConcurrentHashMap<String, TaskRun>();
@@ -32,6 +33,13 @@ public class PipelineRunLogWatch implements Runnable {
         this.tektonClient = tektonClient;
         this.pipelineRun = pipelineRun;
         this.consoleLogger = consoleLogger;
+    }
+
+    /**
+     * @return the exception if the pipeline failed to succeed
+     */
+    public Exception getException() {
+        return exception;
     }
 
     @Override
@@ -72,16 +80,24 @@ public class PipelineRunLogWatch implements Runnable {
                             } catch (InterruptedException exception) {
                                 exception.printStackTrace();
                             }
-                            logger.info("TaskRun " + trName + " completed");
+                            Exception e = logWatch.getException();
+                            if (e != null) {
+                                logger.info("TaskRun " + trName + " failed");
+                                if (exception == null) {
+                                    exception = e;
+                                }
+                            } else {
+                                logger.info("TaskRun " + trName + " completed");
+                            }
                             taskComplete = true;
                         }
                     }
                 }
                 if (taskComplete) {
-                    logger.info("completed PipelineTask " + pipelineTaskName);
+                    logMessage("completed PipelineTask " + pipelineTaskName);
                     break;
                 } else {
-                    logger.info("could not find OwnerReference for " + pipelineRunUid);
+                    logMessage("could not find OwnerReference for " + pipelineRunUid);
                 }
                 try {
                     Thread.sleep(1000);

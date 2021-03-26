@@ -6,10 +6,18 @@ import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
-import io.fabric8.tekton.pipeline.v1beta1.*;
-import io.fabric8.tekton.resource.v1alpha1.PipelineResource;
-import io.fabric8.tekton.resource.v1alpha1.PipelineResourceBuilder;
-import io.fabric8.tekton.resource.v1alpha1.PipelineResourceList;
+import io.fabric8.tekton.pipeline.v1beta1.Pipeline;
+import io.fabric8.tekton.pipeline.v1beta1.PipelineBuilder;
+import io.fabric8.tekton.pipeline.v1beta1.PipelineList;
+import io.fabric8.tekton.pipeline.v1beta1.PipelineRun;
+import io.fabric8.tekton.pipeline.v1beta1.PipelineRunBuilder;
+import io.fabric8.tekton.pipeline.v1beta1.PipelineRunList;
+import io.fabric8.tekton.pipeline.v1beta1.Task;
+import io.fabric8.tekton.pipeline.v1beta1.TaskBuilder;
+import io.fabric8.tekton.pipeline.v1beta1.TaskList;
+import io.fabric8.tekton.pipeline.v1beta1.TaskRun;
+import io.fabric8.tekton.pipeline.v1beta1.TaskRunBuilder;
+import io.fabric8.tekton.pipeline.v1beta1.TaskRunList;
 import org.junit.Rule;
 import org.junit.Test;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
@@ -21,6 +29,8 @@ import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.assertj.core.api.Assertions.fail;
 
 
 public class DeleteRawMockServerTest {
@@ -208,7 +218,12 @@ public class DeleteRawMockServerTest {
         };
         createRaw.setTektonClient(client);
         createRaw.setTaskRunClient(taskRunClient);
-        createRaw.createTaskRun(new ByteArrayInputStream(testTaskRunYaml.getBytes(StandardCharsets.UTF_8)));
+
+        try {
+            createRaw.createTaskRun(new ByteArrayInputStream(testTaskRunYaml.getBytes(StandardCharsets.UTF_8)));
+        } catch (Exception e) {
+            fail(e.getMessage(), e);
+        }
 
         DeleteRaw.DeleteAllBlock deleteAllBlock = new DeleteRaw.DeleteAllBlock(TEST_TASKRUN);
 
@@ -289,7 +304,11 @@ public class DeleteRawMockServerTest {
         };
         createRaw.setTektonClient(client);
         createRaw.setTaskRunClient(taskRunClient);
-        createRaw.createTaskRun(new ByteArrayInputStream(testTaskRun1Yaml.getBytes(StandardCharsets.UTF_8)));
+        try {
+            createRaw.createTaskRun(new ByteArrayInputStream(testTaskRun1Yaml.getBytes(StandardCharsets.UTF_8)));
+        } catch (Exception e) {
+            fail(e.getMessage(), e);
+        }
 
         // TaskRun 2
         createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTaskRun2Yaml, namespace, TektonUtils.DEFAULT_CLIENT_KEY, EnableCatalog){
@@ -300,7 +319,11 @@ public class DeleteRawMockServerTest {
         };
         createRaw.setTektonClient(client);
         createRaw.setTaskRunClient(taskRunClient);
-        createRaw.createTaskRun(new ByteArrayInputStream(testTaskRun2Yaml.getBytes(StandardCharsets.UTF_8)));
+        try {
+            createRaw.createTaskRun(new ByteArrayInputStream(testTaskRun2Yaml.getBytes(StandardCharsets.UTF_8)));
+        } catch (Exception e) {
+            fail(e.getMessage(), e);
+        }
 
         DeleteRaw.DeleteAllBlock deleteAllBlock = new DeleteRaw.DeleteAllBlock(null);
 
@@ -494,7 +517,11 @@ public class DeleteRawMockServerTest {
         };
         createRaw.setTektonClient(client);
         createRaw.setPipelineRunClient(pipelineRunClient);
-        createRaw.createPipelineRun(new ByteArrayInputStream(testPipelineRunYaml.getBytes(StandardCharsets.UTF_8)));
+        try {
+            createRaw.createPipelineRun(new ByteArrayInputStream(testPipelineRunYaml.getBytes(StandardCharsets.UTF_8)));
+        } catch (Exception e) {
+            fail(e.getMessage(), e);
+        }
 
         DeleteRaw.DeleteAllBlock deleteAllBlock = new DeleteRaw.DeleteAllBlock(TEST_PIPELINERUN);
 
@@ -576,7 +603,11 @@ public class DeleteRawMockServerTest {
         };
         createRaw.setTektonClient(client);
         createRaw.setPipelineRunClient(pipelineRunClient);
-        createRaw.createPipelineRun(new ByteArrayInputStream(testPipelineRun1Yaml.getBytes(StandardCharsets.UTF_8)));
+        try {
+            createRaw.createPipelineRun(new ByteArrayInputStream(testPipelineRun1Yaml.getBytes(StandardCharsets.UTF_8)));
+        } catch (Exception e) {
+            fail(e.getMessage(), e);
+        }
 
         // PipelineRun 2
         createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testPipelineRun2Yaml, namespace, TektonUtils.DEFAULT_CLIENT_KEY, EnableCatalog){
@@ -587,7 +618,11 @@ public class DeleteRawMockServerTest {
         };
         createRaw.setTektonClient(client);
         createRaw.setPipelineRunClient(pipelineRunClient);
-        createRaw.createPipelineRun(new ByteArrayInputStream(testPipelineRun2Yaml.getBytes(StandardCharsets.UTF_8)));
+        try {
+            createRaw.createPipelineRun(new ByteArrayInputStream(testPipelineRun2Yaml.getBytes(StandardCharsets.UTF_8)));
+        } catch (Exception e) {
+            fail(e.getMessage(), e);
+        }
 
         DeleteRaw.DeleteAllBlock deleteAllBlock = new DeleteRaw.DeleteAllBlock(null);
 

@@ -23,6 +23,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.fail;
+
 
 public class CreateRawMockServerTest {
     public static final boolean EnableCatalog = false;
@@ -110,8 +112,15 @@ public class CreateRawMockServerTest {
         };
         createRaw.setTektonClient(client);
         createRaw.setTaskRunClient(taskRunClient);
-        String createdTaskRunName = createRaw.createTaskRun(
-                new ByteArrayInputStream(testTaskRunYaml.getBytes(StandardCharsets.UTF_8)));
+
+        String createdTaskRunName = "";
+
+        try {
+            createdTaskRunName = createRaw.createTaskRun(
+                    new ByteArrayInputStream(testTaskRunYaml.getBytes(StandardCharsets.UTF_8)));
+        } catch (Exception e) {
+            fail(e.getMessage(), e);
+        }
 
         // Then
         TaskRunList testTaskRunList = taskRunClient.list();
@@ -197,8 +206,13 @@ public class CreateRawMockServerTest {
         };
         createRaw.setTektonClient(client);
         createRaw.setPipelineRunClient(pipelineRunClient);
-        String createdPipelineName = createRaw.createPipelineRun(
-                new ByteArrayInputStream(testPipelineRunYaml.getBytes(StandardCharsets.UTF_8)));
+        String createdPipelineName = "";
+        try {
+            createdPipelineName = createRaw.createPipelineRun(
+                    new ByteArrayInputStream(testPipelineRunYaml.getBytes(StandardCharsets.UTF_8)));
+        } catch (Exception e) {
+            fail(e.getMessage(), e);
+        }
 
         // Then
         PipelineRunList testPipelineRunList = pipelineRunClient.list();
