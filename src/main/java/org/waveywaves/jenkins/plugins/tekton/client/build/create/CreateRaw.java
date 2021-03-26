@@ -3,11 +3,13 @@ package org.waveywaves.jenkins.plugins.tekton.client.build.create;
 import com.google.common.base.Strings;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.AbstractProject;
+import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.tasks.BuildStepDescriptor;
@@ -31,12 +33,13 @@ import org.waveywaves.jenkins.plugins.tekton.client.build.BaseStep;
 import org.waveywaves.jenkins.plugins.tekton.client.logwatch.PipelineRunLogWatch;
 import org.waveywaves.jenkins.plugins.tekton.client.logwatch.TaskRunLogWatch;
 
-import javax.annotation.Nonnull;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -111,7 +114,7 @@ public class CreateRaw extends BaseStep {
         return clusterName;
     }
 
-    protected String createWithResourceSpecificClient(TektonResourceType resourceType, InputStream inputStream) {
+    protected String createWithResourceSpecificClient(TektonResourceType resourceType, InputStream inputStream) throws Exception {
         switch (resourceType) {
             case task:
                 return createTask(inputStream);
@@ -126,7 +129,7 @@ public class CreateRaw extends BaseStep {
         }
     }
 
-    public String createTaskRun(InputStream inputStream) {
+    public String createTaskRun(InputStream inputStream) throws Exception {
         if (taskRunClient == null) {
             TektonClient tc = (TektonClient) tektonClient;
             setTaskRunClient(tc.v1beta1().taskRuns());
@@ -188,7 +191,7 @@ public class CreateRaw extends BaseStep {
         return resourceName;
     }
 
-    public String createPipelineRun(InputStream inputStream) {
+    public String createPipelineRun(InputStream inputStream) throws Exception {
         if (pipelineRunClient == null) {
             TektonClient tc = (TektonClient) tektonClient;
             setPipelineRunClient(tc.v1beta1().pipelineRuns());
@@ -210,38 +213,38 @@ public class CreateRaw extends BaseStep {
         return resourceName;
     }
 
-    public void streamTaskRunLogsToConsole(TaskRun taskRun) {
+    public void streamTaskRunLogsToConsole(TaskRun taskRun) throws Exception {
         synchronized (consoleLogger) {
             KubernetesClient kc = (KubernetesClient) kubernetesClient;
             TektonClient tc = (TektonClient) tektonClient;
             Thread logWatchTask = null;
-            try {
-                TaskRunLogWatch logWatch = new TaskRunLogWatch(kc, tc, taskRun, consoleLogger);
-                logWatchTask = new Thread(logWatch);
-                logWatchTask.start();
-                logWatchTask.join();
-            } catch (Exception e) {
-                logger.warning("Exception occurred "+e.toString());
+            TaskRunLogWatch logWatch = new TaskRunLogWatch(kc, tc, taskRun, consoleLogger);
+            logWatchTask = new Thread(logWatch);
+            logWatchTask.start();
+            logWatchTask.join();
+            Exception e = logWatch.getException();
+            if (e != null) {
+                throw e;
             }
         }
     }
 
-    public void streamPipelineRunLogsToConsole(PipelineRun pipelineRun) {
+    public void streamPipelineRunLogsToConsole(PipelineRun pipelineRun) throws Exception {
         KubernetesClient kc = (KubernetesClient) kubernetesClient;
         TektonClient tc = (TektonClient) tektonClient;
         Thread logWatchTask;
-        try {
-            PipelineRunLogWatch logWatch = new PipelineRunLogWatch(kc, tc, pipelineRun, consoleLogger);
-            logWatchTask = new Thread(logWatch);
-            logWatchTask.start();
-            logWatchTask.join();
-        } catch (Exception e) {
-            logger.warning("Exception occurred "+e.toString());
+        PipelineRunLogWatch logWatch = new PipelineRunLogWatch(kc, tc, pipelineRun, consoleLogger);
+        logWatchTask = new Thread(logWatch);
+        logWatchTask.start();
+        logWatchTask.join();
+        Exception e = logWatch.getException();
+        if (e != null) {
+            throw e;
         }
     }
 
     @Override
-    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws InterruptedException, IOException {
+    public void perform(@NonNull Run<?, ?> run, @NonNull FilePath workspace, @NonNull EnvVars envVars, @NonNull Launcher launcher, @NonNull TaskListener listener) throws InterruptedException, IOException {
         consoleLogger = listener.getLogger();
 
         String clusterName = getClusterName();
@@ -260,11 +263,10 @@ public class CreateRaw extends BaseStep {
                 throw new IOException("no kubernetesClient for cluster " + clusterName);
             }
         }
-        EnvVars envVars = run.getEnvironment(listener);
-        runCreate(workspace, envVars);
+        runCreate(run, workspace, envVars);
     }
 
-    protected String runCreate(FilePath workspace, EnvVars envVars) {
+    protected String runCreate(Run<?, ?> run, FilePath workspace, EnvVars envVars) {
         URL url = null;
         byte[] data = null;
         File inputFile = null;
@@ -291,11 +293,30 @@ public class CreateRaw extends BaseStep {
                     createdResourceName = createWithResourceSpecificClient(resourceType, new ByteArrayInputStream(data));
                 }
             }
-        } catch (Exception e) {
-            logger.warning("possible URL related Exception has occurred " + e.toString());
+        } catch (Throwable e) {
+            logMessage("Failed: " + e.getMessage());
+            StringWriter buffer = new StringWriter();
+            PrintWriter writer = new PrintWriter(buffer);
+            e.printStackTrace(writer);
+            writer.close();
+            logMessage(buffer.toString());
+
+            logger.warning("Caught: " + e.toString());
             e.printStackTrace();
+
+            run.setResult(Result.FAILURE);
         }
         return createdResourceName;
+    }
+
+    protected void logMessage(String text) {
+        synchronized (this.consoleLogger) {
+            try {
+                this.consoleLogger.write((text + "\n").getBytes(StandardCharsets.UTF_8));
+            } catch (IOException e) {
+                logger.warning("failed to log to console: " + e);
+            }
+        }
     }
 
     /**

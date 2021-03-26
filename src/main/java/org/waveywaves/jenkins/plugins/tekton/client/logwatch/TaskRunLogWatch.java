@@ -31,6 +31,7 @@ public class TaskRunLogWatch implements Runnable{
     private KubernetesClient kubernetesClient;
     private TektonClient tektonClient;
     private TaskRun taskRun;
+    private Exception exception;
     OutputStream consoleLogger;
 
     public TaskRunLogWatch(KubernetesClient kubernetesClient, TektonClient tektonClient, TaskRun taskRun, OutputStream consoleLogger) {
@@ -38,6 +39,13 @@ public class TaskRunLogWatch implements Runnable{
         this.tektonClient = tektonClient;
         this.taskRun = taskRun;
         this.consoleLogger = consoleLogger;
+    }
+
+    /**
+     * @return the exception if the task run failed to succeed
+     */
+    public Exception getException() {
+        return exception;
     }
 
     @Override
@@ -112,12 +120,14 @@ public class TaskRunLogWatch implements Runnable{
             }
             logPodFailures(pr.get());
         } else {
-            logMessage("no pod could be found for TaskRun " + ns + "/" + taskRun.getMetadata().getName());
-
+            String message = "no pod could be found for TaskRun " + ns + "/" + taskRun.getMetadata().getName();
+            logMessage(message);
+            exception = new Exception(message);
 
             // lets reload to get the latest status
             taskRun = tektonClient.v1beta1().taskRuns().inNamespace(ns).withName(taskRun.getMetadata().getName()).get();
             logTaskRunFailure(taskRun);
+
         }
     }
 
@@ -149,9 +159,14 @@ public class TaskRunLogWatch implements Runnable{
         String podName = pod.getMetadata().getName();
         PodStatus status = pod.getStatus();
         String phase = status.getPhase();
-        logMessage("pod " + ns + "/" + podName + " status: " + phase);
+        String message = "pod " + ns + "/" + podName + " status: " + phase;
+        logMessage(message);
 
         // TODO we could try diagnose more information from the failed pod to log
+
+        if (!phase.equals("Succeeded")) {
+            exception = new Exception(message);
+        }
     }
 
 

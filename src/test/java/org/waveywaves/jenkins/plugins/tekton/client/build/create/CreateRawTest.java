@@ -2,6 +2,7 @@ package org.waveywaves.jenkins.plugins.tekton.client.build.create;
 
 import hudson.EnvVars;
 import hudson.FilePath;
+import hudson.model.Run;
 import org.junit.Test;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
 import org.waveywaves.jenkins.plugins.tekton.client.build.create.mock.CreateRawMock;
@@ -14,6 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class CreateRawTest {
     public static final boolean EnableCatalog = false;
+    public static Run<?,?> run;
     public static String namespace;
 
     @Test
@@ -23,7 +25,7 @@ public class CreateRawTest {
                 "metadata:\n" +
                 "  name: testTask\n";
         CreateRaw createRaw = new CreateRawMock(testTaskYaml, CreateRaw.InputType.YAML.toString(), namespace, TektonUtils.DEFAULT_CLIENT_KEY, EnableCatalog);
-        String created = createRaw.runCreate(null, null);
+        String created = createRaw.runCreate(run, null, null);
         assert created.equals(TektonUtils.TektonResourceType.task.toString());
     }
 
@@ -34,7 +36,7 @@ public class CreateRawTest {
                 "metadata:\n" +
                 "  generateName: home-is-set-\n";
         CreateRaw createRaw = new CreateRawMock(testTaskRunYaml, CreateRaw.InputType.YAML.toString(), namespace, TektonUtils.DEFAULT_CLIENT_KEY, EnableCatalog);
-        String created = createRaw.runCreate(null, null);
+        String created = createRaw.runCreate(run, null, null);
         assert created.equals(TektonUtils.TektonResourceType.taskrun.toString());
     }
 
@@ -45,7 +47,7 @@ public class CreateRawTest {
                 "metadata:\n" +
                 "  name: testPipeline\n";
         CreateRaw createRaw = new CreateRawMock(testPipelineYaml, CreateRaw.InputType.YAML.toString(), namespace, TektonUtils.DEFAULT_CLIENT_KEY, EnableCatalog);
-        String created = createRaw.runCreate(null, null);
+        String created = createRaw.runCreate(run, null, null);
         assert created.equals(TektonUtils.TektonResourceType.pipeline.toString());
     }
 
@@ -56,7 +58,7 @@ public class CreateRawTest {
                 "metadata:\n" +
                 "  name: testPipelineRun\n";
         CreateRaw createRaw = new CreateRawMock(testPipelineRunYaml, CreateRaw.InputType.YAML.toString(), namespace, TektonUtils.DEFAULT_CLIENT_KEY, EnableCatalog);
-        String created = createRaw.runCreate(null, null);
+        String created = createRaw.runCreate(run, null, null);
         assert created.equals(TektonUtils.TektonResourceType.pipelinerun.toString());
     }
 
@@ -73,7 +75,7 @@ public class CreateRawTest {
 
         String cheese = "edam";
         EnvVars envVars = new EnvVars("CHEESE", cheese);
-        createRaw.runCreate(workspace, envVars);
+        createRaw.runCreate(run, workspace, envVars);
 
         String created = createRaw.getLastResource();
 
