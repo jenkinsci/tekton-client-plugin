@@ -12,6 +12,7 @@ import hudson.model.AbstractProject;
 import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
+import hudson.remoting.VirtualChannel;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
@@ -338,7 +339,47 @@ public class CreateRaw extends BaseStep {
             }
 
             if (inputFile != null) {
-                inputFile = new File(dir, inputFile.getPath());
+                String path = inputFile.getPath();
+                inputFile = new File(dir, path);
+
+
+                // if the workspace is remote then lets make a local copy
+                if (workspace.isRemote()) {
+                    // lets switch to a temp dir for the local copy
+                    dir = Files.createTempDir();
+                    inputFile = new File(dir, path);
+
+                    logger.info("workspace is remote so lets copy the file " + path);
+
+                    VirtualChannel channel = workspace.getChannel();
+                    File remotePath = new File(workspace.getRemote(), path);
+
+                    logger.info("getting the remote file: " + remotePath + " copying to local file " + inputFile);
+
+                    FilePath inputFilePath = new FilePath(inputFile);
+                    inputFilePath.getParent().mkdirs();
+
+                    try {
+                        FilePath newFile = new FilePath(channel, remotePath.toString());
+                        newFile.copyTo(inputFilePath);
+                    } catch (Exception e) {
+                        logger.info("Failed to copy remote file locally: " + remotePath);
+                        e.printStackTrace();
+                        throw new IOException("failed to copy remote file locally: " + remotePath, e);
+                    }
+
+                    try {
+                        long size = inputFilePath.length();
+                        if (size == 0) {
+                            logger.warning("failed to find a size ");
+                        } else {
+                            logger.info("size of new local file is " + size);
+                        }
+                    } catch (Exception e) {
+                        logger.info("failed to find size of local file " + inputFile);
+                        e.printStackTrace();
+                    }
+                }
             }
             logger.info("processing the tekton catalog at dir " + dir);
             return processTektonCatalog(envVars, dir, inputFile, data);
