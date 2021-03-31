@@ -367,7 +367,9 @@ public class CreateRaw extends BaseStep {
     private byte[] processTektonCatalog(EnvVars envVars, File dir, File file, byte[] data) throws Exception {
         boolean deleteInputFile = false;
         if (file == null) {
-            file = File.createTempFile("tekton-input-", ".yaml", dir);
+            // the following fails when not running in the controller so lets not use a temp file for now
+            //file = File.createTempFile("tekton-input-", ".yaml", dir);
+            file = new File(dir, "tekton-input-pipeline.yaml");
             Files.write(data, file);
             logger.info("saved file: " + file.getPath());
         }
