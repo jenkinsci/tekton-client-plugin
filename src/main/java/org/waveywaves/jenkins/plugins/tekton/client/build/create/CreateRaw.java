@@ -372,7 +372,9 @@ public class CreateRaw extends BaseStep {
             logger.info("saved file: " + file.getPath());
         }
 
-        File outputFile = File.createTempFile("tekton-effective-", ".yaml", dir);
+        // the following fails when not running in the controller so lets not use a temp file for now
+        //File outputFile = File.createTempFile("tekton-effective-", ".yaml", dir);
+        File outputFile = new File(dir, "tekton-effective-pipeline.yaml");
 
         String filePath = file.getPath();
         String binary = ToolUtils.getJXPipelineBinary(getToolClassLoader());
