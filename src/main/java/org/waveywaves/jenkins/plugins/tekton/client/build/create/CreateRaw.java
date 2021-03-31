@@ -357,7 +357,10 @@ public class CreateRaw extends BaseStep {
                     logger.info("getting the remote file: " + remotePath + " copying to local file " + inputFile);
 
                     FilePath inputFilePath = new FilePath(inputFile);
-                    inputFilePath.getParent().mkdirs();
+                    FilePath parent = inputFilePath.getParent();
+                    if (parent != null) {
+                        parent.mkdirs();
+                    }
 
                     try {
                         FilePath newFile = new FilePath(channel, remotePath.toString());
