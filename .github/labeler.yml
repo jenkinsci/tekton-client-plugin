@@ -6,24 +6,24 @@ labels:
   - label: "in progress"
     title: "^wip:.*"
 
-  - title: "feat.*"
+  - title: "^feat.*"
     label: "enhancement"
 
-  - title: "bug.*"
+  - title: "^bug.*"
     label: "bug"
-  - title: "fix.*"
+  - title: "^fix.*"
     label: "bug"
 
-  - title: "chore(deps).*"
+  - title: "^chore(deps).*"
     label: "dependencies"
 
   - branch: "^dependabot/.*"
     label: "dependencies"
 
-  - title: "chore.*"
+  - title: "^chore.*"
     label: "chore"
 
-  - title: "docs.*"
+  - title: "^docs.*"
     label: "documentation"
 
   - files:
