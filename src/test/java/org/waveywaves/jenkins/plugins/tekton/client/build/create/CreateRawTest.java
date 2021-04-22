@@ -5,6 +5,7 @@ import hudson.FilePath;
 import hudson.model.Run;
 import org.junit.Test;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
+import org.waveywaves.jenkins.plugins.tekton.client.build.create.CreateRaw;
 import org.waveywaves.jenkins.plugins.tekton.client.build.create.mock.CreateRawMock;
 import org.waveywaves.jenkins.plugins.tekton.client.build.create.mock.FakeCreateRaw;
 

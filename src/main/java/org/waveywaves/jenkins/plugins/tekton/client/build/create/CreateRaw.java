@@ -48,7 +48,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-@Symbol("createStep")
+@Symbol("createRaw")
 public class CreateRaw extends BaseStep {
     private static final Logger logger = Logger.getLogger(CreateRaw.class.getName());
 
@@ -264,6 +264,7 @@ public class CreateRaw extends BaseStep {
                 throw new IOException("no kubernetesClient for cluster " + clusterName);
             }
         }
+
         runCreate(run, workspace, envVars);
     }
 
@@ -449,6 +450,7 @@ public class CreateRaw extends BaseStep {
         return data;
     }
 
+    @Symbol("createRaw")
     @Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
         public FormValidation doCheckInput(@QueryParameter(value = "input") final String input){

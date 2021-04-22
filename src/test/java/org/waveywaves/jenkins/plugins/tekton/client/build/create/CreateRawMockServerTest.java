@@ -9,9 +9,6 @@ import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
 
 import io.fabric8.tekton.pipeline.v1beta1.*;
-import io.fabric8.tekton.resource.v1alpha1.PipelineResource;
-import io.fabric8.tekton.resource.v1alpha1.PipelineResourceBuilder;
-import io.fabric8.tekton.resource.v1alpha1.PipelineResourceList;
 import org.junit.Rule;
 import org.junit.Test;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
