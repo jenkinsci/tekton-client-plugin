@@ -25,6 +25,7 @@ import io.fabric8.tekton.pipeline.v1beta1.Task;
 import io.fabric8.tekton.pipeline.v1beta1.TaskRun;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.waveywaves.jenkins.plugins.tekton.client.LogUtils;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
@@ -52,8 +53,8 @@ import java.util.logging.Logger;
 public class CreateRaw extends BaseStep {
     private static final Logger logger = Logger.getLogger(CreateRaw.class.getName());
 
-    private String input;
-    private String inputType;
+    private final String input;
+    private final String inputType;
     private String namespace;
     private String clusterName;
     private boolean enableCatalog;
@@ -62,18 +63,30 @@ public class CreateRaw extends BaseStep {
     private transient ClassLoader toolClassLoader;
 
     @DataBoundConstructor
-    public CreateRaw(String input, String inputType, String namespace, String clusterName, boolean enableCatalog) {
+    public CreateRaw(String input, String inputType) {
         super();
         this.inputType = inputType;
         this.input = input;
-        this.enableCatalog = enableCatalog;
-        this.namespace = namespace;
-        this.clusterName = clusterName;
-
         setKubernetesClient(TektonUtils.getKubernetesClient(getClusterName()));
         setTektonClient(TektonUtils.getTektonClient(getClusterName()));
     }
 
+    @DataBoundSetter
+    public void setNamespace(String namespace) {
+        this.namespace = namespace;
+    }
+
+    @DataBoundSetter
+    public void setClusterName(String clusterName) {
+        this.clusterName = clusterName;
+        setKubernetesClient(TektonUtils.getKubernetesClient(getClusterName()));
+        setTektonClient(TektonUtils.getTektonClient(getClusterName()));
+    }
+
+    @DataBoundSetter
+    public void setEnableCatalog(boolean enableCatalog) {
+        this.enableCatalog = enableCatalog;
+    }
 
     protected ClassLoader getToolClassLoader() {
         if (toolClassLoader == null) {
