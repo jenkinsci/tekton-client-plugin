@@ -1,6 +1,7 @@
 package org.waveywaves.jenkins.plugins.tekton.client.build.create;
 
 import com.google.common.base.Strings;
+import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -284,7 +285,7 @@ public class CreateRaw extends BaseStep {
     protected String runCreate(Run<?, ?> run, FilePath workspace, EnvVars envVars) {
         URL url = null;
         byte[] data = null;
-        File inputFile = null;
+        //File inputFile = null;
         String inputData = this.getInput();
         String inputType = this.getInputType();
         String createdResourceName = "";
@@ -295,9 +296,11 @@ public class CreateRaw extends BaseStep {
             } else if (inputType.equals(InputType.YAML.toString())) {
                 data = inputData.getBytes(StandardCharsets.UTF_8);
             } else if (inputType.equals(InputType.FILE.toString())) {
-                inputFile = new File(inputData);
+                FilePath inputFile = workspace.child(inputData);
+                logger.info("Reading from " + inputFile + ", exists:" + inputFile.exists());
+                data = ByteStreams.toByteArray(inputFile.read());
             }
-            data = convertTektonData(workspace, envVars, inputFile, data);
+            data = convertTektonData(workspace, envVars, null, data);
             if (data != null) {
                 List<TektonResourceType> kind = TektonUtils.getKindFromInputStream(new ByteArrayInputStream(data), this.getInputType());
                 if (kind.size() > 1){

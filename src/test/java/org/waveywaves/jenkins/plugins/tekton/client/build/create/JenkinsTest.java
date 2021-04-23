@@ -46,8 +46,15 @@ public class JenkinsTest {
         TektonUtils.initializeKubeClients(config);
     }
 
-    //@Test
+    @Test
     public void testScriptedPipeline() throws Exception {
+        TaskBuilder taskBuilder = new TaskBuilder()
+                .withNewMetadata().withName("testTask").endMetadata();
+        Task testTask = taskBuilder.build();
+
+        kubernetesRule.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
+                .andReturn(HttpURLConnection.HTTP_CREATED, testTask).once();
+
         WorkflowJob p = jenkinsRule.jenkins.createProject(WorkflowJob.class, "p");
         URL zipFile = getClass().getResource("tekton-test-project.zip");
         assertThat(zipFile, is(notNullValue()));
@@ -67,8 +74,15 @@ public class JenkinsTest {
         assertThat(log, not(containsString(".tekton/task.yaml (No such file or directory)")));
     }
 
-    //@Test
+    @Test
     public void testDeclarativePipelineWithFileInput() throws Exception {
+        TaskBuilder taskBuilder = new TaskBuilder()
+                .withNewMetadata().withName("testTask").endMetadata();
+        Task testTask = taskBuilder.build();
+
+        kubernetesRule.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
+                .andReturn(HttpURLConnection.HTTP_CREATED, testTask).once();
+
         WorkflowJob p = jenkinsRule.jenkins.createProject(WorkflowJob.class, "p");
         URL zipFile = getClass().getResource("tekton-test-project.zip");
         assertThat(zipFile, is(notNullValue()));
@@ -99,7 +113,6 @@ public class JenkinsTest {
     public void testDeclarativePipelineWithYamlInput() throws Exception {
         TaskBuilder taskBuilder = new TaskBuilder()
                 .withNewMetadata().withName("testTask").endMetadata();
-        List<Task> tList = new ArrayList<Task>();
         Task testTask = taskBuilder.build();
 
         kubernetesRule.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
