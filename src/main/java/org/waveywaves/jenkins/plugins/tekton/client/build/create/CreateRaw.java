@@ -50,7 +50,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-@Symbol("createRaw")
+@Symbol("tektonCreateRaw")
 public class CreateRaw extends BaseStep {
     private static final Logger logger = Logger.getLogger(CreateRaw.class.getName());
 
@@ -466,7 +466,7 @@ public class CreateRaw extends BaseStep {
         return data;
     }
 
-    @Symbol("createRaw")
+    @Symbol("tektonCreateRaw")
     @Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
         public FormValidation doCheckInput(@QueryParameter(value = "input") final String input){

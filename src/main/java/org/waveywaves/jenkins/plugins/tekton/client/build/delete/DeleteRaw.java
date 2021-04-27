@@ -29,7 +29,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.logging.Logger;
 
-@Symbol("deleteStep")
+@Symbol("tektonDeleteStep")
 public class DeleteRaw extends BaseStep {
     private static final Logger logger = Logger.getLogger(DeleteRaw.class.getName());
     private String resourceType;

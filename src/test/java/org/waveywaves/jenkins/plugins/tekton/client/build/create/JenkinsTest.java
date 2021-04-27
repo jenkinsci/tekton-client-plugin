@@ -1,9 +1,12 @@
 package org.waveywaves.jenkins.plugins.tekton.client.build.create;
 
+import hudson.model.FreeStyleBuild;
+import hudson.model.FreeStyleProject;
 import hudson.model.Result;
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
+import io.fabric8.tekton.client.TektonClient;
 import io.fabric8.tekton.pipeline.v1beta1.Task;
 import io.fabric8.tekton.pipeline.v1beta1.TaskBuilder;
 import java.net.HttpURLConnection;
@@ -19,6 +22,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
+import org.jvnet.hudson.test.ExtractResourceSCM;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
 import org.waveywaves.jenkins.plugins.tekton.client.global.ClusterConfig;
@@ -61,7 +65,7 @@ public class JenkinsTest {
 
         p.setDefinition(new CpsFlowDefinition("node {\n"
                                               + "  unzip '" + zipFile.getPath() + "'\n"
-                                              + "  createRaw(inputType: 'FILE', input: '.tekton/task.yaml')\n"
+                                              + "  tektonCreateRaw(inputType: 'FILE', input: '.tekton/task.yaml')\n"
                                               + "}\n", true));
 
         WorkflowRun b = jenkinsRule.assertBuildStatus(Result.SUCCESS, p.scheduleBuild2(0).get());
@@ -70,7 +74,7 @@ public class JenkinsTest {
         System.out.println(log);
 
         assertThat(log, containsString("Extracting: .tekton/task.yaml"));
-        assertThat(log, containsString("[Pipeline] createRaw"));
+        assertThat(log, containsString("[Pipeline] tektonCreateRaw"));
         assertThat(log, not(containsString(".tekton/task.yaml (No such file or directory)")));
     }
 
@@ -93,7 +97,7 @@ public class JenkinsTest {
                                               + "    stage('Stage') {\n"
                                               + "      steps {\n"
                                               + "        unzip '" + zipFile.getPath() + "'\n"
-                                              + "        createRaw(inputType: 'FILE', input: '.tekton/task.yaml')\n"
+                                              + "        tektonCreateRaw(inputType: 'FILE', input: '.tekton/task.yaml')\n"
                                               + "      }\n"
                                               + "    }\n"
                                               + "  }\n"
@@ -105,7 +109,7 @@ public class JenkinsTest {
         System.out.println(log);
 
         assertThat(log, containsString("Extracting: .tekton/task.yaml"));
-        assertThat(log, containsString("[Pipeline] createRaw"));
+        assertThat(log, containsString("[Pipeline] tektonCreateRaw"));
         assertThat(log, not(containsString(".tekton/task.yaml (No such file or directory)")));
     }
 
@@ -128,7 +132,7 @@ public class JenkinsTest {
                                               + "    stage('Stage') {\n"
                                               + "      steps {\n"
                                               + "        unzip '" + zipFile.getPath() + "'\n"
-                                              + "        createRaw(inputType: 'YAML', input: \"\"\"apiVersion: tekton.dev/v1beta1\n"
+                                              + "        tektonCreateRaw(inputType: 'YAML', input: \"\"\"apiVersion: tekton.dev/v1beta1\n"
                                               + "kind: Task\n"
                                               + "metadata:\n"
                                               + "  name: testTask\n"
@@ -144,7 +148,58 @@ public class JenkinsTest {
         System.out.println(log);
 
         assertThat(log, containsString("Extracting: .tekton/task.yaml"));
-        assertThat(log, containsString("[Pipeline] createRaw"));
+        assertThat(log, containsString("[Pipeline] tektonCreateRaw"));
         assertThat(log, not(containsString(".tekton/task.yaml (No such file or directory)")));
+    }
+
+    @Test
+    public void testFreestyleJobWithFileInput() throws Exception {
+        TaskBuilder taskBuilder = new TaskBuilder()
+                .withNewMetadata().withName("testTask").endMetadata();
+        Task testTask = taskBuilder.build();
+
+        kubernetesRule.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
+                .andReturn(HttpURLConnection.HTTP_CREATED, testTask).once();
+
+        FreeStyleProject p = jenkinsRule.jenkins.createProject(FreeStyleProject.class, "p");
+        URL zipFile = getClass().getResource("tekton-test-project.zip");
+        assertThat(zipFile, is(notNullValue()));
+
+        p.setScm(new ExtractResourceSCM(zipFile));
+        p.getBuildersList().add(new CreateRaw(".tekton/task.yaml", "FILE"));
+
+        FreeStyleBuild b = jenkinsRule.assertBuildStatus(Result.SUCCESS, p.scheduleBuild2(0).get());
+
+        String log = jenkinsRule.getLog(b);
+        System.out.println(log);
+
+        assertThat(log, containsString("Legacy code started this job"));
+    }
+
+    @Test
+    public void testFreestyleJobWithYamlInput() throws Exception {
+        TaskBuilder taskBuilder = new TaskBuilder()
+                .withNewMetadata().withName("testTask").endMetadata();
+        Task testTask = taskBuilder.build();
+
+        kubernetesRule.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
+                .andReturn(HttpURLConnection.HTTP_CREATED, testTask).once();
+
+        FreeStyleProject p = jenkinsRule.jenkins.createProject(FreeStyleProject.class, "p");
+        URL zipFile = getClass().getResource("tekton-test-project.zip");
+        assertThat(zipFile, is(notNullValue()));
+
+        p.setScm(new ExtractResourceSCM(zipFile));
+        p.getBuildersList().add(new CreateRaw("apiVersion: tekton.dev/v1beta1\n"
+                                              + "kind: Task\n"
+                                              + "metadata:\n"
+                                              + "  name: testTask\n", "YAML"));
+
+        FreeStyleBuild b = jenkinsRule.assertBuildStatus(Result.SUCCESS, p.scheduleBuild2(0).get());
+
+        String log = jenkinsRule.getLog(b);
+        System.out.println(log);
+
+        assertThat(log, containsString("Legacy code started this job"));
     }
 }
