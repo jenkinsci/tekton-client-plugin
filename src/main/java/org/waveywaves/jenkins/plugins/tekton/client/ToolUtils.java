@@ -13,7 +13,7 @@ import java.util.logging.Logger;
  * A helper class for accessing the jx-pipeline-effective binary
  */
 public class ToolUtils {
-    private static final Logger logger = Logger.getLogger(ToolUtils.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(ToolUtils.class.getName());
 
     private static String jxPipelineFile = System.getenv("JX_PIPELINE_EFFECTIVE_PATH");
 
@@ -27,7 +27,7 @@ public class ToolUtils {
             File f = File.createTempFile("jx-pipeline-effective-", "");
             boolean success = f.delete();
             if (!success) {
-                logger.log(Level.WARNING, "unable to delete temporary file " + f);
+                LOGGER.log(Level.WARNING, "unable to delete temporary file " + f);
             }
             f.deleteOnExit();
 
@@ -48,7 +48,7 @@ public class ToolUtils {
             try {
                 Files.copy(in, f.toPath());
             } catch (IOException e) {
-                logger.log(Level.SEVERE, "failed to copy jx-pipeline-effective to " + path + " due to " + e);
+                LOGGER.log(Level.SEVERE, "failed to copy jx-pipeline-effective to " + path + " due to " + e);
                 throw new IOException("failed to copy jx-pipeline-effective to " + path + " cause: " + e, e);
             }
 
@@ -60,7 +60,7 @@ public class ToolUtils {
 
             jxPipelineFile = path;
 
-            logger.info("saved jx-pipeline-effective binary to " + jxPipelineFile);
+            LOGGER.info("saved jx-pipeline-effective binary to " + jxPipelineFile);
         }
         return jxPipelineFile;
     }

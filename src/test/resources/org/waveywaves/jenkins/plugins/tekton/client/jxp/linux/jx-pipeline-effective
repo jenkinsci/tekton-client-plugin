@@ -31,5 +31,5 @@ echo "reading input file: $INPUTFILE"
 echo "writing output file: $OUTPUTFILE"
 
 cat $INPUTFILE > $OUTPUTFILE
-echo "  labels:" >> $OUTPUTFILE
-echo "    cheese: $CHEESE" >> $OUTPUTFILE
+echo "labels:" >> $OUTPUTFILE
+echo "  cheese: $CHEESE" >> $OUTPUTFILE

@@ -94,8 +94,8 @@ public class CreateRawTest {
         String created = createRaw.getLastResource();
 
         String expectedYaml = testTaskYaml +
-                "  labels:\n" +
-                "    cheese: " + cheese + "\n";
+                "labels:\n" +
+                "  cheese: " + cheese + "\n";
         assertThat(created).isEqualTo(expectedYaml);
     }
 
