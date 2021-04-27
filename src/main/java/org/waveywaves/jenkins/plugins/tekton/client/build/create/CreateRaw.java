@@ -301,7 +301,9 @@ public class CreateRaw extends BaseStep {
                 data = ByteStreams.toByteArray(inputFile.read());
             }
 
-            LOGGER.info("Got data before enhancement\n" + new String(data));
+            if (data != null) {
+                LOGGER.info("Got data before enhancement\n" + new String(data, StandardCharsets.UTF_8));
+            }
 
             data = convertTektonData(workspace, envVars, null, data);
             if (data != null) {
@@ -468,7 +470,7 @@ public class CreateRaw extends BaseStep {
 
         data = Files.toByteArray(outputFile);
 
-        LOGGER.info("Generated contents:\n" + new String(data));
+        LOGGER.info("Generated contents:\n" + new String(data, StandardCharsets.UTF_8));
 
         return data;
     }
