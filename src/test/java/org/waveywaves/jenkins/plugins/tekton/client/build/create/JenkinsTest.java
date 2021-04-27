@@ -7,6 +7,8 @@ import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
 import io.fabric8.tekton.client.TektonClient;
+import io.fabric8.tekton.pipeline.v1beta1.PipelineRun;
+import io.fabric8.tekton.pipeline.v1beta1.PipelineRunBuilder;
 import io.fabric8.tekton.pipeline.v1beta1.Task;
 import io.fabric8.tekton.pipeline.v1beta1.TaskBuilder;
 import java.net.HttpURLConnection;
@@ -194,6 +196,65 @@ public class JenkinsTest {
                                               + "kind: Task\n"
                                               + "metadata:\n"
                                               + "  name: testTask\n", "YAML"));
+
+        FreeStyleBuild b = jenkinsRule.assertBuildStatus(Result.SUCCESS, p.scheduleBuild2(0).get());
+
+        String log = jenkinsRule.getLog(b);
+        System.out.println(log);
+
+        assertThat(log, containsString("Legacy code started this job"));
+    }
+
+    @Test
+    public void testFreestyleJobWithComplexYamlInput() throws Exception {
+        PipelineRunBuilder pipelineRunBuilder = new PipelineRunBuilder()
+                .withNewMetadata().withName("release").endMetadata();
+        PipelineRun testPipelineRun = pipelineRunBuilder.build();
+
+        kubernetesRule.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns")
+                .andReturn(HttpURLConnection.HTTP_CREATED, testPipelineRun).once();
+
+        FreeStyleProject p = jenkinsRule.jenkins.createProject(FreeStyleProject.class, "p");
+        URL zipFile = getClass().getResource("tekton-test-project.zip");
+        assertThat(zipFile, is(notNullValue()));
+
+        p.setScm(new ExtractResourceSCM(zipFile));
+        p.getBuildersList().add(new CreateRaw("apiVersion: tekton.dev/v1beta1\n"
+                                              + "kind: PipelineRun\n"
+                                              + "metadata:\n"
+                                              + "  creationTimestamp: null\n"
+                                              + "  name: release\n"
+                                              + "spec:\n"
+                                              + "  pipelineSpec:\n"
+                                              + "    tasks:\n"
+                                              + "    - name: from-build-pack\n"
+                                              + "      resources: {}\n"
+                                              + "      taskSpec:\n"
+                                              + "        metadata: {}\n"
+                                              + "        stepTemplate:\n"
+                                              + "          image: uses:jenkins-x/jx3-pipeline-catalog/tasks/go/release.yaml@versionStream\n"
+                                              + "          name: \"\"\n"
+                                              + "          resources:\n"
+                                              + "            requests:\n"
+                                              + "              cpu: 400m\n"
+                                              + "              memory: 600Mi\n"
+                                              + "          workingDir: /workspace/source\n"
+                                              + "        steps:\n"
+                                              + "        - image: uses:jenkins-x/jx3-pipeline-catalog/tasks/git-clone/git-clone.yaml@versionStream\n"
+                                              + "          name: \"\"\n"
+                                              + "          resources: {}\n"
+                                              + "        - name: next-version\n"
+                                              + "          resources: {}\n"
+                                              + "        - name: jx-variables\n"
+                                              + "          resources: {}\n"
+                                              + "        - name: build-make-build\n"
+                                              + "          resources: {}\n"
+                                              + "        - name: promote-changelog\n"
+                                              + "          resources: {}\n"
+                                              + "  podTemplate: {}\n"
+                                              + "  serviceAccountName: tekton-bot\n"
+                                              + "  timeout: 240h0m0s\n"
+                                              + "status: {}", "YAML"));
 
         FreeStyleBuild b = jenkinsRule.assertBuildStatus(Result.SUCCESS, p.scheduleBuild2(0).get());
 
