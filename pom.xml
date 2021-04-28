@@ -28,7 +28,7 @@
         <jenkins.version>2.263.1</jenkins.version>
         <java.level>8</java.level>
         <pipeline-model-definition.version>1.6.0</pipeline-model-definition.version>
-        <revision>1.0-alpha3</revision>
+        <revision>1.0-beta1</revision>
         <changelist>-SNAPSHOT</changelist>
         <jenkins-test-harness.version>2.34</jenkins-test-harness.version>
         <kubernetes-server-mock.version>5.3.0</kubernetes-server-mock.version>
