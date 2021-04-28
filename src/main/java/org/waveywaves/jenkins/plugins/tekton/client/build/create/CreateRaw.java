@@ -1,6 +1,7 @@
 package org.waveywaves.jenkins.plugins.tekton.client.build.create;
 
 import com.google.common.base.Strings;
+import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -25,6 +26,7 @@ import io.fabric8.tekton.pipeline.v1beta1.Task;
 import io.fabric8.tekton.pipeline.v1beta1.TaskRun;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
 import org.waveywaves.jenkins.plugins.tekton.client.LogUtils;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
@@ -48,12 +50,12 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-@Symbol("createStep")
+@Symbol("tektonCreateRaw")
 public class CreateRaw extends BaseStep {
-    private static final Logger logger = Logger.getLogger(CreateRaw.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(CreateRaw.class.getName());
 
-    private String input;
-    private String inputType;
+    private final String input;
+    private final String inputType;
     private String namespace;
     private String clusterName;
     private boolean enableCatalog;
@@ -62,18 +64,30 @@ public class CreateRaw extends BaseStep {
     private transient ClassLoader toolClassLoader;
 
     @DataBoundConstructor
-    public CreateRaw(String input, String inputType, String namespace, String clusterName, boolean enableCatalog) {
+    public CreateRaw(String input, String inputType) {
         super();
         this.inputType = inputType;
         this.input = input;
-        this.enableCatalog = enableCatalog;
-        this.namespace = namespace;
-        this.clusterName = clusterName;
-
         setKubernetesClient(TektonUtils.getKubernetesClient(getClusterName()));
         setTektonClient(TektonUtils.getTektonClient(getClusterName()));
     }
 
+    @DataBoundSetter
+    public void setNamespace(String namespace) {
+        this.namespace = namespace;
+    }
+
+    @DataBoundSetter
+    public void setClusterName(String clusterName) {
+        this.clusterName = clusterName;
+        setKubernetesClient(TektonUtils.getKubernetesClient(getClusterName()));
+        setTektonClient(TektonUtils.getTektonClient(getClusterName()));
+    }
+
+    @DataBoundSetter
+    public void setEnableCatalog(boolean enableCatalog) {
+        this.enableCatalog = enableCatalog;
+    }
 
     protected ClassLoader getToolClassLoader() {
         if (toolClassLoader == null) {
@@ -249,7 +263,7 @@ public class CreateRaw extends BaseStep {
         consoleLogger = listener.getLogger();
 
         String clusterName = getClusterName();
-        logger.info("connecting using cluster name " + clusterName);
+        LOGGER.info("connecting using cluster name " + clusterName);
 
         // lets make sure the clients are not empty
         if (tektonClient == null) {
@@ -264,13 +278,14 @@ public class CreateRaw extends BaseStep {
                 throw new IOException("no kubernetesClient for cluster " + clusterName);
             }
         }
+
         runCreate(run, workspace, envVars);
     }
 
     protected String runCreate(Run<?, ?> run, FilePath workspace, EnvVars envVars) {
         URL url = null;
         byte[] data = null;
-        File inputFile = null;
+        //File inputFile = null;
         String inputData = this.getInput();
         String inputType = this.getInputType();
         String createdResourceName = "";
@@ -281,16 +296,23 @@ public class CreateRaw extends BaseStep {
             } else if (inputType.equals(InputType.YAML.toString())) {
                 data = inputData.getBytes(StandardCharsets.UTF_8);
             } else if (inputType.equals(InputType.FILE.toString())) {
-                inputFile = new File(inputData);
+                FilePath inputFile = workspace.child(inputData);
+                LOGGER.info("Reading from " + inputFile + ", exists:" + inputFile.exists());
+                data = ByteStreams.toByteArray(inputFile.read());
             }
-            data = convertTektonData(workspace, envVars, inputFile, data);
+
+            if (data != null) {
+                LOGGER.info("Got data before enhancement\n" + new String(data, StandardCharsets.UTF_8));
+            }
+
+            data = convertTektonData(workspace, envVars, null, data);
             if (data != null) {
                 List<TektonResourceType> kind = TektonUtils.getKindFromInputStream(new ByteArrayInputStream(data), this.getInputType());
                 if (kind.size() > 1){
-                    logger.info("Multiple Objects in YAML not supported yet");
+                    LOGGER.warning("Multiple Objects in YAML not supported yet");
                 } else {
                     TektonResourceType resourceType = kind.get(0);
-                    logger.info("creating kind " + resourceType.name());
+                    LOGGER.info("creating kind " + resourceType.name());
                     createdResourceName = createWithResourceSpecificClient(resourceType, new ByteArrayInputStream(data));
                 }
             }
@@ -302,7 +324,7 @@ public class CreateRaw extends BaseStep {
             writer.close();
             logMessage(buffer.toString());
 
-            logger.warning("Caught: " + e.toString());
+            LOGGER.warning("Caught: " + e.toString());
             e.printStackTrace();
 
             run.setResult(Result.FAILURE);
@@ -315,7 +337,7 @@ public class CreateRaw extends BaseStep {
             try {
                 this.consoleLogger.write((text + "\n").getBytes(StandardCharsets.UTF_8));
             } catch (IOException e) {
-                logger.warning("failed to log to console: " + e);
+                LOGGER.warning("failed to log to console: " + e);
             }
         }
     }
@@ -335,7 +357,7 @@ public class CreateRaw extends BaseStep {
 
             // lets make sure the dir exists
             if (dir.mkdirs()) {
-                logger.log(Level.FINE, "created workspace dir " + dir);
+                LOGGER.log(Level.FINE, "created workspace dir " + dir);
             }
 
             if (inputFile != null) {
@@ -349,12 +371,12 @@ public class CreateRaw extends BaseStep {
                     dir = Files.createTempDir();
                     inputFile = new File(dir, path);
 
-                    logger.info("workspace is remote so lets copy the file " + path);
+                    LOGGER.info("Workspace is remote so lets copy the file " + path);
 
                     VirtualChannel channel = workspace.getChannel();
                     File remotePath = new File(workspace.getRemote(), path);
 
-                    logger.info("getting the remote file: " + remotePath + " copying to local file " + inputFile);
+                    LOGGER.info("Getting the remote file: " + remotePath + " copying to local file " + inputFile);
 
                     FilePath inputFilePath = new FilePath(inputFile);
                     FilePath parent = inputFilePath.getParent();
@@ -366,7 +388,7 @@ public class CreateRaw extends BaseStep {
                         FilePath newFile = new FilePath(channel, remotePath.toString());
                         newFile.copyTo(inputFilePath);
                     } catch (Exception e) {
-                        logger.info("Failed to copy remote file locally: " + remotePath);
+                        LOGGER.info("Failed to copy remote file locally: " + remotePath);
                         e.printStackTrace();
                         throw new IOException("failed to copy remote file locally: " + remotePath, e);
                     }
@@ -374,17 +396,17 @@ public class CreateRaw extends BaseStep {
                     try {
                         long size = inputFilePath.length();
                         if (size == 0) {
-                            logger.warning("failed to find a size ");
+                            LOGGER.warning("failed to find a size ");
                         } else {
-                            logger.info("size of new local file is " + size);
+                            LOGGER.info("size of new local file is " + size);
                         }
                     } catch (Exception e) {
-                        logger.info("failed to find size of local file " + inputFile);
+                        LOGGER.info("failed to find size of local file " + inputFile);
                         e.printStackTrace();
                     }
                 }
             }
-            logger.info("processing the tekton catalog at dir " + dir);
+            LOGGER.info("Processing the tekton catalog at dir " + dir);
             return processTektonCatalog(envVars, dir, inputFile, data);
         }
 
@@ -415,7 +437,7 @@ public class CreateRaw extends BaseStep {
             //file = File.createTempFile("tekton-input-", ".yaml", dir);
             file = new File(dir, "tekton-input-pipeline.yaml");
             Files.write(data, file);
-            logger.info("saved file: " + file.getPath());
+            LOGGER.info("Saved file: " + file.getPath());
         }
 
         // the following fails when not running in the controller so lets not use a temp file for now
@@ -425,7 +447,7 @@ public class CreateRaw extends BaseStep {
         String filePath = file.getPath();
         String binary = ToolUtils.getJXPipelineBinary(getToolClassLoader());
 
-        logger.info("using tekton pipeline binary " + binary);
+        LOGGER.info("Using tekton pipeline binary " + binary);
 
         ProcessBuilder builder = new ProcessBuilder();
         builder.command(binary, "-b", "--add-defaults", "-f", filePath, "-o", outputFile.getPath());
@@ -437,18 +459,23 @@ public class CreateRaw extends BaseStep {
         Process process = builder.start();
         int exitCode = process.waitFor();
 
-        LogUtils.logStream(process.getInputStream(), logger, false);
-        LogUtils.logStream(process.getErrorStream(), logger, true);
+        LogUtils.logStream(process.getInputStream(), LOGGER, false);
+        LogUtils.logStream(process.getErrorStream(), LOGGER, true);
+
         if (exitCode != 0) {
             throw new Exception("failed to apply tekton catalog to file " + filePath);
         }
 
-        logger.info("generated file: " + outputFile.getPath());
+        LOGGER.info("Generated file: " + outputFile.getPath());
 
         data = Files.toByteArray(outputFile);
+
+        LOGGER.info("Generated contents:\n" + new String(data, StandardCharsets.UTF_8));
+
         return data;
     }
 
+    @Symbol("tektonCreateRaw")
     @Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
         public FormValidation doCheckInput(@QueryParameter(value = "input") final String input){

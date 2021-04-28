@@ -13,8 +13,8 @@ public class FakeCreateRaw extends CreateRawMock {
     private String name = "fakeName";
     private String lastResource;
 
-    public FakeCreateRaw(String input, String inputType, String namespace, String clusterName, boolean enableCatalog) {
-        super(input, inputType, namespace, clusterName, enableCatalog);
+    public FakeCreateRaw(String input, String inputType) {
+        super(input, inputType);
     }
 
     @Override

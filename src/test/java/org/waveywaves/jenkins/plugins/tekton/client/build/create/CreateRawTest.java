@@ -14,9 +14,8 @@ import java.nio.file.Path;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class CreateRawTest {
-    public static final boolean EnableCatalog = false;
-    public static Run<?,?> run;
-    public static String namespace;
+    private Run<?,?> run;
+    private String namespace;
 
     @Test
     public void runCreateTaskTest() {
@@ -24,7 +23,10 @@ public class CreateRawTest {
                 "kind: Task\n" +
                 "metadata:\n" +
                 "  name: testTask\n";
-        CreateRaw createRaw = new CreateRawMock(testTaskYaml, CreateRaw.InputType.YAML.toString(), namespace, TektonUtils.DEFAULT_CLIENT_KEY, EnableCatalog);
+        CreateRaw createRaw = new CreateRawMock(testTaskYaml, CreateRaw.InputType.YAML.toString());
+        createRaw.setNamespace(namespace);
+        createRaw.setClusterName(TektonUtils.DEFAULT_CLIENT_KEY);
+        createRaw.setEnableCatalog(false);
         String created = createRaw.runCreate(run, null, null);
         assert created.equals(TektonUtils.TektonResourceType.task.toString());
     }
@@ -35,7 +37,10 @@ public class CreateRawTest {
                 "kind: TaskRun\n" +
                 "metadata:\n" +
                 "  generateName: home-is-set-\n";
-        CreateRaw createRaw = new CreateRawMock(testTaskRunYaml, CreateRaw.InputType.YAML.toString(), namespace, TektonUtils.DEFAULT_CLIENT_KEY, EnableCatalog);
+        CreateRaw createRaw = new CreateRawMock(testTaskRunYaml, CreateRaw.InputType.YAML.toString());
+        createRaw.setNamespace(namespace);
+        createRaw.setClusterName(TektonUtils.DEFAULT_CLIENT_KEY);
+        createRaw.setEnableCatalog(false);
         String created = createRaw.runCreate(run, null, null);
         assert created.equals(TektonUtils.TektonResourceType.taskrun.toString());
     }
@@ -46,7 +51,10 @@ public class CreateRawTest {
                 "kind: Pipeline\n" +
                 "metadata:\n" +
                 "  name: testPipeline\n";
-        CreateRaw createRaw = new CreateRawMock(testPipelineYaml, CreateRaw.InputType.YAML.toString(), namespace, TektonUtils.DEFAULT_CLIENT_KEY, EnableCatalog);
+        CreateRaw createRaw = new CreateRawMock(testPipelineYaml, CreateRaw.InputType.YAML.toString());
+        createRaw.setNamespace(namespace);
+        createRaw.setClusterName(TektonUtils.DEFAULT_CLIENT_KEY);
+        createRaw.setEnableCatalog(false);
         String created = createRaw.runCreate(run, null, null);
         assert created.equals(TektonUtils.TektonResourceType.pipeline.toString());
     }
@@ -57,7 +65,10 @@ public class CreateRawTest {
                 "kind: PipelineRun\n" +
                 "metadata:\n" +
                 "  name: testPipelineRun\n";
-        CreateRaw createRaw = new CreateRawMock(testPipelineRunYaml, CreateRaw.InputType.YAML.toString(), namespace, TektonUtils.DEFAULT_CLIENT_KEY, EnableCatalog);
+        CreateRaw createRaw = new CreateRawMock(testPipelineRunYaml, CreateRaw.InputType.YAML.toString());
+        createRaw.setNamespace(namespace);
+        createRaw.setClusterName(TektonUtils.DEFAULT_CLIENT_KEY);
+        createRaw.setEnableCatalog(false);
         String created = createRaw.runCreate(run, null, null);
         assert created.equals(TektonUtils.TektonResourceType.pipelinerun.toString());
     }
@@ -68,7 +79,10 @@ public class CreateRawTest {
                 "kind: Task\n" +
                 "metadata:\n" +
                 "  name: testTask\n";
-        FakeCreateRaw createRaw = new FakeCreateRaw(testTaskYaml, CreateRaw.InputType.YAML.toString(), namespace, TektonUtils.DEFAULT_CLIENT_KEY, true);
+        FakeCreateRaw createRaw = new FakeCreateRaw(testTaskYaml, CreateRaw.InputType.YAML.toString());
+        createRaw.setNamespace(namespace);
+        createRaw.setClusterName(TektonUtils.DEFAULT_CLIENT_KEY);
+        createRaw.setEnableCatalog(true);
 
         Path tmpDir = Files.createTempDirectory("");
         FilePath workspace = new FilePath(tmpDir.toFile());
@@ -80,8 +94,8 @@ public class CreateRawTest {
         String created = createRaw.getLastResource();
 
         String expectedYaml = testTaskYaml +
-                "  labels:\n" +
-                "    cheese: " + cheese + "\n";
+                "labels:\n" +
+                "  cheese: " + cheese + "\n";
         assertThat(created).isEqualTo(expectedYaml);
     }
 

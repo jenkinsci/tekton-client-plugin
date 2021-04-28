@@ -34,8 +34,8 @@ import static org.assertj.core.api.Assertions.fail;
 
 
 public class DeleteRawMockServerTest {
-    public static final boolean EnableCatalog = false;
-    public static String namespace;
+    private boolean enableCatalog = false;
+    private String namespace;
 
     @Rule
     public KubernetesServer server = new KubernetesServer();
@@ -75,7 +75,10 @@ public class DeleteRawMockServerTest {
 
 
         // When
-        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTaskYaml, namespace, TektonUtils.DEFAULT_CLIENT_KEY, EnableCatalog);
+        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTaskYaml);
+        createRaw.setNamespace(namespace);
+        createRaw.setClusterName(TektonUtils.DEFAULT_CLIENT_KEY);
+        createRaw.setEnableCatalog(false);
         createRaw.setTektonClient(client);
         createRaw.setTaskClient(taskClient);
         createRaw.createTask(new ByteArrayInputStream(testTaskYaml.getBytes(StandardCharsets.UTF_8)));
@@ -151,13 +154,19 @@ public class DeleteRawMockServerTest {
 
 
         // When
-        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTask1Yaml,namespace, TektonUtils.DEFAULT_CLIENT_KEY, EnableCatalog);
+        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTask1Yaml);
+        createRaw.setNamespace(namespace);
+        createRaw.setClusterName(TektonUtils.DEFAULT_CLIENT_KEY);
+        createRaw.setEnableCatalog(false);
         createRaw.setTektonClient(client);
         createRaw.setTaskClient(taskClient);
         createRaw.createTask(new ByteArrayInputStream(testTask1Yaml.getBytes(StandardCharsets.UTF_8)));
 
         // Task 2
-        createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTask2Yaml, namespace, TektonUtils.DEFAULT_CLIENT_KEY, EnableCatalog);
+        createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTask2Yaml);
+        createRaw.setNamespace(namespace);
+        createRaw.setClusterName(TektonUtils.DEFAULT_CLIENT_KEY);
+        createRaw.setEnableCatalog(false);
         createRaw.setTektonClient(client);
         createRaw.setTaskClient(taskClient);
         createRaw.createTask(new ByteArrayInputStream(testTask2Yaml.getBytes(StandardCharsets.UTF_8)));
@@ -210,12 +219,15 @@ public class DeleteRawMockServerTest {
 
 
         // When
-        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTaskRunYaml, namespace, TektonUtils.DEFAULT_CLIENT_KEY, EnableCatalog){
+        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTaskRunYaml){
             @Override
             public void streamTaskRunLogsToConsole(TaskRun taskRun) {
                 return;
             }
         };
+        createRaw.setNamespace(namespace);
+        createRaw.setClusterName(TektonUtils.DEFAULT_CLIENT_KEY);
+        createRaw.setEnableCatalog(false);
         createRaw.setTektonClient(client);
         createRaw.setTaskRunClient(taskRunClient);
 
@@ -296,12 +308,15 @@ public class DeleteRawMockServerTest {
 
 
         // When
-        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTaskRun1Yaml, namespace, TektonUtils.DEFAULT_CLIENT_KEY, EnableCatalog){
+        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTaskRun1Yaml){
             @Override
             public void streamTaskRunLogsToConsole(TaskRun taskRun) {
                 return;
             }
         };
+        createRaw.setNamespace(namespace);
+        createRaw.setClusterName(TektonUtils.DEFAULT_CLIENT_KEY);
+        createRaw.setEnableCatalog(false);
         createRaw.setTektonClient(client);
         createRaw.setTaskRunClient(taskRunClient);
         try {
@@ -311,12 +326,15 @@ public class DeleteRawMockServerTest {
         }
 
         // TaskRun 2
-        createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTaskRun2Yaml, namespace, TektonUtils.DEFAULT_CLIENT_KEY, EnableCatalog){
+        createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTaskRun2Yaml){
             @Override
             public void streamTaskRunLogsToConsole(TaskRun taskRun) {
                 return;
             }
         };
+        createRaw.setNamespace(namespace);
+        createRaw.setClusterName(TektonUtils.DEFAULT_CLIENT_KEY);
+        createRaw.setEnableCatalog(false);
         createRaw.setTektonClient(client);
         createRaw.setTaskRunClient(taskRunClient);
         try {
@@ -373,7 +391,10 @@ public class DeleteRawMockServerTest {
 
 
         // When
-        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testPipelineYaml, namespace, TektonUtils.DEFAULT_CLIENT_KEY, EnableCatalog);
+        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testPipelineYaml);
+        createRaw.setNamespace(namespace);
+        createRaw.setClusterName(TektonUtils.DEFAULT_CLIENT_KEY);
+        createRaw.setEnableCatalog(false);
         createRaw.setTektonClient(client);
         createRaw.setPipelineClient(pipelineClient);
         createRaw.createPipeline(new ByteArrayInputStream(testPipelineYaml.getBytes(StandardCharsets.UTF_8)));
@@ -450,13 +471,19 @@ public class DeleteRawMockServerTest {
 
 
         // When
-        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testPipelineYaml1, namespace, TektonUtils.DEFAULT_CLIENT_KEY, EnableCatalog);
+        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testPipelineYaml1);
+        createRaw.setNamespace(namespace);
+        createRaw.setClusterName(TektonUtils.DEFAULT_CLIENT_KEY);
+        createRaw.setEnableCatalog(false);
         createRaw.setTektonClient(client);
         createRaw.setPipelineClient(pipelineClient);
         createRaw.createPipeline(new ByteArrayInputStream(testPipelineYaml1.getBytes(StandardCharsets.UTF_8)));
 
         //Pipeline 2
-        createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testPipelineYaml2, namespace, TektonUtils.DEFAULT_CLIENT_KEY, EnableCatalog);
+        createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testPipelineYaml2);
+        createRaw.setNamespace(namespace);
+        createRaw.setClusterName(TektonUtils.DEFAULT_CLIENT_KEY);
+        createRaw.setEnableCatalog(false);
         createRaw.setTektonClient(client);
         createRaw.setPipelineClient(pipelineClient);
         createRaw.createPipeline(new ByteArrayInputStream(testPipelineYaml2.getBytes(StandardCharsets.UTF_8)));
@@ -509,12 +536,15 @@ public class DeleteRawMockServerTest {
 
 
         // When
-        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testPipelineRunYaml, namespace, TektonUtils.DEFAULT_CLIENT_KEY, EnableCatalog){
+        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testPipelineRunYaml){
             @Override
             public void streamPipelineRunLogsToConsole(PipelineRun pipelineRun) {
                 return;
             }
         };
+        createRaw.setNamespace(namespace);
+        createRaw.setClusterName(TektonUtils.DEFAULT_CLIENT_KEY);
+        createRaw.setEnableCatalog(false);
         createRaw.setTektonClient(client);
         createRaw.setPipelineRunClient(pipelineRunClient);
         try {
@@ -595,12 +625,15 @@ public class DeleteRawMockServerTest {
 
 
         // When
-        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testPipelineRun1Yaml, namespace, TektonUtils.DEFAULT_CLIENT_KEY, EnableCatalog){
+        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testPipelineRun1Yaml){
             @Override
             public void streamPipelineRunLogsToConsole(PipelineRun pipelineRun) {
                 return;
             }
         };
+        createRaw.setNamespace(namespace);
+        createRaw.setClusterName(TektonUtils.DEFAULT_CLIENT_KEY);
+        createRaw.setEnableCatalog(false);
         createRaw.setTektonClient(client);
         createRaw.setPipelineRunClient(pipelineRunClient);
         try {
@@ -610,12 +643,15 @@ public class DeleteRawMockServerTest {
         }
 
         // PipelineRun 2
-        createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testPipelineRun2Yaml, namespace, TektonUtils.DEFAULT_CLIENT_KEY, EnableCatalog){
+        createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testPipelineRun2Yaml){
             @Override
             public void streamPipelineRunLogsToConsole(PipelineRun pipelineRun) {
                 return;
             }
         };
+        createRaw.setNamespace(namespace);
+        createRaw.setClusterName(TektonUtils.DEFAULT_CLIENT_KEY);
+        createRaw.setEnableCatalog(false);
         createRaw.setTektonClient(client);
         createRaw.setPipelineRunClient(pipelineRunClient);
         try {

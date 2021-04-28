@@ -1,5 +1,6 @@
 package org.waveywaves.jenkins.plugins.tekton.client;
 
+import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.ConfigBuilder;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -33,6 +34,19 @@ public class TektonUtils {
         pipelinerun
     }
 
+    public synchronized static void initializeKubeClients(Config config) {
+        tektonClientMap = new HashMap<>();
+        kubernetesClientMap = new HashMap<>();
+
+        logger.info("Initializing Kube and Tekton Clients");
+        TektonClient tektonClient = new DefaultTektonClient(config);
+        KubernetesClient kubernetesClient = new DefaultKubernetesClient(config);
+
+        tektonClientMap.put(DEFAULT_CLIENT_KEY, tektonClient);
+        kubernetesClientMap.put(DEFAULT_CLIENT_KEY, kubernetesClient);
+        logger.info("Added Clients for " + DEFAULT_CLIENT_KEY);
+    }
+
     public synchronized static void initializeKubeClients(List<ClusterConfig> clusterConfigs) {
         tektonClientMap = new HashMap<>();
         kubernetesClientMap = new HashMap<>();
@@ -40,9 +54,9 @@ public class TektonUtils {
         logger.info("Initializing Kube and Tekton Clients");
         if (clusterConfigs.size() > 0) {
             for (ClusterConfig cc: clusterConfigs) {
-                ConfigBuilder configBuilder = new ConfigBuilder();
-                configBuilder.withMasterUrl(cc.getMasterUrl());
-                configBuilder.withNamespace(cc.getDefaultNamespace());
+                ConfigBuilder configBuilder = new ConfigBuilder()
+                        .withMasterUrl(cc.getMasterUrl())
+                        .withNamespace(cc.getDefaultNamespace());
 
                 TektonClient tektonClient = new DefaultTektonClient(configBuilder.build());
                 KubernetesClient kubernetesClient = new DefaultKubernetesClient(configBuilder.build());
