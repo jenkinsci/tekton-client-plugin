@@ -26,7 +26,7 @@ import java.util.function.Predicate;
 import java.util.logging.Logger;
 
 public class TaskRunLogWatch implements Runnable{
-    private static final Logger logger = Logger.getLogger(TaskRunLogWatch.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(TaskRunLogWatch.class.getName());
 
     private KubernetesClient kubernetesClient;
     private TektonClient tektonClient;
@@ -73,30 +73,32 @@ public class TaskRunLogWatch implements Runnable{
         if (!podName.isEmpty() && taskRunPod != null){
             logMessage("pod " + ns + "/" + podName + ":\n");
 
-            logger.info("waiting for pod " + ns + "/" + podName + " to start running...");
+            LOGGER.info("waiting for pod " + ns + "/" + podName + " to start running...");
             Predicate<Pod> succeededState = i -> (runningPhases.contains(i.getStatus().getPhase()));
             PodResource<Pod> pr = kubernetesClient.pods().inNamespace(ns).withName(podName);
             try {
                 pr.waitUntilCondition(succeededState,60, TimeUnit.MINUTES);
             } catch ( InterruptedException e) {
-                logger.warning("Interrupted Exception Occurred");
+                LOGGER.warning("Interrupted Exception Occurred");
             }
             logMessage("\npod " + podName + " running:");
             List<String> taskRunContainerNames = new ArrayList<String>();
             for (Container c : taskRunPod.getSpec().getContainers()) {
                 taskRunContainerNames.add(c.getName());
             }
+
             for (String containerName : taskRunContainerNames) {
                 // lets write a little header per container
-                logMessage("\n\n" + containerName + ":");
+                logMessage("\n" + containerName + ":");
 
                 // wait for the container to start
-                logger.info("waiting for pod pod: " + ns + "/" + podName + " container: " + containerName + " to start:");
+                LOGGER.info("waiting for pod: " + ns + "/" + podName + " container: " + containerName + " to start:");
 
                 Predicate<Pod> containerRunning = i -> {
                     List<ContainerStatus> statuses = i.getStatus().getContainerStatuses();
                     for (ContainerStatus status : statuses) {
                         if (status.getName().equals(containerName)) {
+                            LOGGER.info("Found status " + status + " for container " + containerName);
                             ContainerState state = status.getState();
                             if (state != null) {
                                 ContainerStateTerminated terminatedState = state.getTerminated();
@@ -113,7 +115,7 @@ public class TaskRunLogWatch implements Runnable{
                 try {
                     pr.waitUntilCondition(containerRunning,60, TimeUnit.MINUTES);
                 } catch ( InterruptedException e) {
-                    logger.warning("Interrupted Exception Occurred");
+                    LOGGER.warning("Interrupted Exception Occurred");
                 }
 
                 pr.inContainer(containerName).watchLog(this.consoleLogger);
@@ -127,7 +129,6 @@ public class TaskRunLogWatch implements Runnable{
             // lets reload to get the latest status
             taskRun = tektonClient.v1beta1().taskRuns().inNamespace(ns).withName(taskRun.getMetadata().getName()).get();
             logTaskRunFailure(taskRun);
-
         }
     }
 
@@ -159,7 +160,7 @@ public class TaskRunLogWatch implements Runnable{
         String podName = pod.getMetadata().getName();
         PodStatus status = pod.getStatus();
         String phase = status.getPhase();
-        String message = "pod " + ns + "/" + podName + " status: " + phase;
+        String message = "\npod " + ns + "/" + podName + " status: " + phase;
         logMessage(message);
 
         // TODO we could try diagnose more information from the failed pod to log
@@ -174,7 +175,7 @@ public class TaskRunLogWatch implements Runnable{
         try {
             this.consoleLogger.write((text + "\n").getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
-            logger.warning("failed to log to console: " + e);
+            LOGGER.warning("failed to log to console: " + e);
         }
     }
 }

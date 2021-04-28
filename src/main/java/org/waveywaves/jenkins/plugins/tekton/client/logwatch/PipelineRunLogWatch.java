@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 public class PipelineRunLogWatch implements Runnable {
-    private static final Logger logger = Logger.getLogger(PipelineRunLogWatch.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(PipelineRunLogWatch.class.getName());
 
     private KubernetesClient kubernetesClient;
     private TektonClient tektonClient;
@@ -52,7 +52,7 @@ public class PipelineRunLogWatch implements Runnable {
 
         for (PipelineTask pt: pipelineTasks){
             String pipelineTaskName = pt.getName();
-            logger.info("streaming logs for PipelineTask " + ns + "/" + pipelineRunName + "/" + pipelineTaskName);
+            LOGGER.info("Streaming logs for PipelineTask namespace=" + ns + ", runName=" + pipelineRunName + ", taskName=" + pipelineTaskName);
             ListOptions lo = new ListOptions();
             String selector = String.format("%s=%s,%s=%s", pipelineTaskLabelName, pipelineTaskName, pipelineRunLabelName, pipelineRunName);
             lo.setLabelSelector(selector);
@@ -61,17 +61,18 @@ public class PipelineRunLogWatch implements Runnable {
             for (int i = 0; i < 60; i++) {
                 boolean taskComplete = false;
                 List<TaskRun> taskRunList = tektonClient.v1beta1().taskRuns().inNamespace(ns).list(lo).getItems();
+                LOGGER.info("Got " + taskRunList.size() + " TaskRuns");
                 for (TaskRun tr : taskRunList) {
                     String trName = tr.getMetadata().getName();
                     if (Strings.isNullOrEmpty(tr.getMetadata().getNamespace())) {
                         tr.getMetadata().setNamespace(ns);
                     }
-                    logger.info("streaming logs for TaskRun " + trName);
+                    LOGGER.info("streaming logs for TaskRun " + trName);
 
                     List<OwnerReference> ownerReferences = tr.getMetadata().getOwnerReferences();
                     for (OwnerReference or : ownerReferences) {
                         if (or.getUid().equals(pipelineRunUid)) {
-                            logger.info(String.format("Streaming logs for TaskRun %s/%s owned by PipelineRun %s with selector %s", ns, trName, pipelineRunName, selector));
+                            LOGGER.info(String.format("Streaming logs for TaskRun %s/%s owned by PipelineRun %s with selector %s", ns, trName, pipelineRunName, selector));
                             TaskRunLogWatch logWatch = new TaskRunLogWatch(kubernetesClient, tektonClient, tr, consoleLogger);
                             Thread logWatchTask = new Thread(logWatch);
                             logWatchTask.start();
@@ -82,22 +83,22 @@ public class PipelineRunLogWatch implements Runnable {
                             }
                             Exception e = logWatch.getException();
                             if (e != null) {
-                                logger.info("TaskRun " + trName + " failed");
+                                LOGGER.info("TaskRun " + trName + " failed");
                                 if (exception == null) {
                                     exception = e;
                                 }
                             } else {
-                                logger.info("TaskRun " + trName + " completed");
+                                LOGGER.info("TaskRun " + trName + " completed");
                             }
                             taskComplete = true;
                         }
                     }
                 }
                 if (taskComplete) {
-                    logMessage("completed PipelineTask " + pipelineTaskName);
+                    logMessageLn("completed PipelineTask " + pipelineTaskName);
                     break;
                 } else {
-                    logMessage("could not find OwnerReference for " + pipelineRunUid);
+                    logMessageLn("could not find OwnerReference for " + pipelineRunUid);
                 }
                 try {
                     Thread.sleep(1000);
@@ -109,11 +110,11 @@ public class PipelineRunLogWatch implements Runnable {
         }
     }
 
-    protected void logMessage(String text) {
+    protected void logMessageLn(String text) {
         try {
-            this.consoleLogger.write(text.getBytes(StandardCharsets.UTF_8));
+            this.consoleLogger.write((text + "\n").getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
-            logger.warning("failed to log to console: " + e);
+            LOGGER.warning("failed to log to console: " + e);
         }
     }
 }
