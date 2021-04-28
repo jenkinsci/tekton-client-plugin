@@ -24,7 +24,16 @@ import io.fabric8.tekton.pipeline.v1beta1.Pipeline;
 import io.fabric8.tekton.pipeline.v1beta1.PipelineRun;
 import io.fabric8.tekton.pipeline.v1beta1.Task;
 import io.fabric8.tekton.pipeline.v1beta1.TaskRun;
+import io.jenkins.plugins.checks.api.ChecksConclusion;
+import io.jenkins.plugins.checks.api.ChecksDetails;
+import io.jenkins.plugins.checks.api.ChecksOutput;
+import io.jenkins.plugins.checks.api.ChecksPublisher;
+import io.jenkins.plugins.checks.api.ChecksPublisherFactory;
+import io.jenkins.plugins.checks.api.ChecksStatus;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import org.jenkinsci.Symbol;
+import org.jenkinsci.plugins.displayurlapi.DisplayURLProvider;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
@@ -62,6 +71,7 @@ public class CreateRaw extends BaseStep {
 
     private transient PrintStream consoleLogger;
     private transient ClassLoader toolClassLoader;
+    private transient ChecksPublisher checksPublisher;
 
     @DataBoundConstructor
     public CreateRaw(String input, String inputType) {
@@ -103,6 +113,10 @@ public class CreateRaw extends BaseStep {
      */
     protected void setToolClassLoader(ClassLoader toolClassLoader) {
         this.toolClassLoader = toolClassLoader;
+    }
+
+    public void setChecksPublisher(ChecksPublisher checksPublisher) {
+        this.checksPublisher = checksPublisher;
     }
 
     // the getters must be public to work with the Configure page...
@@ -224,6 +238,13 @@ public class CreateRaw extends BaseStep {
         }
         resourceName = pipelineRun.getMetadata().getName();
 
+        ChecksDetails checkDetails = new ChecksDetails.ChecksDetailsBuilder()
+                .withName("Tekton: " + pipelineRun.getMetadata().getName())
+                .withStatus(ChecksStatus.IN_PROGRESS)
+                .withConclusion(ChecksConclusion.NONE)
+                .build();
+        checksPublisher.publish(checkDetails);
+
         streamPipelineRunLogsToConsole(pipelineRun);
         return resourceName;
     }
@@ -279,6 +300,10 @@ public class CreateRaw extends BaseStep {
             }
         }
 
+        if (checksPublisher == null) {
+            checksPublisher = ChecksPublisherFactory.fromRun(run, listener);
+        }
+
         runCreate(run, workspace, envVars);
     }
 
@@ -328,6 +353,17 @@ public class CreateRaw extends BaseStep {
             e.printStackTrace();
 
             run.setResult(Result.FAILURE);
+
+            ChecksDetails checkDetails = new ChecksDetails.ChecksDetailsBuilder()
+                    .withName("Tekton: " + createdResourceName)
+                    .withStatus(ChecksStatus.COMPLETED)
+                    .withConclusion(ChecksConclusion.FAILURE)
+                    .withOutput(new ChecksOutput.ChecksOutputBuilder().withText(buffer.toString()).build())
+                    .withDetailsURL(DisplayURLProvider.get().getRunURL(run))
+                    .withCompletedAt(LocalDateTime.now(ZoneOffset.UTC))
+                    .build();
+
+            checksPublisher.publish(checkDetails);
         }
         return createdResourceName;
     }
@@ -363,7 +399,6 @@ public class CreateRaw extends BaseStep {
             if (inputFile != null) {
                 String path = inputFile.getPath();
                 inputFile = new File(dir, path);
-
 
                 // if the workspace is remote then lets make a local copy
                 if (workspace.isRemote()) {

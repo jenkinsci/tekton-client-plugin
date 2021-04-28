@@ -1,6 +1,5 @@
 package org.waveywaves.jenkins.plugins.tekton.client;
 
-import junit.framework.TestCase;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -14,7 +13,7 @@ import static org.assertj.core.api.Assertions.*;
 
 /**
  */
-public class LogUtilsTest extends TestCase {
+public class LogUtilsTest {
     String expected = "hello\nworld";
     boolean verbose = System.getenv("TEST_VERBOSE") == "true";
 

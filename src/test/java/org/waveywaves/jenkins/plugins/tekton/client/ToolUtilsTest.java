@@ -1,6 +1,5 @@
 package org.waveywaves.jenkins.plugins.tekton.client;
 
-import junit.framework.TestCase;
 import org.junit.Test;
 
 import java.io.File;
@@ -10,7 +9,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  */
-public class ToolUtilsTest extends TestCase {
+public class ToolUtilsTest {
     private static final Logger logger = Logger.getLogger(ToolUtilsTest.class.getName());
 
     @Test
