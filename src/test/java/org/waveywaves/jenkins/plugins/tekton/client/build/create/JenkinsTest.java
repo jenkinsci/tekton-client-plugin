@@ -3,20 +3,41 @@ package org.waveywaves.jenkins.plugins.tekton.client.build.create;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Result;
+import io.fabric8.kubernetes.api.model.ContainerBuilder;
+import io.fabric8.kubernetes.api.model.ContainerState;
+import io.fabric8.kubernetes.api.model.ContainerStateBuilder;
+import io.fabric8.kubernetes.api.model.ContainerStateTerminated;
+import io.fabric8.kubernetes.api.model.ContainerStateTerminatedBuilder;
+import io.fabric8.kubernetes.api.model.ContainerStatusBuilder;
+import io.fabric8.kubernetes.api.model.OwnerReference;
+import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.PodBuilder;
+import io.fabric8.kubernetes.api.model.PodList;
+import io.fabric8.kubernetes.api.model.PodListBuilder;
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
 import io.fabric8.tekton.client.TektonClient;
 import io.fabric8.tekton.pipeline.v1beta1.PipelineRun;
 import io.fabric8.tekton.pipeline.v1beta1.PipelineRunBuilder;
+import io.fabric8.tekton.pipeline.v1beta1.PipelineRunSpec;
+import io.fabric8.tekton.pipeline.v1beta1.PipelineTask;
 import io.fabric8.tekton.pipeline.v1beta1.Task;
 import io.fabric8.tekton.pipeline.v1beta1.TaskBuilder;
+import io.fabric8.tekton.pipeline.v1beta1.TaskList;
+import io.fabric8.tekton.pipeline.v1beta1.TaskRunBuilder;
+import io.fabric8.tekton.pipeline.v1beta1.TaskRunList;
+import io.fabric8.tekton.pipeline.v1beta1.TaskRunListBuilder;
+import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import okhttp3.mockwebserver.RecordedRequest;
+import org.apache.commons.io.IOUtils;
+import org.assertj.core.internal.InputStreams;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -58,10 +79,11 @@ public class JenkinsTest {
     public void testScriptedPipeline() throws Exception {
         TaskBuilder taskBuilder = new TaskBuilder()
                 .withNewMetadata().withName("testTask").endMetadata();
-        Task testTask = taskBuilder.build();
 
-        kubernetesRule.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
-                .andReturn(HttpURLConnection.HTTP_CREATED, testTask).once();
+        kubernetesRule.expect()
+                .post()
+                .withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
+                .andReturn(HttpURLConnection.HTTP_OK, taskBuilder.build()).once();
 
         WorkflowJob p = jenkinsRule.jenkins.createProject(WorkflowJob.class, "p");
         URL zipFile = getClass().getResource("tekton-test-project.zip");
@@ -73,6 +95,8 @@ public class JenkinsTest {
                                               + "}\n", true));
 
         WorkflowRun b = jenkinsRule.assertBuildStatus(Result.SUCCESS, p.scheduleBuild2(0).get());
+
+        assertThat(kubernetesRule.getMockServer().getRequestCount(), is(1));
 
         String log = jenkinsRule.getLog(b);
         System.out.println(log);
@@ -86,10 +110,11 @@ public class JenkinsTest {
     public void testDeclarativePipelineWithFileInput() throws Exception {
         TaskBuilder taskBuilder = new TaskBuilder()
                 .withNewMetadata().withName("testTask").endMetadata();
-        Task testTask = taskBuilder.build();
 
-        kubernetesRule.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
-                .andReturn(HttpURLConnection.HTTP_CREATED, testTask).once();
+        kubernetesRule.expect()
+                .post()
+                .withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
+                .andReturn(HttpURLConnection.HTTP_OK, taskBuilder.build()).once();
 
         WorkflowJob p = jenkinsRule.jenkins.createProject(WorkflowJob.class, "p");
         URL zipFile = getClass().getResource("tekton-test-project.zip");
@@ -109,6 +134,8 @@ public class JenkinsTest {
 
         WorkflowRun b = jenkinsRule.assertBuildStatus(Result.SUCCESS, p.scheduleBuild2(0).get());
 
+        assertThat(kubernetesRule.getMockServer().getRequestCount(), is(1));
+
         String log = jenkinsRule.getLog(b);
         System.out.println(log);
 
@@ -121,10 +148,11 @@ public class JenkinsTest {
     public void testDeclarativePipelineWithYamlInput() throws Exception {
         TaskBuilder taskBuilder = new TaskBuilder()
                 .withNewMetadata().withName("testTask").endMetadata();
-        Task testTask = taskBuilder.build();
 
-        kubernetesRule.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
-                .andReturn(HttpURLConnection.HTTP_CREATED, testTask).once();
+        kubernetesRule.expect()
+                .post()
+                .withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
+                .andReturn(HttpURLConnection.HTTP_OK, taskBuilder.build()).once();
 
         WorkflowJob p = jenkinsRule.jenkins.createProject(WorkflowJob.class, "p");
         URL zipFile = getClass().getResource("tekton-test-project.zip");
@@ -148,6 +176,8 @@ public class JenkinsTest {
 
         WorkflowRun b = jenkinsRule.assertBuildStatus(Result.SUCCESS, p.scheduleBuild2(0).get());
 
+        assertThat(kubernetesRule.getMockServer().getRequestCount(), is(1));
+
         String log = jenkinsRule.getLog(b);
         System.out.println(log);
 
@@ -160,10 +190,11 @@ public class JenkinsTest {
     public void testFreestyleJobWithFileInput() throws Exception {
         TaskBuilder taskBuilder = new TaskBuilder()
                 .withNewMetadata().withName("testTask").endMetadata();
-        Task testTask = taskBuilder.build();
 
-        kubernetesRule.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
-                .andReturn(HttpURLConnection.HTTP_CREATED, testTask).once();
+        kubernetesRule.expect()
+                .post()
+                .withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
+                .andReturn(HttpURLConnection.HTTP_OK, taskBuilder.build()).once();
 
         FreeStyleProject p = jenkinsRule.jenkins.createProject(FreeStyleProject.class, "p");
         URL zipFile = getClass().getResource("tekton-test-project.zip");
@@ -173,6 +204,8 @@ public class JenkinsTest {
         p.getBuildersList().add(new CreateRaw(".tekton/task.yaml", "FILE"));
 
         FreeStyleBuild b = jenkinsRule.assertBuildStatus(Result.SUCCESS, p.scheduleBuild2(0).get());
+
+        assertThat(kubernetesRule.getMockServer().getRequestCount(), is(1));
 
         String log = jenkinsRule.getLog(b);
         System.out.println(log);
@@ -184,10 +217,11 @@ public class JenkinsTest {
     public void testFreestyleJobWithYamlInput() throws Exception {
         TaskBuilder taskBuilder = new TaskBuilder()
                 .withNewMetadata().withName("testTask").endMetadata();
-        Task testTask = taskBuilder.build();
 
-        kubernetesRule.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
-                .andReturn(HttpURLConnection.HTTP_CREATED, testTask).once();
+        kubernetesRule.expect()
+                .post()
+                .withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
+                .andReturn(HttpURLConnection.HTTP_OK, taskBuilder.build()).once();
 
         FreeStyleProject p = jenkinsRule.jenkins.createProject(FreeStyleProject.class, "p");
         URL zipFile = getClass().getResource("tekton-test-project.zip");
@@ -201,6 +235,8 @@ public class JenkinsTest {
 
         FreeStyleBuild b = jenkinsRule.assertBuildStatus(Result.SUCCESS, p.scheduleBuild2(0).get());
 
+        assertThat(kubernetesRule.getMockServer().getRequestCount(), is(1));
+
         String log = jenkinsRule.getLog(b);
         System.out.println(log);
 
@@ -212,53 +248,87 @@ public class JenkinsTest {
         ToolUtils.getJXPipelineBinary(ToolUtils.class.getClassLoader());
 
         PipelineRunBuilder pipelineRunBuilder = new PipelineRunBuilder()
-                .withNewMetadata().withName("release").endMetadata();
-        PipelineRun testPipelineRun = pipelineRunBuilder.build();
+                .withNewMetadata()
+                    .withName("release")
+                    .withNamespace("test")
+                    .withUid("pipeline-run-uid")
+                .endMetadata()
+                .withNewSpec()
+                    .withNewPipelineSpec()
+                        .addNewTask()
+                            .withName("pipelineTaskName")
+                        .endTask()
+                    .endPipelineSpec()
+                .endSpec();
 
-        kubernetesRule.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns")
-                .andReturn(HttpURLConnection.HTTP_CREATED, testPipelineRun).once();
+        kubernetesRule.expect()
+                .post()
+                .withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns")
+                .andReturn(HttpURLConnection.HTTP_OK, pipelineRunBuilder.build())
+                .once();
+
+        TaskRunList taskRunList = new TaskRunListBuilder()
+                .addToItems(
+                        new TaskRunBuilder()
+                            .withNewMetadata()
+                                .withName("testTaskRun")
+                                .withOwnerReferences(ownerReference("pipeline-run-uid"))
+                            .endMetadata()
+                        .build())
+                .build();
+
+        kubernetesRule.expect()
+                .get()
+                .withPath("/apis/tekton.dev/v1beta1/namespaces/test/taskruns?labelSelector=tekton.dev%2FpipelineTask%3DpipelineTaskName%2Ctekton.dev%2FpipelineRun%3Drelease")
+                .andReturn(HttpURLConnection.HTTP_OK, taskRunList)
+                .once();
+
+        Pod pod = new PodBuilder()
+                .withNewMetadata()
+                    .withName("hello-world-pod")
+                    .withNamespace("test")
+                    .withOwnerReferences(ownerReference("TaskRun","testTaskRun"))
+                .endMetadata()
+                .withNewSpec()
+                    .withContainers(
+                        new ContainerBuilder()
+                             .withName("hello-world-container")
+                        .build()
+                    )
+                .endSpec()
+                .withNewStatus()
+                    .withPhase("Succeeded")
+                    .withContainerStatuses(
+                            new ContainerStatusBuilder()
+                                    .withName("hello-world-container")
+                                    .withState(
+                                            new ContainerStateBuilder()
+                                                    .withTerminated(new ContainerStateTerminatedBuilder().withStartedAt("timestamp").build())
+                                            .build()
+                                    )
+                            .build())
+                .endStatus()
+                .build();
+
+        PodList podList = new PodListBuilder()
+                .addToItems(pod)
+                .build();
+
+        kubernetesRule.expect().get().withPath("/api/v1/namespaces/test/pods")
+                .andReturn(HttpURLConnection.HTTP_OK, podList).once();
+
+        kubernetesRule.expect().get().withPath("/api/v1/namespaces/test/pods/hello-world-pod")
+                .andReturn(HttpURLConnection.HTTP_OK, pod).always();
+        
+        kubernetesRule.expect().get().withPath("/api/v1/namespaces/test/pods/hello-world-pod/log?pretty=false&container=hello-world-container&follow=true")
+                .andReturn(HttpURLConnection.HTTP_OK, "Whoop! This is the pod log").once();
 
         FreeStyleProject p = jenkinsRule.jenkins.createProject(FreeStyleProject.class, "p");
         URL zipFile = getClass().getResource("tekton-test-project.zip");
         assertThat(zipFile, is(notNullValue()));
 
         p.setScm(new ExtractResourceSCM(zipFile));
-        CreateRaw createRaw = new CreateRaw("apiVersion: tekton.dev/v1beta1\n"
-                                  + "kind: PipelineRun\n"
-                                  + "metadata:\n"
-                                  + "  creationTimestamp: null\n"
-                                  + "  name: release\n"
-                                  + "spec:\n"
-                                  + "  pipelineSpec:\n"
-                                  + "    tasks:\n"
-                                  + "    - name: from-build-pack\n"
-                                  + "      resources: {}\n"
-                                  + "      taskSpec:\n"
-                                  + "        metadata: {}\n"
-                                  + "        stepTemplate:\n"
-                                  + "          image: uses:jenkins-x/jx3-pipeline-catalog/tasks/go/release.yaml@versionStream\n"
-                                  + "          name: \"\"\n"
-                                  + "          resources:\n"
-                                  + "            requests:\n"
-                                  + "              cpu: 400m\n"
-                                  + "              memory: 600Mi\n"
-                                  + "          workingDir: /workspace/source\n"
-                                  + "        steps:\n"
-                                  + "        - image: uses:jenkins-x/jx3-pipeline-catalog/tasks/git-clone/git-clone.yaml@versionStream\n"
-                                  + "          name: \"\"\n"
-                                  + "          resources: {}\n"
-                                  + "        - name: next-version\n"
-                                  + "          resources: {}\n"
-                                  + "        - name: jx-variables\n"
-                                  + "          resources: {}\n"
-                                  + "        - name: build-make-build\n"
-                                  + "          resources: {}\n"
-                                  + "        - name: promote-changelog\n"
-                                  + "          resources: {}\n"
-                                  + "  podTemplate: {}\n"
-                                  + "  serviceAccountName: tekton-bot\n"
-                                  + "  timeout: 240h0m0s\n"
-                                  + "status: {}\n", "YAML");
+        CreateRaw createRaw = new CreateRaw(contents("jx-pipeline.yaml"), "YAML");
         createRaw.setEnableCatalog(true);
         p.getBuildersList().add(createRaw);
 
@@ -268,14 +338,120 @@ public class JenkinsTest {
         System.out.println(log);
 
         assertThat(log, containsString("Legacy code started this job"));
-        assertThat(kubernetesRule.getMockServer().getRequestCount(), is(1));
+        assertThat(log, containsString("Whoop! This is the pod log"));
 
-        RecordedRequest request = kubernetesRule.getLastRequest();
+        assertThat(kubernetesRule.getMockServer().getRequestCount(), is(8));
+    }
 
-        assertThat(request.getPath(), is("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns"));
-        assertThat(request.getMethod(), is("POST"));
-        String body = request.getBody().readUtf8();
-        // this is the modification from the fake jx-pipeline-effective
-        assertThat(body, containsString("\"labels\":{\"cheese\":null}"));
+    @Test
+    public void testFreestyleJobWithExpandedYamlInput() throws Exception {
+        ToolUtils.getJXPipelineBinary(ToolUtils.class.getClassLoader());
+
+        PipelineRunBuilder pipelineRunBuilder = new PipelineRunBuilder()
+                .withNewMetadata()
+                    .withName("release")
+                    .withNamespace("test")
+                    .withUid("pipeline-run-uid")
+                .endMetadata()
+                .withNewSpec()
+                    .withNewPipelineSpec()
+                        .addNewTask()
+                            .withName("pipelineTaskName")
+                        .endTask()
+                    .endPipelineSpec()
+                .endSpec();
+
+        kubernetesRule.expect()
+                .post()
+                .withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns")
+                .andReturn(HttpURLConnection.HTTP_OK, pipelineRunBuilder.build())
+                .once();
+
+        TaskRunList taskRunList = new TaskRunListBuilder()
+                .addToItems(
+                        new TaskRunBuilder()
+                                .withNewMetadata()
+                                    .withName("testTaskRun")
+                                    .withOwnerReferences(ownerReference("pipeline-run-uid"))
+                                .endMetadata()
+                                .build())
+                .build();
+
+        kubernetesRule.expect()
+                .get()
+                .withPath("/apis/tekton.dev/v1beta1/namespaces/test/taskruns?labelSelector=tekton.dev%2FpipelineTask%3DpipelineTaskName%2Ctekton.dev%2FpipelineRun%3Drelease")
+                .andReturn(HttpURLConnection.HTTP_OK, taskRunList)
+                .once();
+
+        Pod pod = new PodBuilder()
+                .withNewMetadata()
+                .withName("hello-world-pod")
+                .withNamespace("test")
+                .withOwnerReferences(ownerReference("TaskRun","testTaskRun"))
+                .endMetadata()
+                .withNewSpec()
+                .withContainers(
+                        new ContainerBuilder()
+                                .withName("hello-world-container")
+                                .build()
+                )
+                .endSpec()
+                .withNewStatus()
+                .withPhase("Succeeded")
+                .withContainerStatuses(
+                        new ContainerStatusBuilder()
+                                .withName("hello-world-container")
+                                .withState(
+                                        new ContainerStateBuilder()
+                                                .withTerminated(new ContainerStateTerminatedBuilder().withStartedAt("timestamp").build())
+                                                .build()
+                                )
+                                .build())
+                .endStatus()
+                .build();
+
+        PodList podList = new PodListBuilder()
+                .addToItems(pod)
+                .build();
+
+        kubernetesRule.expect().get().withPath("/api/v1/namespaces/test/pods")
+                .andReturn(HttpURLConnection.HTTP_OK, podList).once();
+
+        kubernetesRule.expect().get().withPath("/api/v1/namespaces/test/pods/hello-world-pod")
+                .andReturn(HttpURLConnection.HTTP_OK, pod).always();
+
+        kubernetesRule.expect().get().withPath("/api/v1/namespaces/test/pods/hello-world-pod/log?pretty=false&container=hello-world-container&follow=true")
+                .andReturn(HttpURLConnection.HTTP_OK, "Whoop! This is the pod log").once();
+
+        FreeStyleProject p = jenkinsRule.jenkins.createProject(FreeStyleProject.class, "p");
+        URL zipFile = getClass().getResource("tekton-test-project.zip");
+        assertThat(zipFile, is(notNullValue()));
+
+        p.setScm(new ExtractResourceSCM(zipFile));
+        CreateRaw createRaw = new CreateRaw(contents("jx-pipeline.expanded.yaml"), "YAML");
+        createRaw.setEnableCatalog(false);
+        p.getBuildersList().add(createRaw);
+
+        FreeStyleBuild b = jenkinsRule.assertBuildStatus(Result.SUCCESS, p.scheduleBuild2(0).get());
+
+        String log = jenkinsRule.getLog(b);
+        System.out.println(log);
+
+        assertThat(log, containsString("Legacy code started this job"));
+        assertThat(log, containsString("Whoop! This is the pod log"));
+
+        assertThat(kubernetesRule.getMockServer().getRequestCount(), is(8));
+    }
+
+    private String contents(String filename) throws IOException {
+        return IOUtils.toString(this.getClass().getResourceAsStream(filename), StandardCharsets.UTF_8.name());
+    }
+
+    private OwnerReference ownerReference(String uid) {
+        return new OwnerReference("", false, false, "", "", uid);
+    }
+
+    private OwnerReference ownerReference(String kind, String name) {
+        return new OwnerReference("", false, false, kind, name, "");
     }
 }

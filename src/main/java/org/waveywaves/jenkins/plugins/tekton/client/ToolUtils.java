@@ -52,7 +52,6 @@ public class ToolUtils {
                 throw new IOException("failed to copy jx-pipeline-effective to " + path + " cause: " + e, e);
             }
 
-
             boolean chmodSuccess = f.setExecutable(true);
             if (!chmodSuccess) {
                 throw new IOException("failed make the file executable: " + path);

@@ -309,7 +309,7 @@ public class CreateRaw extends BaseStep {
             if (data != null) {
                 List<TektonResourceType> kind = TektonUtils.getKindFromInputStream(new ByteArrayInputStream(data), this.getInputType());
                 if (kind.size() > 1){
-                    LOGGER.info("Multiple Objects in YAML not supported yet");
+                    LOGGER.warning("Multiple Objects in YAML not supported yet");
                 } else {
                     TektonResourceType resourceType = kind.get(0);
                     LOGGER.info("creating kind " + resourceType.name());
