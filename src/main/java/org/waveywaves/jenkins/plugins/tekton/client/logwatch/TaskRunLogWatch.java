@@ -71,7 +71,7 @@ public class TaskRunLogWatch implements Runnable{
         }
 
         if (!podName.isEmpty() && taskRunPod != null){
-            logMessage("pod " + ns + "/" + podName + ":\n");
+            logMessage("[Tekton] Pod " + ns + "/" + podName);
 
             LOGGER.info("waiting for pod " + ns + "/" + podName + " to start running...");
             Predicate<Pod> succeededState = i -> (runningPhases.contains(i.getStatus().getPhase()));
@@ -81,7 +81,7 @@ public class TaskRunLogWatch implements Runnable{
             } catch ( InterruptedException e) {
                 LOGGER.warning("Interrupted Exception Occurred");
             }
-            logMessage("\npod " + podName + " running:");
+            logMessage("[Tekton] Pod " + ns + "/" + podName + " - Running...");
             List<String> taskRunContainerNames = new ArrayList<String>();
             for (Container c : taskRunPod.getSpec().getContainers()) {
                 taskRunContainerNames.add(c.getName());
@@ -89,7 +89,7 @@ public class TaskRunLogWatch implements Runnable{
 
             for (String containerName : taskRunContainerNames) {
                 // lets write a little header per container
-                logMessage("\n" + containerName + ":");
+                logMessage("[Tekton] Container " + containerName);
 
                 // wait for the container to start
                 LOGGER.info("waiting for pod: " + ns + "/" + podName + " container: " + containerName + " to start:");
@@ -103,7 +103,7 @@ public class TaskRunLogWatch implements Runnable{
                             if (state != null) {
                                 ContainerStateTerminated terminatedState = state.getTerminated();
                                 if (terminatedState != null && terminatedState.getStartedAt() != null) {
-                                    logMessage("container " + containerName + " completed");
+                                    logMessage("[Tekton] Container " + containerName + " - Completed");
                                     return true;
                                 }
                             }
@@ -123,7 +123,7 @@ public class TaskRunLogWatch implements Runnable{
             logPodFailures(pr.get());
         } else {
             String message = "no pod could be found for TaskRun " + ns + "/" + taskRun.getMetadata().getName();
-            logMessage(message);
+            logMessage("[Tekton] " + message);
             exception = new Exception(message);
 
             // lets reload to get the latest status
@@ -141,12 +141,12 @@ public class TaskRunLogWatch implements Runnable{
         String name = taskRun.getMetadata().getName();
         List<Condition> conditions = taskRun.getStatus().getConditions();
         if (conditions == null || conditions.size() == 0) {
-            logMessage("TaskRun " + name + " has no status conditions");
+            logMessage("[Tekton] TaskRun " + name + " has no status conditions");
             return;
         }
 
         for (Condition condition : conditions) {
-            logMessage("TaskRun " + name + " " + condition.getType() + "/" + condition.getReason() + ": " + condition.getMessage());
+            logMessage("[Tekton] TaskRun " + name + " " + condition.getType() + "/" + condition.getReason() + ": " + condition.getMessage());
         }
     }
 
@@ -160,8 +160,8 @@ public class TaskRunLogWatch implements Runnable{
         String podName = pod.getMetadata().getName();
         PodStatus status = pod.getStatus();
         String phase = status.getPhase();
-        String message = "\npod " + ns + "/" + podName + " status: " + phase;
-        logMessage(message);
+        String message = "Pod " + ns + "/" + podName + " Status: " + phase;
+        logMessage("[Tekton] " + message);
 
         // TODO we could try diagnose more information from the failed pod to log
 
