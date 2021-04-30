@@ -95,10 +95,10 @@ public class PipelineRunLogWatch implements Runnable {
                     }
                 }
                 if (taskComplete) {
-                    logMessageLn("completed PipelineTask " + pipelineTaskName);
+                    logMessage("[Tekton] Completed PipelineTask " + pipelineTaskName);
                     break;
                 } else {
-                    logMessageLn("could not find OwnerReference for " + pipelineRunUid);
+                    logMessage("[Tekton] Could not find OwnerReference for " + pipelineRunUid);
                 }
                 try {
                     Thread.sleep(1000);
@@ -110,7 +110,7 @@ public class PipelineRunLogWatch implements Runnable {
         }
     }
 
-    protected void logMessageLn(String text) {
+    protected void logMessage(String text) {
         try {
             this.consoleLogger.write((text + "\n").getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
