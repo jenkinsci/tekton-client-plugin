@@ -1,5 +1,6 @@
 package org.waveywaves.jenkins.plugins.tekton.client.build.create.mock;
 
+import hudson.EnvVars;
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
@@ -33,7 +34,7 @@ public class FakeCreateRaw extends CreateRawMock {
     }
 
     @Override
-    public String createPipelineRun(InputStream inputStream) {
+    public String createPipelineRun(InputStream inputStream, EnvVars envVars) {
         return createResource(inputStream);
     }
 

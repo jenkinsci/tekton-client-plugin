@@ -20,8 +20,11 @@ import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.tekton.client.TektonClient;
+import io.fabric8.tekton.pipeline.v1beta1.ArrayOrString;
+import io.fabric8.tekton.pipeline.v1beta1.Param;
 import io.fabric8.tekton.pipeline.v1beta1.Pipeline;
 import io.fabric8.tekton.pipeline.v1beta1.PipelineRun;
+import io.fabric8.tekton.pipeline.v1beta1.PipelineRunSpec;
 import io.fabric8.tekton.pipeline.v1beta1.Task;
 import io.fabric8.tekton.pipeline.v1beta1.TaskRun;
 import io.jenkins.plugins.checks.api.ChecksConclusion;
@@ -32,6 +35,9 @@ import io.jenkins.plugins.checks.api.ChecksPublisherFactory;
 import io.jenkins.plugins.checks.api.ChecksStatus;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Optional;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.displayurlapi.DisplayURLProvider;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -143,7 +149,7 @@ public class CreateRaw extends BaseStep {
         return clusterName;
     }
 
-    protected String createWithResourceSpecificClient(TektonResourceType resourceType, InputStream inputStream) throws Exception {
+    protected String createWithResourceSpecificClient(TektonResourceType resourceType, InputStream inputStream, EnvVars envVars) throws Exception {
         switch (resourceType) {
             case task:
                 return createTask(inputStream);
@@ -152,7 +158,7 @@ public class CreateRaw extends BaseStep {
             case pipeline:
                 return createPipeline(inputStream);
             case pipelinerun:
-                return createPipelineRun(inputStream);
+                return createPipelineRun(inputStream, envVars);
             default:
                 return "";
         }
@@ -220,33 +226,77 @@ public class CreateRaw extends BaseStep {
         return resourceName;
     }
 
-    public String createPipelineRun(InputStream inputStream) throws Exception {
+    public String createPipelineRun(InputStream inputStream, EnvVars envVars) throws Exception {
         if (pipelineRunClient == null) {
             TektonClient tc = (TektonClient) tektonClient;
             setPipelineRunClient(tc.v1beta1().pipelineRuns());
         }
         String resourceName;
-        PipelineRun pipelineRun = pipelineRunClient.load(inputStream).get();
+        final PipelineRun pipelineRun = pipelineRunClient.load(inputStream).get();
         if (!Strings.isNullOrEmpty(namespace) && Strings.isNullOrEmpty(pipelineRun.getMetadata().getNamespace())) {
             pipelineRun.getMetadata().setNamespace(namespace);
         }
+
+        // BUILD_ID
+        // JOB_NAME
+        // JOB_SPEC
+        // JOB_TYPE
+        // PULL_BASE_REF
+        // PULL_BASE_SHA
+        // PULL_NUMBER
+        // PULL_PULL_REF
+        // PULL_PULL_SHA
+        // PULL_REFS
+        // REPO_NAME
+        // REPO_OWNER
+        // REPO_URL
+
+        // GIT_BRANCH=origin/main
+        // GIT_COMMIT=bb1ef888f5375bb19d5bb227e35bfcfed49759ed
+        // GIT_PREVIOUS_COMMIT=9c7648f892913dfa12963a38fe489b1291e033a8
+        // GIT_PREVIOUS_SUCCESSFUL_COMMIT=9c7648f892913dfa12963a38fe489b1291e033a8
+        // GIT_URL=https://github.com/garethjevans/test-tekton-client
+
+        setParamOnPipelineRunSpec(pipelineRun.getSpec(), "BUILD_ID", envVars.get("BUILD_ID"));
+        setParamOnPipelineRunSpec(pipelineRun.getSpec(), "PULL_BASE_SHA", envVars.get("GIT_COMMIT"));
+        setParamOnPipelineRunSpec(pipelineRun.getSpec(), "REPO_URL", envVars.get("GIT_URL"));
+
+        pipelineRun.getSpec().getParams().add(new Param("BUILD_ID", new ArrayOrString(envVars.get("BUILD_ID"))));
+        pipelineRun.getSpec().getParams().add(new Param("", new ArrayOrString(envVars.get("GIT_COMMIT"))));
+        pipelineRun.getSpec().getParams().add(new Param("", new ArrayOrString(envVars.get("GIT_URL"))));
+
         String ns = pipelineRun.getMetadata().getNamespace();
-        if (Strings.isNullOrEmpty(ns)) {
-            pipelineRun = pipelineRunClient.create(pipelineRun);
-        } else {
-            pipelineRun = pipelineRunClient.inNamespace(ns).create(pipelineRun);
-        }
-        resourceName = pipelineRun.getMetadata().getName();
+
+        LOGGER.info("Creating PipelineRun " + pipelineRun);
+
+        PipelineRun updatedPipelineRun = Strings.isNullOrEmpty(ns) ?
+                pipelineRunClient.create(pipelineRun) :
+                pipelineRunClient.inNamespace(ns).create(pipelineRun);
+
+        resourceName = updatedPipelineRun.getMetadata().getName();
 
         ChecksDetails checkDetails = new ChecksDetails.ChecksDetailsBuilder()
-                .withName("Tekton: " + pipelineRun.getMetadata().getName())
+                .withName("Tekton: " + updatedPipelineRun.getMetadata().getName())
                 .withStatus(ChecksStatus.IN_PROGRESS)
                 .withConclusion(ChecksConclusion.NONE)
                 .build();
         checksPublisher.publish(checkDetails);
 
-        streamPipelineRunLogsToConsole(pipelineRun);
+        streamPipelineRunLogsToConsole(updatedPipelineRun);
+
         return resourceName;
+    }
+
+    private void setParamOnPipelineRunSpec(@NonNull PipelineRunSpec spec, String paramName, String paramValue) {
+        if (spec.getParams() == null) {
+            spec.setParams(new ArrayList<>());
+        }
+        Optional<Param> param = spec.getParams().stream().filter(p -> p.getName().equals(paramName)).findAny();
+        if (param.isPresent()) {
+            param.get().setValue(new ArrayOrString(paramValue));
+        } else {
+            spec.getParams().add(new Param(paramName, new ArrayOrString(paramValue)));
+        }
     }
 
     public void streamTaskRunLogsToConsole(TaskRun taskRun) throws Exception {
@@ -338,7 +388,7 @@ public class CreateRaw extends BaseStep {
                 } else {
                     TektonResourceType resourceType = kind.get(0);
                     LOGGER.info("creating kind " + resourceType.name());
-                    createdResourceName = createWithResourceSpecificClient(resourceType, new ByteArrayInputStream(data));
+                    createdResourceName = createWithResourceSpecificClient(resourceType, new ByteArrayInputStream(data), envVars);
                 }
             }
         } catch (Throwable e) {
@@ -488,6 +538,7 @@ public class CreateRaw extends BaseStep {
         builder.command(binary, "-b", "--add-defaults", "-f", filePath, "-o", outputFile.getPath());
         if (envVars != null) {
             for (Map.Entry<String, String> entry : envVars.entrySet()) {
+                LOGGER.info("Adding env var " + entry.getKey() + "=" + entry.getValue());
                 builder.environment().put(entry.getKey(), entry.getValue());
             }
         }

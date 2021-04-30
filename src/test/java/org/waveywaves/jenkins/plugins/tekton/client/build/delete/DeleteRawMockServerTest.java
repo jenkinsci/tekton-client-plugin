@@ -1,5 +1,6 @@
 package org.waveywaves.jenkins.plugins.tekton.client.build.delete;
 
+import hudson.EnvVars;
 import io.fabric8.kubernetes.api.model.apiextensions.v1beta1.CustomResourceDefinition;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
@@ -9,15 +10,19 @@ import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
 import io.fabric8.tekton.pipeline.v1beta1.Pipeline;
 import io.fabric8.tekton.pipeline.v1beta1.PipelineBuilder;
 import io.fabric8.tekton.pipeline.v1beta1.PipelineList;
+import io.fabric8.tekton.pipeline.v1beta1.PipelineListBuilder;
 import io.fabric8.tekton.pipeline.v1beta1.PipelineRun;
 import io.fabric8.tekton.pipeline.v1beta1.PipelineRunBuilder;
 import io.fabric8.tekton.pipeline.v1beta1.PipelineRunList;
+import io.fabric8.tekton.pipeline.v1beta1.PipelineRunListBuilder;
 import io.fabric8.tekton.pipeline.v1beta1.Task;
 import io.fabric8.tekton.pipeline.v1beta1.TaskBuilder;
 import io.fabric8.tekton.pipeline.v1beta1.TaskList;
+import io.fabric8.tekton.pipeline.v1beta1.TaskListBuilder;
 import io.fabric8.tekton.pipeline.v1beta1.TaskRun;
 import io.fabric8.tekton.pipeline.v1beta1.TaskRunBuilder;
 import io.fabric8.tekton.pipeline.v1beta1.TaskRunList;
+import io.fabric8.tekton.pipeline.v1beta1.TaskRunListBuilder;
 import org.junit.Rule;
 import org.junit.Test;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
@@ -60,19 +65,19 @@ public class DeleteRawMockServerTest {
 
         // Mocked Responses
         TaskBuilder taskBuilder = new TaskBuilder()
-                .withNewMetadata().withName(TEST_TASK).endMetadata();
-        List<Task> tList = new ArrayList<>();
-        Task testTask = taskBuilder.build();
-        tList.add(testTask);
-        TaskList taskList = new TaskList();
-        taskList.setItems(tList);
+                .withNewMetadata()
+                    .withName(TEST_TASK)
+                .endMetadata();
+        TaskList taskList = new TaskListBuilder()
+                .addToItems(taskBuilder.build())
+                .build();
 
         server.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
-                .andReturn(HttpURLConnection.HTTP_CREATED, testTask).once();
+                .andReturn(HttpURLConnection.HTTP_CREATED, taskBuilder.build()).once();
         server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
                 .andReturn(HttpURLConnection.HTTP_OK, taskList).once();
         server.expect().delete().withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks/"+TEST_TASK)
-                .andReturn(HttpURLConnection.HTTP_OK, testTask).once();
+                .andReturn(HttpURLConnection.HTTP_OK, taskBuilder.build()).once();
         server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
                 .andReturn(HttpURLConnection.HTTP_OK, new TaskList()).once();
 
@@ -120,37 +125,37 @@ public class DeleteRawMockServerTest {
 
         // Mocked Responses
         TaskBuilder taskBuilder = new TaskBuilder()
-                .withNewMetadata().withName(TEST_TASK1).endMetadata();
-        List<Task> tList = new ArrayList<>();
-        Task testTask = taskBuilder.build();
-        tList.add(testTask);
-        TaskList taskList = new TaskList();
-        taskList.setItems(tList);
+                .withNewMetadata()
+                    .withName(TEST_TASK1)
+                .endMetadata();
+        TaskList taskList = new TaskListBuilder()
+                .addToItems(taskBuilder.build())
+                .build();
 
         server.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
-                .andReturn(HttpURLConnection.HTTP_CREATED, testTask).once();
+                .andReturn(HttpURLConnection.HTTP_CREATED, taskBuilder.build()).once();
         server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
                 .andReturn(HttpURLConnection.HTTP_OK, taskList).once();
         server.expect().delete().withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks/"+TEST_TASK1)
-                .andReturn(HttpURLConnection.HTTP_OK, testTask).once();
+                .andReturn(HttpURLConnection.HTTP_OK, taskBuilder.build()).once();
         server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
                 .andReturn(HttpURLConnection.HTTP_OK, new TaskList()).once();
 
         // for Task 2
         taskBuilder = new TaskBuilder()
-                .withNewMetadata().withName(TEST_TASK2).endMetadata();
-        tList = new ArrayList<>();
-        testTask = taskBuilder.build();
-        tList.add(testTask);
-        taskList = new TaskList();
-        taskList.setItems(tList);
+                .withNewMetadata()
+                    .withName(TEST_TASK2)
+                .endMetadata();
+        taskList = new TaskListBuilder()
+                .addToItems(taskBuilder.build())
+                .build();
 
         server.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
-                .andReturn(HttpURLConnection.HTTP_CREATED, testTask).once();
+                .andReturn(HttpURLConnection.HTTP_CREATED, taskBuilder.build()).once();
         server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
                 .andReturn(HttpURLConnection.HTTP_OK, taskList).once();
         server.expect().delete().withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks/"+TEST_TASK2)
-                .andReturn(HttpURLConnection.HTTP_OK, testTask).once();
+                .andReturn(HttpURLConnection.HTTP_OK, taskBuilder.build()).once();
         server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
                 .andReturn(HttpURLConnection.HTTP_OK, new TaskList()).once();
 
@@ -202,19 +207,19 @@ public class DeleteRawMockServerTest {
 
         // Mocked Responses
         TaskRunBuilder taskRunBuilder = new TaskRunBuilder()
-                .withNewMetadata().withName(TEST_TASKRUN).endMetadata();
-        List<TaskRun> trList = new ArrayList<>();
-        TaskRun testTaskRun = taskRunBuilder.build();
-        trList.add(testTaskRun);
-        TaskRunList taskRunList = new TaskRunList();
-        taskRunList.setItems(trList);
+                .withNewMetadata()
+                    .withName(TEST_TASKRUN)
+                .endMetadata();
+        TaskRunList taskRunList = new TaskRunListBuilder()
+                .addToItems(taskRunBuilder.build())
+                .build();
 
         server.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/taskruns")
-                .andReturn(HttpURLConnection.HTTP_CREATED, testTaskRun).once();
+                .andReturn(HttpURLConnection.HTTP_CREATED, taskRunBuilder.build()).once();
         server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/taskruns")
                 .andReturn(HttpURLConnection.HTTP_OK, taskRunList).once();
         server.expect().delete().withPath("/apis/tekton.dev/v1beta1/namespaces/test/taskruns/"+TEST_TASKRUN)
-                .andReturn(HttpURLConnection.HTTP_OK, testTaskRun).once();
+                .andReturn(HttpURLConnection.HTTP_OK, taskRunBuilder.build()).once();
         server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/taskruns")
                 .andReturn(HttpURLConnection.HTTP_OK, new TaskList()).once();
 
@@ -272,37 +277,37 @@ public class DeleteRawMockServerTest {
 
         // Mocked Responses
         TaskRunBuilder taskRunBuilder = new TaskRunBuilder()
-                .withNewMetadata().withName(TEST_TASKRUN1).endMetadata();
-        List<TaskRun> trList = new ArrayList<>();
-        TaskRun testTaskRun = taskRunBuilder.build();
-        trList.add(testTaskRun);
-        TaskRunList taskRunList = new TaskRunList();
-        taskRunList.setItems(trList);
+                .withNewMetadata()
+                .withName(TEST_TASKRUN1)
+                .endMetadata();
+        TaskRunList taskRunList = new TaskRunListBuilder()
+                .addToItems(taskRunBuilder.build())
+                .build();
 
         server.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/taskruns")
-                .andReturn(HttpURLConnection.HTTP_CREATED, testTaskRun).once();
+                .andReturn(HttpURLConnection.HTTP_CREATED, taskRunBuilder.build()).once();
         server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/taskruns")
                 .andReturn(HttpURLConnection.HTTP_OK, taskRunList).once();
         server.expect().delete().withPath("/apis/tekton.dev/v1beta1/namespaces/test/taskruns/"+TEST_TASKRUN1)
-                .andReturn(HttpURLConnection.HTTP_OK, testTaskRun).once();
+                .andReturn(HttpURLConnection.HTTP_OK, taskRunBuilder.build()).once();
         server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/taskruns")
                 .andReturn(HttpURLConnection.HTTP_OK, new TaskList()).once();
 
         // TaskRun 2
         taskRunBuilder = new TaskRunBuilder()
-                .withNewMetadata().withName(TEST_TASKRUN2).endMetadata();
-        trList = new ArrayList<>();
-        testTaskRun = taskRunBuilder.build();
-        trList.add(testTaskRun);
-        taskRunList = new TaskRunList();
-        taskRunList.setItems(trList);
+                .withNewMetadata()
+                .withName(TEST_TASKRUN2)
+                .endMetadata();
+        taskRunList = new TaskRunListBuilder()
+                .addToItems(taskRunBuilder.build())
+                .build();
 
         server.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/taskruns")
-                .andReturn(HttpURLConnection.HTTP_CREATED, testTaskRun).once();
+                .andReturn(HttpURLConnection.HTTP_CREATED, taskRunBuilder.build()).once();
         server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/taskruns")
                 .andReturn(HttpURLConnection.HTTP_OK, taskRunList).once();
         server.expect().delete().withPath("/apis/tekton.dev/v1beta1/namespaces/test/taskruns/"+TEST_TASKRUN2)
-                .andReturn(HttpURLConnection.HTTP_OK, testTaskRun).once();
+                .andReturn(HttpURLConnection.HTTP_OK, taskRunBuilder.build()).once();
         server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/taskruns")
                 .andReturn(HttpURLConnection.HTTP_OK, new TaskList()).once();
 
@@ -372,19 +377,19 @@ public class DeleteRawMockServerTest {
 
         // Mocked Responses
         PipelineBuilder pipelineBuilder = new PipelineBuilder()
-                .withNewMetadata().withName(TEST_PIPELINE).endMetadata();
-        List<Pipeline> pList = new ArrayList<>();
-        Pipeline testPipeline = pipelineBuilder.build();
-        pList.add(testPipeline);
-        PipelineList pipelineList = new PipelineList();
-        pipelineList.setItems(pList);
+                .withNewMetadata()
+                    .withName(TEST_PIPELINE)
+                .endMetadata();
+        PipelineList pipelineList = new PipelineListBuilder()
+                .addToItems(pipelineBuilder.build())
+                .build();
 
         server.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelines")
-                .andReturn(HttpURLConnection.HTTP_CREATED, testPipeline).once();
+                .andReturn(HttpURLConnection.HTTP_CREATED, pipelineBuilder.build()).once();
         server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelines")
                 .andReturn(HttpURLConnection.HTTP_OK, pipelineList).once();
         server.expect().delete().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelines/"+TEST_PIPELINE)
-                .andReturn(HttpURLConnection.HTTP_OK, testPipeline).once();
+                .andReturn(HttpURLConnection.HTTP_OK, pipelineBuilder.build()).once();
         server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelines")
                 .andReturn(HttpURLConnection.HTTP_OK, new PipelineList()).once();
 
@@ -434,40 +439,39 @@ public class DeleteRawMockServerTest {
 
         // Mocked Responses
         PipelineBuilder pipelineBuilder = new PipelineBuilder()
-                .withNewMetadata().withName(TEST_PIPELINE1).endMetadata();
-        List<Pipeline> pList = new ArrayList<>();
-        Pipeline testPipeline = pipelineBuilder.build();
-        pList.add(testPipeline);
-        PipelineList pipelineList = new PipelineList();
-        pipelineList.setItems(pList);
+                .withNewMetadata()
+                .withName(TEST_PIPELINE1)
+                .endMetadata();
+        PipelineList pipelineList = new PipelineListBuilder()
+                .addToItems(pipelineBuilder.build())
+                .build();
 
         server.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelines")
-                .andReturn(HttpURLConnection.HTTP_CREATED, testPipeline).once();
+                .andReturn(HttpURLConnection.HTTP_CREATED, pipelineBuilder.build()).once();
         server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelines")
                 .andReturn(HttpURLConnection.HTTP_OK, pipelineList).once();
         server.expect().delete().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelines/"+TEST_PIPELINE1)
-                .andReturn(HttpURLConnection.HTTP_OK, testPipeline).once();
+                .andReturn(HttpURLConnection.HTTP_OK, pipelineBuilder.build()).once();
         server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelines")
                 .andReturn(HttpURLConnection.HTTP_OK, new PipelineList()).once();
 
         // Pipeline 2
         pipelineBuilder = new PipelineBuilder()
-                .withNewMetadata().withName(TEST_PIPELINE2).endMetadata();
-        pList = new ArrayList<>();
-        testPipeline = pipelineBuilder.build();
-        pList.add(testPipeline);
-        pipelineList = new PipelineList();
-        pipelineList.setItems(pList);
+                .withNewMetadata()
+                .withName(TEST_PIPELINE2)
+                .endMetadata();
+        pipelineList = new PipelineListBuilder()
+                .addToItems(pipelineBuilder.build())
+                .build();
 
         server.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelines")
-                .andReturn(HttpURLConnection.HTTP_CREATED, testPipeline).once();
+                .andReturn(HttpURLConnection.HTTP_CREATED, pipelineBuilder.build()).once();
         server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelines")
                 .andReturn(HttpURLConnection.HTTP_OK, pipelineList).once();
         server.expect().delete().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelines/"+TEST_PIPELINE2)
-                .andReturn(HttpURLConnection.HTTP_OK, testPipeline).once();
+                .andReturn(HttpURLConnection.HTTP_OK, pipelineBuilder.build()).once();
         server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelines")
                 .andReturn(HttpURLConnection.HTTP_OK, new PipelineList()).once();
-
 
         // When
         CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testPipelineYaml1);
@@ -506,7 +510,9 @@ public class DeleteRawMockServerTest {
         String testPipelineRunYaml = "apiVersion: tekton.dev/v1beta1\n" +
                 "kind: PipelineRun\n" +
                 "metadata:\n" +
-                "  name: testPipelineRun\n";
+                "  name: testPipelineRun\n" +
+                "spec:\n" +
+                "  params: []\n";
         String TEST_PIPELINERUN = "testPipelineRun";
 
         KubernetesClient client = server.getClient();
@@ -517,19 +523,19 @@ public class DeleteRawMockServerTest {
 
         // Mocked Responses
         PipelineRunBuilder pipelineRunBuilder = new PipelineRunBuilder()
-                .withNewMetadata().withName(TEST_PIPELINERUN).endMetadata();
-        List<PipelineRun> pList = new ArrayList<>();
-        PipelineRun testPipelineRun = pipelineRunBuilder.build();
-        pList.add(testPipelineRun);
-        PipelineRunList pipelineRunList = new PipelineRunList();
-        pipelineRunList.setItems(pList);
+                .withNewMetadata()
+                    .withName(TEST_PIPELINERUN)
+                .endMetadata();
+        PipelineRunList pipelineRunList = new PipelineRunListBuilder()
+                .addToItems(pipelineRunBuilder.build())
+                .build();
 
         server.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns")
-                .andReturn(HttpURLConnection.HTTP_CREATED, testPipelineRun).once();
+                .andReturn(HttpURLConnection.HTTP_CREATED, pipelineRunBuilder.build()).once();
         server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns")
                 .andReturn(HttpURLConnection.HTTP_OK, pipelineRunList).once();
         server.expect().delete().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns/"+TEST_PIPELINERUN)
-                .andReturn(HttpURLConnection.HTTP_OK, testPipelineRun).once();
+                .andReturn(HttpURLConnection.HTTP_OK, pipelineRunBuilder.build()).once();
         server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns")
                 .andReturn(HttpURLConnection.HTTP_OK, new PipelineRunList()).once();
 
@@ -549,7 +555,7 @@ public class DeleteRawMockServerTest {
         createRaw.setChecksPublisher(checksPublisher);
 
         try {
-            createRaw.createPipelineRun(new ByteArrayInputStream(testPipelineRunYaml.getBytes(StandardCharsets.UTF_8)));
+            createRaw.createPipelineRun(new ByteArrayInputStream(testPipelineRunYaml.getBytes(StandardCharsets.UTF_8)), new EnvVars());
         } catch (Exception e) {
             fail(e.getMessage(), e);
         }
@@ -573,13 +579,17 @@ public class DeleteRawMockServerTest {
         String testPipelineRun1Yaml = "apiVersion: tekton.dev/v1beta1\n" +
                 "kind: PipelineRun\n" +
                 "metadata:\n" +
-                "  name: testPipelineRun1\n";
+                "  name: testPipelineRun1\n" +
+                "spec:\n" +
+                "  params: []\n";
         String TEST_PIPELINERUN1 = "testPipelineRun1";
 
         String testPipelineRun2Yaml = "apiVersion: tekton.dev/v1beta1\n" +
                 "kind: PipelineRun\n" +
                 "metadata:\n" +
-                "  name: testPipelineRun2\n";
+                "  name: testPipelineRun2\n" +
+                "spec:\n" +
+                "  params: []\n";
         String TEST_PIPELINERUN2 = "testPipelineRun2";
 
         KubernetesClient client = server.getClient();
@@ -590,37 +600,37 @@ public class DeleteRawMockServerTest {
 
         // Mocked Responses
         PipelineRunBuilder pipelineRunBuilder = new PipelineRunBuilder()
-                .withNewMetadata().withName(TEST_PIPELINERUN1).endMetadata();
-        List<PipelineRun> pList = new ArrayList<>();
-        PipelineRun testPipelineRun = pipelineRunBuilder.build();
-        pList.add(testPipelineRun);
-        PipelineRunList pipelineRunList = new PipelineRunList();
-        pipelineRunList.setItems(pList);
+                .withNewMetadata()
+                .withName(TEST_PIPELINERUN1)
+                .endMetadata();
+        PipelineRunList pipelineRunList = new PipelineRunListBuilder()
+                .addToItems(pipelineRunBuilder.build())
+                .build();
 
         server.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns")
-                .andReturn(HttpURLConnection.HTTP_CREATED, testPipelineRun).once();
+                .andReturn(HttpURLConnection.HTTP_CREATED, pipelineRunBuilder.build()).once();
         server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns")
                 .andReturn(HttpURLConnection.HTTP_OK, pipelineRunList).once();
         server.expect().delete().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns/"+TEST_PIPELINERUN1)
-                .andReturn(HttpURLConnection.HTTP_OK, testPipelineRun).once();
+                .andReturn(HttpURLConnection.HTTP_OK, pipelineRunBuilder.build()).once();
         server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns")
                 .andReturn(HttpURLConnection.HTTP_OK, new PipelineRunList()).once();
 
         // PipelineRun 2
         pipelineRunBuilder = new PipelineRunBuilder()
-                .withNewMetadata().withName(TEST_PIPELINERUN2).endMetadata();
-        pList = new ArrayList<>();
-        testPipelineRun = pipelineRunBuilder.build();
-        pList.add(testPipelineRun);
-        pipelineRunList = new PipelineRunList();
-        pipelineRunList.setItems(pList);
+                .withNewMetadata()
+                .withName(TEST_PIPELINERUN2)
+                .endMetadata();
+        pipelineRunList = new PipelineRunListBuilder()
+                .addToItems(pipelineRunBuilder.build())
+                .build();
 
         server.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns")
-                .andReturn(HttpURLConnection.HTTP_CREATED, testPipelineRun).once();
+                .andReturn(HttpURLConnection.HTTP_CREATED, pipelineRunBuilder.build()).once();
         server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns")
                 .andReturn(HttpURLConnection.HTTP_OK, pipelineRunList).once();
         server.expect().delete().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns/"+TEST_PIPELINERUN2)
-                .andReturn(HttpURLConnection.HTTP_OK, testPipelineRun).once();
+                .andReturn(HttpURLConnection.HTTP_OK, pipelineRunBuilder.build()).once();
         server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns")
                 .andReturn(HttpURLConnection.HTTP_OK, new PipelineRunList()).once();
 
@@ -640,7 +650,7 @@ public class DeleteRawMockServerTest {
         createRaw.setChecksPublisher(checksPublisher);
 
         try {
-            createRaw.createPipelineRun(new ByteArrayInputStream(testPipelineRun1Yaml.getBytes(StandardCharsets.UTF_8)));
+            createRaw.createPipelineRun(new ByteArrayInputStream(testPipelineRun1Yaml.getBytes(StandardCharsets.UTF_8)), new EnvVars());
         } catch (Exception e) {
             fail(e.getMessage(), e);
         }
@@ -660,7 +670,7 @@ public class DeleteRawMockServerTest {
         checksPublisher = new FakeChecksPublisher();
         createRaw.setChecksPublisher(checksPublisher);
         try {
-            createRaw.createPipelineRun(new ByteArrayInputStream(testPipelineRun2Yaml.getBytes(StandardCharsets.UTF_8)));
+            createRaw.createPipelineRun(new ByteArrayInputStream(testPipelineRun2Yaml.getBytes(StandardCharsets.UTF_8)), new EnvVars());
         } catch (Exception e) {
             fail(e.getMessage(), e);
         }
