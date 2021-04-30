@@ -237,20 +237,6 @@ public class CreateRaw extends BaseStep {
             pipelineRun.getMetadata().setNamespace(namespace);
         }
 
-        // BUILD_ID
-        // JOB_NAME
-        // JOB_SPEC
-        // JOB_TYPE
-        // PULL_BASE_REF
-        // PULL_BASE_SHA
-        // PULL_NUMBER
-        // PULL_PULL_REF
-        // PULL_PULL_SHA
-        // PULL_REFS
-        // REPO_NAME
-        // REPO_OWNER
-        // REPO_URL
-
         // GIT_BRANCH=origin/main
         // GIT_COMMIT=bb1ef888f5375bb19d5bb227e35bfcfed49759ed
         // GIT_PREVIOUS_COMMIT=9c7648f892913dfa12963a38fe489b1291e033a8
@@ -258,12 +244,18 @@ public class CreateRaw extends BaseStep {
         // GIT_URL=https://github.com/garethjevans/test-tekton-client
 
         setParamOnPipelineRunSpec(pipelineRun.getSpec(), "BUILD_ID", envVars.get("BUILD_ID"));
+        // JOB_NAME
+        // JOB_SPEC
+        // JOB_TYPE
+        // PULL_BASE_REF
         setParamOnPipelineRunSpec(pipelineRun.getSpec(), "PULL_BASE_SHA", envVars.get("GIT_COMMIT"));
+        // PULL_NUMBER
+        // PULL_PULL_REF
+        // PULL_PULL_SHA
+        // PULL_REFS
+        // REPO_NAME
+        // REPO_OWNER
         setParamOnPipelineRunSpec(pipelineRun.getSpec(), "REPO_URL", envVars.get("GIT_URL"));
-
-        pipelineRun.getSpec().getParams().add(new Param("BUILD_ID", new ArrayOrString(envVars.get("BUILD_ID"))));
-        pipelineRun.getSpec().getParams().add(new Param("", new ArrayOrString(envVars.get("GIT_COMMIT"))));
-        pipelineRun.getSpec().getParams().add(new Param("", new ArrayOrString(envVars.get("GIT_URL"))));
 
         String ns = pipelineRun.getMetadata().getNamespace();
 
