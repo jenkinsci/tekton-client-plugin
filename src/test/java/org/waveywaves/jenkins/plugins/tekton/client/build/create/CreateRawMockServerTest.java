@@ -19,11 +19,15 @@ import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import org.waveywaves.jenkins.plugins.tekton.client.build.FakeChecksPublisher;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 
 public class CreateRawMockServerTest {
+
     private boolean enableCatalog = false;
     private String namespace;
 
@@ -46,15 +50,15 @@ public class CreateRawMockServerTest {
 
         // Mocked Responses
         TaskBuilder taskBuilder = new TaskBuilder()
-                .withNewMetadata().withName("testTask").endMetadata();
-        List<Task> tList = new ArrayList<Task>();
-        Task testTask = taskBuilder.build();
-        tList.add(testTask);
-        TaskList taskList = new TaskList();
-        taskList.setItems(tList);
+                .withNewMetadata()
+                    .withName("testTask")
+                .endMetadata();
+        TaskList taskList = new TaskListBuilder()
+                .addToItems(taskBuilder.build())
+                .build();
 
         server.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
-                .andReturn(HttpURLConnection.HTTP_CREATED, testTask).once();
+                .andReturn(HttpURLConnection.HTTP_CREATED, taskBuilder.build()).once();
         server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
                 .andReturn(HttpURLConnection.HTTP_OK, taskList).once();
 
@@ -71,8 +75,8 @@ public class CreateRawMockServerTest {
 
         // Then
         TaskList testTaskList = taskClient.list();
-        assert createdTaskName.equals("testTask");
-        assert testTaskList.getItems().size() == 1;
+        assertThat(createdTaskName, is("testTask"));
+        assertThat(testTaskList.getItems().size(), is(1));
     }
 
     @Test
@@ -127,8 +131,8 @@ public class CreateRawMockServerTest {
 
         // Then
         TaskRunList testTaskRunList = taskRunClient.list();
-        assert createdTaskRunName.equals("home-is-set-1234");
-        assert testTaskRunList.getItems().size() == 1;
+        assertThat(createdTaskRunName, is("home-is-set-1234"));
+        assertThat(testTaskRunList.getItems().size(), is(1));
     }
 
     @Test
@@ -171,8 +175,8 @@ public class CreateRawMockServerTest {
 
         // Then
         PipelineList testPipelineList = pipelineClient.list();
-        assert createdPipelineName.equals("testPipeline");
-        assert testPipelineList.getItems().size() == 1;
+        assertThat(createdPipelineName, is("testPipeline"));
+        assertThat(testPipelineList.getItems().size(), is(1));
     }
 
     @Test
@@ -215,6 +219,10 @@ public class CreateRawMockServerTest {
         createRaw.setEnableCatalog(enableCatalog);
         createRaw.setTektonClient(client);
         createRaw.setPipelineRunClient(pipelineRunClient);
+
+        FakeChecksPublisher checksPublisher = new FakeChecksPublisher();
+        createRaw.setChecksPublisher(checksPublisher);
+
         String createdPipelineName = "";
         try {
             createdPipelineName = createRaw.createPipelineRun(
@@ -223,9 +231,11 @@ public class CreateRawMockServerTest {
             fail(e.getMessage(), e);
         }
 
+        assertThat(checksPublisher.getCounter(), is(1));
+
         // Then
         PipelineRunList testPipelineRunList = pipelineRunClient.list();
-        assert createdPipelineName.equals("testPipelineRun");
-        assert testPipelineRunList.getItems().size() == 1;
+        assertThat(createdPipelineName, is("testPipelineRun"));
+        assertThat(testPipelineRunList.getItems().size(), is(1));
     }
 }

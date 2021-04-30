@@ -21,6 +21,7 @@ import io.fabric8.tekton.pipeline.v1beta1.TaskRunList;
 import org.junit.Rule;
 import org.junit.Test;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
+import org.waveywaves.jenkins.plugins.tekton.client.build.FakeChecksPublisher;
 import org.waveywaves.jenkins.plugins.tekton.client.build.create.CreateRaw;
 
 import java.io.ByteArrayInputStream;
@@ -31,9 +32,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.fail;
-
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class DeleteRawMockServerTest {
+
     private boolean enableCatalog = false;
     private String namespace;
 
@@ -73,7 +76,6 @@ public class DeleteRawMockServerTest {
         server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
                 .andReturn(HttpURLConnection.HTTP_OK, new TaskList()).once();
 
-
         // When
         CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTaskYaml);
         createRaw.setNamespace(namespace);
@@ -92,8 +94,8 @@ public class DeleteRawMockServerTest {
 
         // Then
         TaskList testTaskList = taskClient.list();
-        assert isTaskDeleted.equals(true);
-        assert testTaskList.getItems().size() == 0;
+        assertThat(isTaskDeleted, is(true));
+        assertThat(testTaskList.getItems().size(), is(0));
     }
 
     @Test
@@ -152,7 +154,6 @@ public class DeleteRawMockServerTest {
         server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
                 .andReturn(HttpURLConnection.HTTP_OK, new TaskList()).once();
 
-
         // When
         CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTask1Yaml);
         createRaw.setNamespace(namespace);
@@ -180,8 +181,8 @@ public class DeleteRawMockServerTest {
 
         // Then
         TaskList testTaskList = taskClient.list();
-        assert isTaskDeleted.equals(true);
-        assert testTaskList.getItems().size() == 0;
+        assertThat(isTaskDeleted, is(true));
+        assertThat(testTaskList.getItems().size(), is(0));
     }
 
     @Test
@@ -217,7 +218,6 @@ public class DeleteRawMockServerTest {
         server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/taskruns")
                 .andReturn(HttpURLConnection.HTTP_OK, new TaskList()).once();
 
-
         // When
         CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTaskRunYaml){
             @Override
@@ -246,8 +246,8 @@ public class DeleteRawMockServerTest {
 
         // Then
         TaskRunList testTaskRunList = taskRunClient.list();
-        assert isTaskRunDeleted.equals(true);
-        assert testTaskRunList.getItems().size() == 0;
+        assertThat(isTaskRunDeleted, is(true));
+        assertThat(testTaskRunList.getItems().size(), is(0));
     }
 
     @Test
@@ -306,7 +306,6 @@ public class DeleteRawMockServerTest {
         server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/taskruns")
                 .andReturn(HttpURLConnection.HTTP_OK, new TaskList()).once();
 
-
         // When
         CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTaskRun1Yaml){
             @Override
@@ -352,8 +351,8 @@ public class DeleteRawMockServerTest {
 
         // Then
         TaskRunList testTaskRunList = taskRunClient.list();
-        assert isTaskRunDeleted.equals(true);
-        assert testTaskRunList.getItems().size() == 0;
+        assertThat(isTaskRunDeleted, is(true));
+        assertThat(testTaskRunList.getItems().size(),is(0));
     }
 
     @Test
@@ -408,8 +407,8 @@ public class DeleteRawMockServerTest {
 
         // Then
         PipelineList testPipelineList = pipelineClient.list();
-        assert isPipelineDeleted.equals(true);
-        assert testPipelineList.getItems().size() == 0;
+        assertThat(isPipelineDeleted, is(true));
+        assertThat(testPipelineList.getItems().size(), is(0));
     }
 
     @Test
@@ -497,8 +496,8 @@ public class DeleteRawMockServerTest {
 
         // Then
         PipelineList testPipelineList = pipelineClient.list();
-        assert isPipelineDeleted.equals(true);
-        assert testPipelineList.getItems().size() == 0;
+        assertThat(isPipelineDeleted, is(true));
+        assertThat(testPipelineList.getItems().size(), is(0));
     }
 
     @Test
@@ -534,7 +533,6 @@ public class DeleteRawMockServerTest {
         server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns")
                 .andReturn(HttpURLConnection.HTTP_OK, new PipelineRunList()).once();
 
-
         // When
         CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testPipelineRunYaml){
             @Override
@@ -547,6 +545,9 @@ public class DeleteRawMockServerTest {
         createRaw.setEnableCatalog(false);
         createRaw.setTektonClient(client);
         createRaw.setPipelineRunClient(pipelineRunClient);
+        FakeChecksPublisher checksPublisher = new FakeChecksPublisher();
+        createRaw.setChecksPublisher(checksPublisher);
+
         try {
             createRaw.createPipelineRun(new ByteArrayInputStream(testPipelineRunYaml.getBytes(StandardCharsets.UTF_8)));
         } catch (Exception e) {
@@ -562,8 +563,8 @@ public class DeleteRawMockServerTest {
 
         // Then
         PipelineRunList testPipelineRunList = pipelineRunClient.list();
-        assert isPipelineRunDeleted.equals(true);
-        assert testPipelineRunList.getItems().size() == 0;
+        assertThat(isPipelineRunDeleted, is(true));
+        assertThat(testPipelineRunList.getItems().size(), is(0));
     }
 
     @Test
@@ -623,7 +624,6 @@ public class DeleteRawMockServerTest {
         server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns")
                 .andReturn(HttpURLConnection.HTTP_OK, new PipelineRunList()).once();
 
-
         // When
         CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testPipelineRun1Yaml){
             @Override
@@ -636,6 +636,9 @@ public class DeleteRawMockServerTest {
         createRaw.setEnableCatalog(false);
         createRaw.setTektonClient(client);
         createRaw.setPipelineRunClient(pipelineRunClient);
+        FakeChecksPublisher checksPublisher = new FakeChecksPublisher();
+        createRaw.setChecksPublisher(checksPublisher);
+
         try {
             createRaw.createPipelineRun(new ByteArrayInputStream(testPipelineRun1Yaml.getBytes(StandardCharsets.UTF_8)));
         } catch (Exception e) {
@@ -654,6 +657,8 @@ public class DeleteRawMockServerTest {
         createRaw.setEnableCatalog(false);
         createRaw.setTektonClient(client);
         createRaw.setPipelineRunClient(pipelineRunClient);
+        checksPublisher = new FakeChecksPublisher();
+        createRaw.setChecksPublisher(checksPublisher);
         try {
             createRaw.createPipelineRun(new ByteArrayInputStream(testPipelineRun2Yaml.getBytes(StandardCharsets.UTF_8)));
         } catch (Exception e) {
@@ -669,7 +674,7 @@ public class DeleteRawMockServerTest {
 
         // Then
         PipelineRunList testPipelineRunList = pipelineRunClient.list();
-        assert isPipelineRunDeleted.equals(true);
-        assert testPipelineRunList.getItems().size() == 0;
+        assertThat(isPipelineRunDeleted, is(true));
+        assertThat(testPipelineRunList.getItems().size(), is(0));
     }
 }
