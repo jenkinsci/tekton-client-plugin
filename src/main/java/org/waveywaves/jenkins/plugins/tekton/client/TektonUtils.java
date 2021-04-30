@@ -142,7 +142,6 @@ public class TektonUtils {
             }
         }
 
-
         return inputStream;
     }
 

@@ -94,6 +94,7 @@ public class PipelineRunLogWatch implements Runnable {
                         }
                     }
                 }
+
                 if (taskComplete) {
                     logMessageLn("completed PipelineTask " + pipelineTaskName);
                     break;

@@ -1,5 +1,6 @@
 package org.waveywaves.jenkins.plugins.tekton.client.build.create;
 
+import hudson.EnvVars;
 import io.fabric8.kubernetes.api.model.apiextensions.v1beta1.CustomResourceDefinition;
 import io.fabric8.kubernetes.client.KubernetesClient;
 
@@ -95,15 +96,15 @@ public class CreateRawMockServerTest {
 
         // Mocked Responses
         TaskRunBuilder taskRunBuilder = new TaskRunBuilder()
-                .withNewMetadata().withName("home-is-set-1234").endMetadata();
-        List<TaskRun> trList = new ArrayList<TaskRun>();
-        TaskRun testTaskRun = taskRunBuilder.build();
-        trList.add(testTaskRun);
-        TaskRunList taskRunList = new TaskRunList();
-        taskRunList.setItems(trList);
+                .withNewMetadata()
+                    .withName("home-is-set-1234")
+                .endMetadata();
+        TaskRunList taskRunList = new TaskRunListBuilder()
+                .addToItems(taskRunBuilder.build())
+                .build();
 
         server.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/taskruns")
-                .andReturn(HttpURLConnection.HTTP_CREATED, testTaskRun).once();
+                .andReturn(HttpURLConnection.HTTP_CREATED, taskRunBuilder.build()).once();
         server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/taskruns")
                 .andReturn(HttpURLConnection.HTTP_OK, taskRunList).once();
 
@@ -151,15 +152,15 @@ public class CreateRawMockServerTest {
 
         // Mocked Responses
         PipelineBuilder pipelineBuilder = new PipelineBuilder()
-                .withNewMetadata().withName("testPipeline").endMetadata();
-        List<Pipeline> pList = new ArrayList<Pipeline>();
-        Pipeline testPipeline = pipelineBuilder.build();
-        pList.add(testPipeline);
-        PipelineList pipelineList = new PipelineList();
-        pipelineList.setItems(pList);
+                .withNewMetadata()
+                    .withName("testPipeline")
+                .endMetadata();
+        PipelineList pipelineList = new PipelineListBuilder()
+                .addToItems(pipelineBuilder.build())
+                .build();
 
         server.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelines")
-                .andReturn(HttpURLConnection.HTTP_CREATED, testPipeline).once();
+                .andReturn(HttpURLConnection.HTTP_CREATED, pipelineBuilder.build()).once();
         server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelines")
                 .andReturn(HttpURLConnection.HTTP_OK, pipelineList).once();
 
@@ -185,7 +186,9 @@ public class CreateRawMockServerTest {
         String testPipelineRunYaml = "apiVersion: tekton.dev/v1beta1\n" +
                 "kind: PipelineRun\n" +
                 "metadata:\n" +
-                "  name: testPipelineRun\n";
+                "  name: testPipelineRun\n" +
+                "spec:\n" +
+                "  params: []\n";
 
         KubernetesClient client = server.getClient();
         InputStream crdAsInputStream = getClass().getResourceAsStream("/pipeline-crd.yaml");
@@ -195,15 +198,19 @@ public class CreateRawMockServerTest {
 
         // Mocked Responses
         PipelineRunBuilder pipelineRunBuilder = new PipelineRunBuilder()
-                .withNewMetadata().withName("testPipelineRun").endMetadata();
-        List<PipelineRun> prList = new ArrayList<PipelineRun>();
-        PipelineRun testPipelineRun = pipelineRunBuilder.build();
-        prList.add(testPipelineRun);
-        PipelineRunList pipelineRunList = new PipelineRunList();
-        pipelineRunList.setItems(prList);
+                .withNewMetadata()
+                    .withName("testPipelineRun")
+                .endMetadata()
+                .withNewSpec()
+                    .withParams(new Param("param", new ArrayOrString("value")))
+                .endSpec();
+
+        PipelineRunList pipelineRunList = new PipelineRunListBuilder()
+                .addToItems(pipelineRunBuilder.build())
+                .build();
 
         server.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelines")
-                .andReturn(HttpURLConnection.HTTP_CREATED, testPipelineRun).once();
+                .andReturn(HttpURLConnection.HTTP_CREATED, pipelineRunBuilder.build()).once();
         server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelines")
                 .andReturn(HttpURLConnection.HTTP_OK, pipelineRunList).once();
 
@@ -226,7 +233,7 @@ public class CreateRawMockServerTest {
         String createdPipelineName = "";
         try {
             createdPipelineName = createRaw.createPipelineRun(
-                    new ByteArrayInputStream(testPipelineRunYaml.getBytes(StandardCharsets.UTF_8)));
+                    new ByteArrayInputStream(testPipelineRunYaml.getBytes(StandardCharsets.UTF_8)), new EnvVars());
         } catch (Exception e) {
             fail(e.getMessage(), e);
         }

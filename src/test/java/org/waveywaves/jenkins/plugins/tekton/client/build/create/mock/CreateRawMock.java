@@ -1,5 +1,6 @@
 package org.waveywaves.jenkins.plugins.tekton.client.build.create.mock;
 
+import hudson.EnvVars;
 import io.fabric8.tekton.pipeline.v1beta1.PipelineRun;
 import io.fabric8.tekton.pipeline.v1beta1.TaskRun;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
@@ -28,7 +29,7 @@ public class CreateRawMock extends CreateRaw {
     }
 
     @Override
-    public String createPipelineRun(InputStream inputStream) { return TektonUtils.TektonResourceType.pipelinerun.toString(); }
+    public String createPipelineRun(InputStream inputStream, EnvVars envVars) { return TektonUtils.TektonResourceType.pipelinerun.toString(); }
 
     @Override
     public void streamTaskRunLogsToConsole(TaskRun taskRun) {
