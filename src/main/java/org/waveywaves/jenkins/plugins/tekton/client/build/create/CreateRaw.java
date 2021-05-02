@@ -280,6 +280,9 @@ public class CreateRaw extends BaseStep {
     }
 
     private void setParamOnPipelineRunSpec(@NonNull PipelineRunSpec spec, String paramName, String paramValue) {
+        if (paramValue == null) {
+            paramValue = "";
+        }
         if (spec.getParams() == null) {
             spec.setParams(new ArrayList<>());
         }
