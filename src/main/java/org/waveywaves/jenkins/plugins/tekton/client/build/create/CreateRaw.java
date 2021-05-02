@@ -1,5 +1,9 @@
 package org.waveywaves.jenkins.plugins.tekton.client.build.create;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
@@ -243,6 +247,8 @@ public class CreateRaw extends BaseStep {
         // GIT_PREVIOUS_SUCCESSFUL_COMMIT=9c7648f892913dfa12963a38fe489b1291e033a8
         // GIT_URL=https://github.com/garethjevans/test-tekton-client
 
+        LOGGER.info("Using environment variables " + envVars);
+
         setParamOnPipelineRunSpec(pipelineRun.getSpec(), "BUILD_ID", envVars.get("BUILD_ID"));
         // JOB_NAME
         // JOB_SPEC
@@ -259,7 +265,7 @@ public class CreateRaw extends BaseStep {
 
         String ns = pipelineRun.getMetadata().getNamespace();
 
-        LOGGER.info("Creating PipelineRun " + pipelineRun);
+        LOGGER.info("Creating PipelineRun\n" + marshall(pipelineRun));
 
         PipelineRun updatedPipelineRun = Strings.isNullOrEmpty(ns) ?
                 pipelineRunClient.create(pipelineRun) :
@@ -588,5 +594,16 @@ public class CreateRaw extends BaseStep {
         public String getDisplayName() {
             return "Tekton : Create Resource (Raw)";
         }
+    }
+
+    private String marshall(PipelineRun pipelineRun) {
+        ObjectMapper mapper = new ObjectMapper(new YAMLFactory().disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER));
+        String output = null;
+        try {
+            output = mapper.writeValueAsString(pipelineRun);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+        return output;
     }
 }
