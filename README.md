@@ -10,7 +10,7 @@
 
 Jenkins plugin to interact with [Tekton Pipelines](https://github.com/tektoncd/pipeline) on a Kubernetes Cluster. 
 
-#### **Current State** : _Alpha_
+#### **Current State** : _Beta_
 
 ## Start using the plugin
 
