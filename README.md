@@ -28,6 +28,7 @@ _Currently in the tekton-client-plugin we are able to create and delete Tekton R
 
 - Learn more with [the tutorial!](docs/tutorial.md)
 - Check out the [roadmap](roadmap.md) for a better idea of what's planned for the future.
+- [Installation Guide](docs/installation.md)
 
 ## Want to contribute
 
