@@ -318,9 +318,8 @@ public class CreateRawMockServerTest {
 
         createRaw.setChecksPublisher(checksPublisher);
 
-        String createdPipelineName = "";
         try {
-            createdPipelineName = createRaw.createPipelineRun(
+             createRaw.createPipelineRun(
                     new ByteArrayInputStream(testPipelineRunYaml.getBytes(StandardCharsets.UTF_8)), new EnvVars());
             fail("Expected this to fail");
         } catch (Exception e) {
@@ -328,10 +327,5 @@ public class CreateRawMockServerTest {
         }
 
         assertThat(checksPublisher.getCounter(), is(1));
-
-        // Then
-        PipelineRunList testPipelineRunList = pipelineRunClient.list();
-        assertThat(createdPipelineName, is("testPipelineRun"));
-        assertThat(testPipelineRunList.getItems().size(), is(1));
     }
 }
