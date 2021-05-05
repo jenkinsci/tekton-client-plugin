@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Optional;
 import org.junit.Test;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
+import org.waveywaves.jenkins.plugins.tekton.client.build.FakeChecksPublisher;
 import org.waveywaves.jenkins.plugins.tekton.client.build.create.mock.CreateRawMock;
 import org.waveywaves.jenkins.plugins.tekton.client.build.create.mock.FakeCreateRaw;
 
@@ -78,6 +79,7 @@ public class CreateRawTest {
         createRaw.setNamespace(namespace);
         createRaw.setClusterName(TektonUtils.DEFAULT_CLIENT_KEY);
         createRaw.setEnableCatalog(false);
+        createRaw.setChecksPublisher(new FakeChecksPublisher());
         String created = createRaw.runCreate(run, null, null);
         assert created.equals(TektonUtils.TektonResourceType.pipelinerun.toString());
     }
