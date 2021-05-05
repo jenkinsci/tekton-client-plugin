@@ -3,6 +3,7 @@ package org.waveywaves.jenkins.plugins.tekton.client.build.create;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Result;
+import io.fabric8.knative.internal.pkg.apis.Condition;
 import io.fabric8.kubernetes.api.model.ContainerBuilder;
 import io.fabric8.kubernetes.api.model.ContainerStateBuilder;
 import io.fabric8.kubernetes.api.model.ContainerStateTerminatedBuilder;
@@ -64,7 +65,9 @@ public class JenkinsTest {
     @Test
     public void testScriptedPipeline() throws Exception {
         TaskBuilder taskBuilder = new TaskBuilder()
-                .withNewMetadata().withName("testTask").endMetadata();
+                .withNewMetadata()
+                    .withName("testTask")
+                .endMetadata();
 
         kubernetesRule.expect()
                 .post()
@@ -95,7 +98,9 @@ public class JenkinsTest {
     @Test
     public void testDeclarativePipelineWithFileInput() throws Exception {
         TaskBuilder taskBuilder = new TaskBuilder()
-                .withNewMetadata().withName("testTask").endMetadata();
+                .withNewMetadata()
+                    .withName("testTask")
+                .endMetadata();
 
         kubernetesRule.expect()
                 .post()
@@ -133,7 +138,9 @@ public class JenkinsTest {
     @Test
     public void testDeclarativePipelineWithYamlInput() throws Exception {
         TaskBuilder taskBuilder = new TaskBuilder()
-                .withNewMetadata().withName("testTask").endMetadata();
+                .withNewMetadata()
+                    .withName("testTask")
+                .endMetadata();
 
         kubernetesRule.expect()
                 .post()
@@ -175,7 +182,9 @@ public class JenkinsTest {
     @Test
     public void testFreestyleJobWithFileInput() throws Exception {
         TaskBuilder taskBuilder = new TaskBuilder()
-                .withNewMetadata().withName("testTask").endMetadata();
+                .withNewMetadata()
+                    .withName("testTask")
+                .endMetadata();
 
         kubernetesRule.expect()
                 .post()
@@ -202,7 +211,9 @@ public class JenkinsTest {
     @Test
     public void testFreestyleJobWithYamlInput() throws Exception {
         TaskBuilder taskBuilder = new TaskBuilder()
-                .withNewMetadata().withName("testTask").endMetadata();
+                .withNewMetadata()
+                    .withName("testTask")
+                .endMetadata();
 
         kubernetesRule.expect()
                 .post()
@@ -245,11 +256,20 @@ public class JenkinsTest {
                             .withName("pipelineTaskName")
                         .endTask()
                     .endPipelineSpec()
-                .endSpec();
+                .endSpec()
+                .withNewStatus()
+                    .withConditions(new Condition("lastTransitionTime","","","","True","Succeeded"))
+                .endStatus();
 
         kubernetesRule.expect()
                 .post()
                 .withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns")
+                .andReturn(HttpURLConnection.HTTP_OK, pipelineRunBuilder.build())
+                .once();
+
+        kubernetesRule.expect()
+                .get()
+                .withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns/release")
                 .andReturn(HttpURLConnection.HTTP_OK, pipelineRunBuilder.build())
                 .once();
 
@@ -326,7 +346,7 @@ public class JenkinsTest {
         assertThat(log, containsString("Legacy code started this job"));
         assertThat(log, containsString("Whoop! This is the pod log"));
 
-        assertThat(kubernetesRule.getMockServer().getRequestCount(), is(8));
+        assertThat(kubernetesRule.getMockServer().getRequestCount(), is(9));
     }
 
     @Test
@@ -345,11 +365,20 @@ public class JenkinsTest {
                             .withName("pipelineTaskName")
                         .endTask()
                     .endPipelineSpec()
-                .endSpec();
+                .endSpec()
+                .withNewStatus()
+                    .withConditions(new Condition("lastTransitionTime","","","","True","Succeeded"))
+                .endStatus();
 
         kubernetesRule.expect()
                 .post()
                 .withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns")
+                .andReturn(HttpURLConnection.HTTP_OK, pipelineRunBuilder.build())
+                .once();
+
+        kubernetesRule.expect()
+                .get()
+                .withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns/release")
                 .andReturn(HttpURLConnection.HTTP_OK, pipelineRunBuilder.build())
                 .once();
 
@@ -371,9 +400,9 @@ public class JenkinsTest {
 
         Pod pod = new PodBuilder()
                 .withNewMetadata()
-                .withName("hello-world-pod")
-                .withNamespace("test")
-                .withOwnerReferences(ownerReference("TaskRun","testTaskRun"))
+                    .withName("hello-world-pod")
+                    .withNamespace("test")
+                    .withOwnerReferences(ownerReference("TaskRun","testTaskRun"))
                 .endMetadata()
                 .withNewSpec()
                 .withContainers(
@@ -426,7 +455,7 @@ public class JenkinsTest {
         assertThat(log, containsString("Legacy code started this job"));
         assertThat(log, containsString("Whoop! This is the pod log"));
 
-        assertThat(kubernetesRule.getMockServer().getRequestCount(), is(8));
+        assertThat(kubernetesRule.getMockServer().getRequestCount(), is(9));
     }
 
     private String contents(String filename) throws IOException {

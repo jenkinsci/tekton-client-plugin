@@ -22,6 +22,7 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import io.fabric8.knative.internal.pkg.apis.Condition;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.tekton.client.TektonClient;
 import io.fabric8.tekton.pipeline.v1beta1.ArrayOrString;
@@ -270,6 +271,20 @@ public class CreateRaw extends BaseStep {
         checksPublisher.publish(checkDetails);
 
         streamPipelineRunLogsToConsole(updatedPipelineRun);
+
+        PipelineRun reloaded = pipelineRunClient.withName(resourceName).get();
+        List<Condition> conditions = reloaded
+                .getStatus()
+                .getConditions();
+        Optional<Condition> succeeded = conditions
+                .stream()
+                .filter(c -> c.getType().equalsIgnoreCase("Succeeded"))
+                .findFirst();
+
+        if (succeeded.isPresent() && succeeded.get().getStatus().equalsIgnoreCase("false")) {
+            // pass the error message
+            throw new Exception(succeeded.get().getReason() + ": " + succeeded.get().getMessage());
+        }
 
         return resourceName;
     }
