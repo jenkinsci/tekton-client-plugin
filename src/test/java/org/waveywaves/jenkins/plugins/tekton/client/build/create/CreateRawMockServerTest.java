@@ -1,6 +1,8 @@
 package org.waveywaves.jenkins.plugins.tekton.client.build.create;
 
 import hudson.EnvVars;
+import io.fabric8.knative.internal.pkg.apis.Condition;
+import io.fabric8.kubernetes.api.model.ConditionBuilder;
 import io.fabric8.kubernetes.api.model.apiextensions.v1beta1.CustomResourceDefinition;
 import io.fabric8.kubernetes.client.KubernetesClient;
 
@@ -214,7 +216,10 @@ public class CreateRawMockServerTest {
                 .endMetadata()
                 .withNewSpec()
                     .withParams(new Param("param", new ArrayOrString("value")))
-                .endSpec();
+                .endSpec()
+                .withNewStatus()
+                     .withConditions(new Condition("lastTransitionTime","","","","True","Succeeded"))
+                .endStatus();
 
         PipelineRunList pipelineRunList = new PipelineRunListBuilder()
                 .addToItems(pipelineRunBuilder.build())
@@ -224,6 +229,8 @@ public class CreateRawMockServerTest {
                 .andReturn(HttpURLConnection.HTTP_CREATED, pipelineRunBuilder.build()).once();
         server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelines")
                 .andReturn(HttpURLConnection.HTTP_OK, pipelineRunList).once();
+        server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelines/testPipelineRun")
+                .andReturn(HttpURLConnection.HTTP_OK, pipelineRunBuilder.build()).once();
 
         // When
         CreateRaw createRaw = new CreateRaw(testPipelineRunYaml, CreateRaw.InputType.YAML.toString()) {
@@ -254,5 +261,71 @@ public class CreateRawMockServerTest {
         PipelineRunList testPipelineRunList = pipelineRunClient.list();
         assertThat(createdPipelineName, is("testPipelineRun"));
         assertThat(testPipelineRunList.getItems().size(), is(1));
+    }
+
+    @Test
+    public void testPipelineRunCreateWithFailingPod() {
+        // Given
+        String testPipelineRunYaml = "apiVersion: tekton.dev/v1beta1\n" +
+                                     "kind: PipelineRun\n" +
+                                     "metadata:\n" +
+                                     "  name: testPipelineRun\n" +
+                                     "spec:\n" +
+                                     "  params: []\n";
+
+        KubernetesClient client = server.getClient();
+        InputStream crdAsInputStream = getClass().getResourceAsStream("/pipeline-crd.yaml");
+        CustomResourceDefinition pipelineRunCrd = client.apiextensions().v1beta1().customResourceDefinitions().load(crdAsInputStream).get();
+        MixedOperation<PipelineRun, PipelineRunList, Resource<PipelineRun>> pipelineRunClient = client
+                .customResources(CustomResourceDefinitionContext.fromCrd(pipelineRunCrd), PipelineRun.class, PipelineRunList.class);
+
+        // Mocked Responses
+        PipelineRunBuilder pipelineRunBuilder = new PipelineRunBuilder()
+                .withNewMetadata()
+                    .withName("testPipelineRun")
+                .endMetadata()
+                .withNewSpec()
+                    .withParams(new Param("param", new ArrayOrString("value")))
+                .endSpec()
+                .withNewStatus()
+                    .withConditions(new Condition("lastTransitionTime","This is an error message","ParameterMissing","","False","Succeeded"))
+                .endStatus();
+
+        PipelineRunList pipelineRunList = new PipelineRunListBuilder()
+                .addToItems(pipelineRunBuilder.build())
+                .build();
+
+        server.expect().post().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelines")
+                .andReturn(HttpURLConnection.HTTP_CREATED, pipelineRunBuilder.build()).once();
+        server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelines")
+                .andReturn(HttpURLConnection.HTTP_OK, pipelineRunList).once();
+        server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelines/testPipelineRun")
+                .andReturn(HttpURLConnection.HTTP_OK, pipelineRunBuilder.build()).once();
+
+        // When
+        CreateRaw createRaw = new CreateRaw(testPipelineRunYaml, CreateRaw.InputType.YAML.toString()) {
+            @Override
+            public void streamPipelineRunLogsToConsole(PipelineRun pipelineRun) {
+                return;
+            }
+        };
+
+        createRaw.setNamespace(namespace);
+        createRaw.setClusterName(TektonUtils.DEFAULT_CLIENT_KEY);
+        createRaw.setEnableCatalog(enableCatalog);
+        createRaw.setTektonClient(client);
+        createRaw.setPipelineRunClient(pipelineRunClient);
+
+        createRaw.setChecksPublisher(checksPublisher);
+
+        try {
+             createRaw.createPipelineRun(
+                    new ByteArrayInputStream(testPipelineRunYaml.getBytes(StandardCharsets.UTF_8)), new EnvVars());
+            fail("Expected this to fail");
+        } catch (Exception e) {
+            assertThat(e.getMessage(), is("ParameterMissing: This is an error message"));
+        }
+
+        assertThat(checksPublisher.getCounter(), is(1));
     }
 }

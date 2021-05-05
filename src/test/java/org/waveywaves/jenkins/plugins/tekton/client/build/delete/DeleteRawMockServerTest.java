@@ -1,6 +1,7 @@
 package org.waveywaves.jenkins.plugins.tekton.client.build.delete;
 
 import hudson.EnvVars;
+import io.fabric8.knative.internal.pkg.apis.Condition;
 import io.fabric8.kubernetes.api.model.apiextensions.v1beta1.CustomResourceDefinition;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
@@ -33,8 +34,6 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.fail;
 import static org.hamcrest.CoreMatchers.is;
@@ -525,7 +524,11 @@ public class DeleteRawMockServerTest {
         PipelineRunBuilder pipelineRunBuilder = new PipelineRunBuilder()
                 .withNewMetadata()
                     .withName(TEST_PIPELINERUN)
-                .endMetadata();
+                .endMetadata()
+                .withNewStatus()
+                    .withConditions(new Condition("lastTransitionTime","","","","True","Succeeded"))
+                .endStatus();
+
         PipelineRunList pipelineRunList = new PipelineRunListBuilder()
                 .addToItems(pipelineRunBuilder.build())
                 .build();
@@ -538,6 +541,8 @@ public class DeleteRawMockServerTest {
                 .andReturn(HttpURLConnection.HTTP_OK, pipelineRunBuilder.build()).once();
         server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns")
                 .andReturn(HttpURLConnection.HTTP_OK, new PipelineRunList()).once();
+        server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns/"+TEST_PIPELINERUN)
+                .andReturn(HttpURLConnection.HTTP_OK, pipelineRunBuilder.build()).once();
 
         // When
         CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testPipelineRunYaml){
@@ -601,8 +606,11 @@ public class DeleteRawMockServerTest {
         // Mocked Responses
         PipelineRunBuilder pipelineRunBuilder = new PipelineRunBuilder()
                 .withNewMetadata()
-                .withName(TEST_PIPELINERUN1)
-                .endMetadata();
+                    .withName(TEST_PIPELINERUN1)
+                .endMetadata()
+                .withNewStatus()
+                    .withConditions(new Condition("lastTransitionTime","","","","True","Succeeded"))
+                .endStatus();
         PipelineRunList pipelineRunList = new PipelineRunListBuilder()
                 .addToItems(pipelineRunBuilder.build())
                 .build();
@@ -615,6 +623,10 @@ public class DeleteRawMockServerTest {
                 .andReturn(HttpURLConnection.HTTP_OK, pipelineRunBuilder.build()).once();
         server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns")
                 .andReturn(HttpURLConnection.HTTP_OK, new PipelineRunList()).once();
+        server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns/"+TEST_PIPELINERUN1)
+                .andReturn(HttpURLConnection.HTTP_OK, pipelineRunBuilder.build()).once();
+        server.expect().get().withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns/"+TEST_PIPELINERUN2)
+                .andReturn(HttpURLConnection.HTTP_OK, pipelineRunBuilder.build()).once();
 
         // PipelineRun 2
         pipelineRunBuilder = new PipelineRunBuilder()
