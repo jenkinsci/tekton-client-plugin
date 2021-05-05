@@ -43,18 +43,72 @@ pipeline {
 }
 ```
 
-When used in this way, the following parameters are passed to the `PipelineRun` so that the correct source code can be cloned in the tekton pipeline:
+When used in this way, the following parameters are passed to the `PipelineRun` so that the 
+correct source code can be cloned in the tekton pipeline:
 
 * `BUILD_ID` - the build id/number of the Jenkins job
-* `JOB_NAME` - ???
-* `JOB_SPEC` - ???
-* `JOB_TYPE` - ???
-* `PULL_BASE_REF` - ???
-* `PULL_BASE_SHA` - the commit sha of the base of the pull request 
-* `PULL_NUMBER` - ???
-* `PULL_PULL_REF` - ???
-* `PULL_PULL_SHA` - ???
-* `PULL_REFS` - ???
-* `REPO_NAME` - ???
-* `REPO_OWNER` - ???
+* `JOB_NAME` - the name of the jenkins job that triggered this pipeline
+* `PULL_BASE_REF` - name of the base branch
+* `PULL_PULL_SHA` - the commit sha of the pull request or branch
+* `REPO_NAME` - name of the repository
+* `REPO_OWNER` - owner of the repository
 * `REPO_URL` - the URL of the repository
+
+## Using the git-clone task from the tekton catalog.
+
+To use tasks from the tekton-catalog, the tasks will need to be installed in the same namespace 
+that tekton is running, once that is done they can be used in a `PipelineRun`.  An example pipeline
+showing this in use is shown below:
+
+```
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  generateName: hello-world-pipeline-
+spec:
+  workspaces:
+    - name: shared-data
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 500Mi
+  pipelineSpec:
+    params:
+      - description: the unique build number
+        name: BUILD_ID
+        type: string
+      - description: the git sha of the tip of the pull request
+        name: PULL_PULL_SHA
+        type: string
+      - description: git url to clone
+        name: REPO_URL
+        type: string
+    workspaces:
+      - name: shared-data
+    tasks:
+      - name: fetch-repo
+        taskRef:
+          name: git-clone
+        workspaces:
+          - name: output
+            workspace: shared-data
+        params:
+          - name: url
+            value: $(params.REPO_URL)
+          - name: revision
+            value: $(params.PULL_PULL_SHA)
+```            
+
+to reuse the same workspace in future tasks you need to make use of the `runAfter` command e.g.:
+
+```
+      - name: do-something-with-the-source-code
+        runAfter:
+          - fetch-repo
+        workspaces:
+          - name: source
+            workspace: shared-data
+```            
