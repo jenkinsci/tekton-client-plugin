@@ -10,6 +10,8 @@ import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
 
 import io.fabric8.tekton.pipeline.v1beta1.*;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
@@ -18,8 +20,6 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 import org.waveywaves.jenkins.plugins.tekton.client.build.FakeChecksPublisher;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -30,10 +30,21 @@ import static org.assertj.core.api.Assertions.fail;
 public class CreateRawMockServerTest {
 
     private boolean enableCatalog = false;
-    private String namespace;
+    private String namespace = "test";
+    private FakeChecksPublisher checksPublisher;
 
     @Rule
     public KubernetesServer server = new KubernetesServer();
+
+    @Before
+    public void before() {
+        checksPublisher = new FakeChecksPublisher();
+    }
+
+    @After
+    public void after() {
+        checksPublisher.validate();
+    }
 
     @Test
     public void testTaskCreate() {
@@ -227,7 +238,6 @@ public class CreateRawMockServerTest {
         createRaw.setTektonClient(client);
         createRaw.setPipelineRunClient(pipelineRunClient);
 
-        FakeChecksPublisher checksPublisher = new FakeChecksPublisher();
         createRaw.setChecksPublisher(checksPublisher);
 
         String createdPipelineName = "";
