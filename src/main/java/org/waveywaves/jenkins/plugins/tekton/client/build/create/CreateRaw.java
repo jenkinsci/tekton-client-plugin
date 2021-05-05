@@ -261,6 +261,7 @@ public class CreateRaw extends BaseStep {
                 .withName("tekton")
                 .withOutput(new ChecksOutput.ChecksOutputBuilder()
                         .withTitle(updatedPipelineRun.getMetadata().getName())
+                        .withSummary("PipelineRun is running...")
                         .build())
                 .withStartedAt(LocalDateTime.now())
                 .withStatus(ChecksStatus.IN_PROGRESS)
@@ -382,7 +383,6 @@ public class CreateRaw extends BaseStep {
     protected String runCreate(Run<?, ?> run, FilePath workspace, EnvVars envVars) {
         URL url = null;
         byte[] data = null;
-        //File inputFile = null;
         String inputData = this.getInput();
         String inputType = this.getInputType();
         String createdResourceName = "";
@@ -421,6 +421,7 @@ public class CreateRaw extends BaseStep {
                         .withName("tekton")
                         .withOutput(new ChecksOutput.ChecksOutputBuilder()
                                 .withTitle(createdResourceName)
+                                .withSummary("PipelineRun completed")
                                 .build())
                         .withCompletedAt(LocalDateTime.now())
                         .withStatus(ChecksStatus.COMPLETED)
@@ -449,6 +450,7 @@ public class CreateRaw extends BaseStep {
                         .withConclusion(ChecksConclusion.FAILURE)
                         .withOutput(new ChecksOutput.ChecksOutputBuilder()
                                 .withTitle(createdResourceName)
+                                .withSummary("PipelineRun Failed")
                                 .withText(buffer.toString())
                                 .build())
                         .withDetailsURL(DisplayURLProvider.get().getRunURL(run))

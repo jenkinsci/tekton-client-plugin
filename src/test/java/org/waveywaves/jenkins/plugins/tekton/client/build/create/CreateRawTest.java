@@ -7,7 +7,8 @@ import io.fabric8.tekton.pipeline.v1beta1.Param;
 import io.fabric8.tekton.pipeline.v1beta1.PipelineRun;
 import io.fabric8.tekton.pipeline.v1beta1.PipelineRunBuilder;
 import java.util.List;
-import java.util.Optional;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
 import org.waveywaves.jenkins.plugins.tekton.client.build.FakeChecksPublisher;
@@ -26,6 +27,17 @@ public class CreateRawTest {
 
     private Run<?,?> run;
     private String namespace;
+    private FakeChecksPublisher checksPublisher;
+
+    @Before
+    public void before() {
+        checksPublisher = new FakeChecksPublisher();
+    }
+
+    @After
+    public void after() {
+        checksPublisher.validate();
+    }
 
     @Test
     public void runCreateTaskTest() {
@@ -79,7 +91,7 @@ public class CreateRawTest {
         createRaw.setNamespace(namespace);
         createRaw.setClusterName(TektonUtils.DEFAULT_CLIENT_KEY);
         createRaw.setEnableCatalog(false);
-        createRaw.setChecksPublisher(new FakeChecksPublisher());
+        createRaw.setChecksPublisher(checksPublisher);
         String created = createRaw.runCreate(run, null, null);
         assert created.equals(TektonUtils.TektonResourceType.pipelinerun.toString());
     }
