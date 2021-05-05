@@ -386,6 +386,7 @@ public class CreateRaw extends BaseStep {
         String inputData = this.getInput();
         String inputType = this.getInputType();
         String createdResourceName = "";
+        TektonResourceType resourceType = null;
         try {
             if (inputType.equals(InputType.URL.toString())) {
                 url = new URL(inputData);
@@ -408,10 +409,24 @@ public class CreateRaw extends BaseStep {
                 if (kind.size() > 1){
                     LOGGER.warning("Multiple Objects in YAML not supported yet");
                 } else {
-                    TektonResourceType resourceType = kind.get(0);
+                    resourceType = kind.get(0);
                     LOGGER.info("creating kind " + resourceType.name());
                     createdResourceName = createWithResourceSpecificClient(resourceType, new ByteArrayInputStream(data), envVars);
                 }
+            }
+
+            // only recording checks for pipelineruns
+            if (resourceType != null && resourceType == TektonResourceType.pipelinerun) {
+                ChecksDetails checkDetails = new ChecksDetails.ChecksDetailsBuilder()
+                        .withName("tekton")
+                        .withOutput(new ChecksOutput.ChecksOutputBuilder()
+                                .withTitle(createdResourceName)
+                                .build())
+                        .withCompletedAt(LocalDateTime.now())
+                        .withStatus(ChecksStatus.COMPLETED)
+                        .withConclusion(ChecksConclusion.SUCCESS)
+                        .build();
+                checksPublisher.publish(checkDetails);
             }
         } catch (Throwable e) {
             logMessage("Failed: " + e.getMessage());
@@ -426,19 +441,22 @@ public class CreateRaw extends BaseStep {
 
             run.setResult(Result.FAILURE);
 
-            ChecksDetails checkDetails = new ChecksDetails.ChecksDetailsBuilder()
-                    .withName("tekton")
-                    .withStatus(ChecksStatus.COMPLETED)
-                    .withConclusion(ChecksConclusion.FAILURE)
-                    .withOutput(new ChecksOutput.ChecksOutputBuilder()
-                            .withTitle(createdResourceName)
-                            .withText(buffer.toString())
-                            .build())
-                    .withDetailsURL(DisplayURLProvider.get().getRunURL(run))
-                    .withCompletedAt(LocalDateTime.now(ZoneOffset.UTC))
-                    .build();
+            // only recording checks for pipelineruns
+            if (resourceType != null && resourceType == TektonResourceType.pipelinerun) {
+                ChecksDetails checkDetails = new ChecksDetails.ChecksDetailsBuilder()
+                        .withName("tekton")
+                        .withStatus(ChecksStatus.COMPLETED)
+                        .withConclusion(ChecksConclusion.FAILURE)
+                        .withOutput(new ChecksOutput.ChecksOutputBuilder()
+                                .withTitle(createdResourceName)
+                                .withText(buffer.toString())
+                                .build())
+                        .withDetailsURL(DisplayURLProvider.get().getRunURL(run))
+                        .withCompletedAt(LocalDateTime.now(ZoneOffset.UTC))
+                        .build();
 
-            checksPublisher.publish(checkDetails);
+                checksPublisher.publish(checkDetails);
+            }
         }
         return createdResourceName;
     }
