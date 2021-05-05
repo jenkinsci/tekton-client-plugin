@@ -37,11 +37,13 @@ import io.jenkins.plugins.checks.api.ChecksOutput;
 import io.jenkins.plugins.checks.api.ChecksPublisher;
 import io.jenkins.plugins.checks.api.ChecksPublisherFactory;
 import io.jenkins.plugins.checks.api.ChecksStatus;
+import java.net.MalformedURLException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Optional;
+import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.displayurlapi.DisplayURLProvider;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -241,27 +243,9 @@ public class CreateRaw extends BaseStep {
             pipelineRun.getMetadata().setNamespace(namespace);
         }
 
-        // GIT_BRANCH=origin/main
-        // GIT_COMMIT=bb1ef888f5375bb19d5bb227e35bfcfed49759ed
-        // GIT_PREVIOUS_COMMIT=9c7648f892913dfa12963a38fe489b1291e033a8
-        // GIT_PREVIOUS_SUCCESSFUL_COMMIT=9c7648f892913dfa12963a38fe489b1291e033a8
-        // GIT_URL=https://github.com/garethjevans/test-tekton-client
-
         LOGGER.info("Using environment variables " + envVars);
 
-        setParamOnPipelineRunSpec(pipelineRun.getSpec(), "BUILD_ID", envVars.get("BUILD_ID"));
-        // JOB_NAME
-        // JOB_SPEC
-        // JOB_TYPE
-        // PULL_BASE_REF
-        setParamOnPipelineRunSpec(pipelineRun.getSpec(), "PULL_BASE_SHA", envVars.get("GIT_COMMIT"));
-        // PULL_NUMBER
-        // PULL_PULL_REF
-        // PULL_PULL_SHA
-        // PULL_REFS
-        // REPO_NAME
-        // REPO_OWNER
-        setParamOnPipelineRunSpec(pipelineRun.getSpec(), "REPO_URL", envVars.get("GIT_URL"));
+        enhancePipelineRunWithEnvVars(pipelineRun, envVars);
 
         String ns = pipelineRun.getMetadata().getNamespace();
 
@@ -283,6 +267,39 @@ public class CreateRaw extends BaseStep {
         streamPipelineRunLogsToConsole(updatedPipelineRun);
 
         return resourceName;
+    }
+
+    protected void enhancePipelineRunWithEnvVars(PipelineRun pr, EnvVars envVars) {
+        setParamOnPipelineRunSpec(pr.getSpec(), "BUILD_ID", envVars.get("BUILD_ID"));
+        setParamOnPipelineRunSpec(pr.getSpec(), "JOB_NAME", envVars.get("JOB_NAME"));
+        setParamOnPipelineRunSpec(pr.getSpec(), "PULL_PULL_SHA", envVars.get("GIT_COMMIT"));
+
+        String gitBranch = envVars.get("GIT_BRANCH");
+        if (StringUtils.isNotEmpty(gitBranch)) {
+            String[] gitBranchParts = gitBranch.split("/");
+            setParamOnPipelineRunSpec(pr.getSpec(), "PULL_BASE_REF", gitBranchParts[gitBranchParts.length - 1]);
+        }
+
+        String gitUrlString = envVars.get("GIT_URL");
+        if (StringUtils.isNotEmpty(gitUrlString)) {
+            URL gitUrl = null;
+            try {
+                gitUrl = new URL(gitUrlString);
+            } catch (MalformedURLException e) {
+                throw new RuntimeException(e);
+            }
+            String[] parts = gitUrl.getPath().split("/");
+            setParamOnPipelineRunSpec(pr.getSpec(), "REPO_URL", gitUrl.toString());
+            setParamOnPipelineRunSpec(pr.getSpec(), "REPO_OWNER", parts[1]);
+            setParamOnPipelineRunSpec(pr.getSpec(), "REPO_NAME", removeGitSuffix(parts[2]));
+        }
+    }
+
+    private String removeGitSuffix(String part) {
+        if (part.endsWith(".git")) {
+            return part.replaceAll("\\.git$", "");
+        }
+        return part;
     }
 
     private void setParamOnPipelineRunSpec(@NonNull PipelineRunSpec spec, String paramName, String paramValue) {
