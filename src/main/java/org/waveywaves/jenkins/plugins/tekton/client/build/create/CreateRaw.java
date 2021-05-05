@@ -258,7 +258,11 @@ public class CreateRaw extends BaseStep {
         resourceName = updatedPipelineRun.getMetadata().getName();
 
         ChecksDetails checkDetails = new ChecksDetails.ChecksDetailsBuilder()
-                .withName("Tekton: " + updatedPipelineRun.getMetadata().getName())
+                .withName("tekton")
+                .withOutput(new ChecksOutput.ChecksOutputBuilder()
+                        .withTitle(updatedPipelineRun.getMetadata().getName())
+                        .build())
+                .withStartedAt(LocalDateTime.now())
                 .withStatus(ChecksStatus.IN_PROGRESS)
                 .withConclusion(ChecksConclusion.NONE)
                 .build();
@@ -423,10 +427,13 @@ public class CreateRaw extends BaseStep {
             run.setResult(Result.FAILURE);
 
             ChecksDetails checkDetails = new ChecksDetails.ChecksDetailsBuilder()
-                    .withName("Tekton: " + createdResourceName)
+                    .withName("tekton")
                     .withStatus(ChecksStatus.COMPLETED)
                     .withConclusion(ChecksConclusion.FAILURE)
-                    .withOutput(new ChecksOutput.ChecksOutputBuilder().withText(buffer.toString()).build())
+                    .withOutput(new ChecksOutput.ChecksOutputBuilder()
+                            .withTitle(createdResourceName)
+                            .withText(buffer.toString())
+                            .build())
                     .withDetailsURL(DisplayURLProvider.get().getRunURL(run))
                     .withCompletedAt(LocalDateTime.now(ZoneOffset.UTC))
                     .build();
