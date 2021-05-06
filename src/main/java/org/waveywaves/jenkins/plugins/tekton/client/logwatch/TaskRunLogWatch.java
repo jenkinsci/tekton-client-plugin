@@ -104,7 +104,11 @@ public class TaskRunLogWatch implements Runnable{
                             if (state != null) {
                                 ContainerStateTerminated terminatedState = state.getTerminated();
                                 if (terminatedState != null && terminatedState.getStartedAt() != null) {
-                                    logMessage(String.format("[Tekton] Container %s/%s/%s - Completed", ns, selectedPodName, containerName));
+                                    if (terminatedState.getExitCode() != null && terminatedState.getExitCode() != 0) {
+                                        logMessage(String.format("[Tekton] Container %s/%s/%s - %s", ns, selectedPodName, containerName, terminatedState.getReason()));
+                                    } else {
+                                        logMessage(String.format("[Tekton] Container %s/%s/%s - Completed", ns, selectedPodName, containerName));
+                                    }
                                     return true;
                                 }
                             }

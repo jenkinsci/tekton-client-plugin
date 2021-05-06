@@ -467,8 +467,8 @@ public class JenkinsPipelineTest {
                 .addToItems(
                         new TaskRunBuilder()
                                 .withNewMetadata()
-                                .withName("testTaskRun")
-                                .withOwnerReferences(ownerReference("pipeline-run-uid"))
+                                    .withName("testTaskRun")
+                                    .withOwnerReferences(ownerReference("pipeline-run-uid"))
                                 .endMetadata()
                                 .build())
                 .build();
@@ -493,13 +493,19 @@ public class JenkinsPipelineTest {
                 )
                 .endSpec()
                 .withNewStatus()
-                .withPhase("Succeeded")
+                .withPhase("Failed")
                 .withContainerStatuses(
                         new ContainerStatusBuilder()
                                 .withName("hello-world-container")
                                 .withState(
                                         new ContainerStateBuilder()
-                                                .withTerminated(new ContainerStateTerminatedBuilder().withStartedAt("timestamp").build())
+                                                .withTerminated(
+                                                        new ContainerStateTerminatedBuilder()
+                                                                .withStartedAt("timestamp")
+                                                                .withMessage("Failure Message")
+                                                                .withReason("Error")
+                                                                .withExitCode(1)
+                                                                .build())
                                                 .build()
                                 )
                                 .build())
@@ -550,10 +556,11 @@ public class JenkinsPipelineTest {
         assertThat(log, containsString("[Tekton] Pod tekton-pipelines/hello-world-pod"));
         assertThat(log, containsString("[Tekton] Pod tekton-pipelines/hello-world-pod - Running..."));
         assertThat(log, containsString("[Tekton] Container tekton-pipelines/hello-world-pod/hello-world-container"));
-        assertThat(log, containsString("[Tekton] Container tekton-pipelines/hello-world-pod/hello-world-container - Completed"));
+        assertThat(log, containsString("[Tekton] Container tekton-pipelines/hello-world-pod/hello-world-container - Error"));
+        assertThat(log, containsString("[Tekton] Pod tekton-pipelines/hello-world-pod Status: Failed"));
         assertThat(log, containsString("Whoop! This is the pod log"));
 
-        assertThat(kubernetesRule.getMockServer().getRequestCount(), is(9));
+        assertThat(kubernetesRule.getMockServer().getRequestCount(), is(8));
     }
 
     @Test
