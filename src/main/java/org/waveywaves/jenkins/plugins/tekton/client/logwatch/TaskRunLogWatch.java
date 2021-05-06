@@ -6,6 +6,7 @@ import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ContainerState;
 import io.fabric8.kubernetes.api.model.ContainerStateTerminated;
 import io.fabric8.kubernetes.api.model.ContainerStatus;
+import io.fabric8.kubernetes.api.model.ListOptions;
 import io.fabric8.kubernetes.api.model.OwnerReference;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodStatus;
@@ -28,9 +29,14 @@ import java.util.logging.Logger;
 public class TaskRunLogWatch implements Runnable{
     private static final Logger LOGGER = Logger.getLogger(TaskRunLogWatch.class.getName());
 
+    private static final String TASK_RUN_LABEL_NAME = "tekton.dev/taskRun";
+
+    // TODO should be final
+    private TaskRun taskRun;
+
     private KubernetesClient kubernetesClient;
     private TektonClient tektonClient;
-    private TaskRun taskRun;
+
     private Exception exception;
     OutputStream consoleLogger;
 
@@ -52,7 +58,24 @@ public class TaskRunLogWatch implements Runnable{
     public void run() {
         HashSet<String> runningPhases = Sets.newHashSet("Running", "Succeeded", "Failed");
         String ns = taskRun.getMetadata().getNamespace();
-        List<Pod> pods = kubernetesClient.pods().inNamespace(ns).list().getItems();
+        ListOptions lo = new ListOptions();
+        String selector = String.format("%s=%s", TASK_RUN_LABEL_NAME, taskRun.getMetadata().getName());
+        lo.setLabelSelector(selector);
+        List<Pod> pods = null;
+        for (int i = 0; i < 60; i++) {
+            pods = kubernetesClient.pods().inNamespace(ns).list(lo).getItems();
+            LOGGER.info("Found " + pods.size() + " pod(s) for taskRun " + taskRun.getMetadata().getName());
+            if (pods.size() > 0) {
+                break;
+            }
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+
         Pod taskRunPod = null;
         String podName = "";
         for (Pod pod : pods) {
@@ -144,14 +167,18 @@ public class TaskRunLogWatch implements Runnable{
      */
     protected void logTaskRunFailure(TaskRun taskRun) {
         String name = taskRun.getMetadata().getName();
-        List<Condition> conditions = taskRun.getStatus().getConditions();
-        if (conditions == null || conditions.size() == 0) {
-            logMessage("[Tekton] TaskRun " + name + " has no status conditions");
-            return;
-        }
+        if (taskRun.getStatus() != null) {
+            List<Condition> conditions = taskRun.getStatus().getConditions();
+            if (conditions == null || conditions.size() == 0) {
+                logMessage("[Tekton] TaskRun " + name + " has no status conditions");
+                return;
+            }
 
-        for (Condition condition : conditions) {
-            logMessage("[Tekton] TaskRun " + name + " " + condition.getType() + "/" + condition.getReason() + ": " + condition.getMessage());
+            for (Condition condition : conditions) {
+                logMessage("[Tekton] TaskRun " + name + " " + condition.getType() + "/" + condition.getReason() + ": " + condition.getMessage());
+            }
+        } else {
+            logMessage("[Tekton] TaskRun " + name + " has no status");
         }
     }
 

@@ -81,7 +81,7 @@ public class JenkinsFreestyleTest {
 
         assertThat(kubernetesRule.getMockServer().getRequestCount(), is(1));
 
-        String log = jenkinsRule.getLog(b);
+        String log = JenkinsRule.getLog(b);
         System.out.println(log);
 
         assertThat(log, containsString("Legacy code started this job"));
@@ -113,7 +113,7 @@ public class JenkinsFreestyleTest {
 
         assertThat(kubernetesRule.getMockServer().getRequestCount(), is(1));
 
-        String log = jenkinsRule.getLog(b);
+        String log = JenkinsRule.getLog(b);
         System.out.println(log);
 
         assertThat(log, containsString("Legacy code started this job"));
@@ -199,7 +199,7 @@ public class JenkinsFreestyleTest {
                 .addToItems(pod)
                 .build();
 
-        kubernetesRule.expect().get().withPath("/api/v1/namespaces/test/pods")
+        kubernetesRule.expect().get().withPath("/api/v1/namespaces/test/pods?labelSelector=tekton.dev%2FtaskRun%3DtestTaskRun")
                 .andReturn(HttpURLConnection.HTTP_OK, podList).once();
 
         kubernetesRule.expect().get().withPath("/api/v1/namespaces/test/pods/hello-world-pod")
@@ -219,7 +219,7 @@ public class JenkinsFreestyleTest {
 
         FreeStyleBuild b = jenkinsRule.assertBuildStatus(Result.SUCCESS, p.scheduleBuild2(0).get());
 
-        String log = jenkinsRule.getLog(b);
+        String log = JenkinsRule.getLog(b);
         System.out.println(log);
 
         assertThat(log, containsString("Legacy code started this job"));
@@ -308,7 +308,7 @@ public class JenkinsFreestyleTest {
                 .addToItems(pod)
                 .build();
 
-        kubernetesRule.expect().get().withPath("/api/v1/namespaces/test/pods")
+        kubernetesRule.expect().get().withPath("/api/v1/namespaces/test/pods?labelSelector=tekton.dev%2FtaskRun%3DtestTaskRun")
                 .andReturn(HttpURLConnection.HTTP_OK, podList).once();
 
         kubernetesRule.expect().get().withPath("/api/v1/namespaces/test/pods/hello-world-pod")
@@ -328,7 +328,7 @@ public class JenkinsFreestyleTest {
 
         FreeStyleBuild b = jenkinsRule.assertBuildStatus(Result.SUCCESS, p.scheduleBuild2(0).get());
 
-        String log = jenkinsRule.getLog(b);
+        String log = JenkinsRule.getLog(b);
         System.out.println(log);
 
         assertThat(log, containsString("Legacy code started this job"));

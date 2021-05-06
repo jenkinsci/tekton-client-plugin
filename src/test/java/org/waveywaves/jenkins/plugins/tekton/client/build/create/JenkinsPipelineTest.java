@@ -19,11 +19,8 @@ import io.fabric8.tekton.pipeline.v1beta1.TaskBuilder;
 import io.fabric8.tekton.pipeline.v1beta1.TaskRunBuilder;
 import io.fabric8.tekton.pipeline.v1beta1.TaskRunList;
 import io.fabric8.tekton.pipeline.v1beta1.TaskRunListBuilder;
-import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import org.apache.commons.io.IOUtils;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -32,7 +29,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
-import org.jvnet.hudson.test.ExtractResourceSCM;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
 import org.waveywaves.jenkins.plugins.tekton.client.ToolUtils;
@@ -85,7 +81,7 @@ public class JenkinsPipelineTest {
 
         assertThat(kubernetesRule.getMockServer().getRequestCount(), is(1));
 
-        String log = jenkinsRule.getLog(b);
+        String log = JenkinsRule.getLog(b);
         System.out.println(log);
 
         assertThat(log, containsString("Extracting: .tekton/task.yaml"));
@@ -125,7 +121,7 @@ public class JenkinsPipelineTest {
 
         assertThat(kubernetesRule.getMockServer().getRequestCount(), is(1));
 
-        String log = jenkinsRule.getLog(b);
+        String log = JenkinsRule.getLog(b);
         System.out.println(log);
 
         assertThat(log, containsString("Extracting: .tekton/task.yaml"));
@@ -169,7 +165,7 @@ public class JenkinsPipelineTest {
 
         assertThat(kubernetesRule.getMockServer().getRequestCount(), is(1));
 
-        String log = jenkinsRule.getLog(b);
+        String log = JenkinsRule.getLog(b);
         System.out.println(log);
 
         assertThat(log, containsString("Extracting: .tekton/task.yaml"));
@@ -258,7 +254,7 @@ public class JenkinsPipelineTest {
                 .addToItems(pod)
                 .build();
 
-        kubernetesRule.expect().get().withPath("/api/v1/namespaces/test/pods")
+        kubernetesRule.expect().get().withPath("/api/v1/namespaces/test/pods?labelSelector=tekton.dev%2FtaskRun%3DtestTaskRun")
                 .andReturn(HttpURLConnection.HTTP_OK, podList).once();
 
         kubernetesRule.expect().get().withPath("/api/v1/namespaces/test/pods/hello-world-pod")
@@ -291,7 +287,7 @@ public class JenkinsPipelineTest {
 
         WorkflowRun b = jenkinsRule.assertBuildStatus(Result.SUCCESS, p.scheduleBuild2(0).get());
 
-        String log = jenkinsRule.getLog(b);
+        String log = JenkinsRule.getLog(b);
         System.out.println(log);
 
         assertThat(log, containsString("[Pipeline] tektonCreateRaw"));
@@ -384,7 +380,7 @@ public class JenkinsPipelineTest {
                 .addToItems(pod)
                 .build();
 
-        kubernetesRule.expect().get().withPath("/api/v1/namespaces/tekton-pipelines/pods")
+        kubernetesRule.expect().get().withPath("/api/v1/namespaces/tekton-pipelines/pods?labelSelector=tekton.dev%2FtaskRun%3DtestTaskRun")
                 .andReturn(HttpURLConnection.HTTP_OK, podList).once();
 
         kubernetesRule.expect().get().withPath("/api/v1/namespaces/tekton-pipelines/pods/hello-world-pod")
@@ -417,7 +413,7 @@ public class JenkinsPipelineTest {
 
         WorkflowRun b = jenkinsRule.assertBuildStatus(Result.SUCCESS, p.scheduleBuild2(0).get());
 
-        String log = jenkinsRule.getLog(b);
+        String log = JenkinsRule.getLog(b);
         System.out.println(log);
 
         assertThat(log, containsString("[Pipeline] tektonCreateRaw"));
@@ -516,7 +512,7 @@ public class JenkinsPipelineTest {
                 .addToItems(pod)
                 .build();
 
-        kubernetesRule.expect().get().withPath("/api/v1/namespaces/tekton-pipelines/pods")
+        kubernetesRule.expect().get().withPath("/api/v1/namespaces/tekton-pipelines/pods?labelSelector=tekton.dev%2FtaskRun%3DtestTaskRun")
                 .andReturn(HttpURLConnection.HTTP_OK, podList).once();
 
         kubernetesRule.expect().get().withPath("/api/v1/namespaces/tekton-pipelines/pods/hello-world-pod")
@@ -549,7 +545,7 @@ public class JenkinsPipelineTest {
 
         WorkflowRun b = jenkinsRule.assertBuildStatus(Result.FAILURE, p.scheduleBuild2(0).get());
 
-        String log = jenkinsRule.getLog(b);
+        String log = JenkinsRule.getLog(b);
         System.out.println(log);
 
         assertThat(log, containsString("[Pipeline] tektonCreateRaw"));
@@ -643,7 +639,7 @@ public class JenkinsPipelineTest {
                 .addToItems(pod)
                 .build();
 
-        kubernetesRule.expect().get().withPath("/api/v1/namespaces/tekton-pipelines/pods")
+        kubernetesRule.expect().get().withPath("/api/v1/namespaces/tekton-pipelines/pods?labelSelector=tekton.dev%2FtaskRun%3DtestTaskRun")
                 .andReturn(HttpURLConnection.HTTP_OK, podList).once();
 
         kubernetesRule.expect().get().withPath("/api/v1/namespaces/tekton-pipelines/pods/hello-world-pod")
@@ -676,7 +672,7 @@ public class JenkinsPipelineTest {
 
         WorkflowRun b = jenkinsRule.assertBuildStatus(Result.FAILURE, p.scheduleBuild2(0).get());
 
-        String log = jenkinsRule.getLog(b);
+        String log = JenkinsRule.getLog(b);
         System.out.println(log);
 
         assertThat(log, containsString("[Pipeline] tektonCreateRaw"));
@@ -687,10 +683,6 @@ public class JenkinsPipelineTest {
         assertThat(log, containsString("Whoop! This is the pod log"));
 
         assertThat(kubernetesRule.getMockServer().getRequestCount(), is(9));
-    }
-
-    private String contents(String filename) throws IOException {
-        return IOUtils.toString(this.getClass().getResourceAsStream(filename), StandardCharsets.UTF_8.name());
     }
 
     private OwnerReference ownerReference(String uid) {
