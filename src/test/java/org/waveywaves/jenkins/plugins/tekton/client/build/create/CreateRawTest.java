@@ -50,7 +50,7 @@ public class CreateRawTest {
         createRaw.setClusterName(TektonUtils.DEFAULT_CLIENT_KEY);
         createRaw.setEnableCatalog(false);
         String created = createRaw.runCreate(run, null, null);
-        assert created.equals(TektonUtils.TektonResourceType.task.toString());
+        assertThat(created, is(TektonUtils.TektonResourceType.task.toString()));
     }
 
     @Test
@@ -64,7 +64,7 @@ public class CreateRawTest {
         createRaw.setClusterName(TektonUtils.DEFAULT_CLIENT_KEY);
         createRaw.setEnableCatalog(false);
         String created = createRaw.runCreate(run, null, null);
-        assert created.equals(TektonUtils.TektonResourceType.taskrun.toString());
+        assertThat(created, is(TektonUtils.TektonResourceType.taskrun.toString()));
     }
 
     @Test
@@ -78,7 +78,7 @@ public class CreateRawTest {
         createRaw.setClusterName(TektonUtils.DEFAULT_CLIENT_KEY);
         createRaw.setEnableCatalog(false);
         String created = createRaw.runCreate(run, null, null);
-        assert created.equals(TektonUtils.TektonResourceType.pipeline.toString());
+        assertThat(created, is(TektonUtils.TektonResourceType.pipeline.toString()));
     }
 
     @Test
@@ -93,7 +93,7 @@ public class CreateRawTest {
         createRaw.setEnableCatalog(false);
         createRaw.setChecksPublisher(checksPublisher);
         String created = createRaw.runCreate(run, null, null);
-        assert created.equals(TektonUtils.TektonResourceType.pipelinerun.toString());
+        assertThat(created, is(TektonUtils.TektonResourceType.pipelinerun.toString()));
     }
 
     @Test
@@ -119,7 +119,7 @@ public class CreateRawTest {
         String expectedYaml = testTaskYaml +
                 "labels:\n" +
                 "  cheese: " + cheese + "\n";
-        assertThat(created).isEqualTo(expectedYaml);
+        assertThat(created, is(expectedYaml));
     }
 
     @Test
