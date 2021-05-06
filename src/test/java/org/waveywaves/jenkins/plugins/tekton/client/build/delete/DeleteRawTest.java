@@ -4,6 +4,9 @@ import org.junit.Test;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
 import org.waveywaves.jenkins.plugins.tekton.client.build.delete.mock.DeleteRawMock;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+
 public class DeleteRawTest {
 
     DeleteRaw.DeleteAllBlock deleteAllBlock;
@@ -13,7 +16,7 @@ public class DeleteRawTest {
         deleteAllBlock = new DeleteRaw.DeleteAllBlock("test");
         DeleteRaw deleteRaw = new DeleteRawMock(TektonUtils.TektonResourceType.task.toString(), TektonUtils.DEFAULT_CLIENT_KEY, deleteAllBlock);
         Boolean isDeleted = deleteRaw.runDelete();
-        assert isDeleted.equals(true);
+        assertThat(isDeleted, is(true));
     }
 
     @Test
@@ -21,7 +24,7 @@ public class DeleteRawTest {
         deleteAllBlock = new DeleteRaw.DeleteAllBlock("test");
         DeleteRaw deleteRaw = new DeleteRawMock(TektonUtils.TektonResourceType.taskrun.toString(),TektonUtils.DEFAULT_CLIENT_KEY, deleteAllBlock);
         Boolean isDeleted = deleteRaw.runDelete();
-        assert isDeleted.equals(true);
+        assertThat(isDeleted, is(true));
     }
 
     @Test
@@ -29,7 +32,7 @@ public class DeleteRawTest {
         deleteAllBlock = new DeleteRaw.DeleteAllBlock("test");
         DeleteRaw deleteRaw = new DeleteRawMock(TektonUtils.TektonResourceType.pipeline.toString(),TektonUtils.DEFAULT_CLIENT_KEY, deleteAllBlock);
         Boolean isDeleted = deleteRaw.runDelete();
-        assert isDeleted.equals(true);
+        assertThat(isDeleted, is(true));
     }
 
     @Test
@@ -37,6 +40,6 @@ public class DeleteRawTest {
         deleteAllBlock = new DeleteRaw.DeleteAllBlock("test");
         DeleteRaw deleteRaw = new DeleteRawMock(TektonUtils.TektonResourceType.pipelinerun.toString(),TektonUtils.DEFAULT_CLIENT_KEY, deleteAllBlock);
         Boolean isDeleted = deleteRaw.runDelete();
-        assert isDeleted.equals(true);
+        assertThat(isDeleted, is(true));
     }
 }
