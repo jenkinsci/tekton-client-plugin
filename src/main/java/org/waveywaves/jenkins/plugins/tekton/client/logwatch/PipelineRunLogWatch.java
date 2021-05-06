@@ -14,19 +14,23 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 public class PipelineRunLogWatch implements Runnable {
+
     private static final Logger LOGGER = Logger.getLogger(PipelineRunLogWatch.class.getName());
+
+    private static final String PIPELINE_TASK_LABEL_NAME = "tekton.dev/pipelineTask";
+    private static final String PIPELINE_RUN_LABEL_NAME = "tekton.dev/pipelineRun";
+
+    private final PipelineRun pipelineRun;
 
     private KubernetesClient kubernetesClient;
     private TektonClient tektonClient;
-    private PipelineRun pipelineRun;
     private Exception exception;
     OutputStream consoleLogger;
 
-    ConcurrentHashMap<String, TaskRun> taskRunsOnWatch = new ConcurrentHashMap<String, TaskRun>();
-    ConcurrentHashMap<String, Boolean> taskRunsWatchDone = new ConcurrentHashMap<String, Boolean>();
+    //ConcurrentHashMap<String, TaskRun> taskRunsOnWatch = new ConcurrentHashMap<String, TaskRun>();
+    //ConcurrentHashMap<String, Boolean> taskRunsWatchDone = new ConcurrentHashMap<String, Boolean>();
 
-    private final String pipelineTaskLabelName = "tekton.dev/pipelineTask";
-    private final String pipelineRunLabelName = "tekton.dev/pipelineRun";
+
 
     public PipelineRunLogWatch(KubernetesClient kubernetesClient, TektonClient tektonClient, PipelineRun pipelineRun, OutputStream consoleLogger) {
         this.kubernetesClient = kubernetesClient;
@@ -54,7 +58,7 @@ public class PipelineRunLogWatch implements Runnable {
             String pipelineTaskName = pt.getName();
             LOGGER.info("Streaming logs for PipelineTask namespace=" + ns + ", runName=" + pipelineRunName + ", taskName=" + pipelineTaskName);
             ListOptions lo = new ListOptions();
-            String selector = String.format("%s=%s,%s=%s", pipelineTaskLabelName, pipelineTaskName, pipelineRunLabelName, pipelineRunName);
+            String selector = String.format("%s=%s,%s=%s", PIPELINE_TASK_LABEL_NAME, pipelineTaskName, PIPELINE_RUN_LABEL_NAME, pipelineRunName);
             lo.setLabelSelector(selector);
 
             // the tekton operator may not have created the TasksRuns yet so lets wait a little bit for them to show up
