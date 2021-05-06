@@ -70,8 +70,9 @@ public class TaskRunLogWatch implements Runnable{
             }
         }
 
+        final String selectedPodName = podName;
         if (!podName.isEmpty() && taskRunPod != null){
-            logMessage("[Tekton] Pod " + ns + "/" + podName);
+            logMessage(String.format("[Tekton] Pod %s/%s", ns, podName));
 
             LOGGER.info("waiting for pod " + ns + "/" + podName + " to start running...");
             Predicate<Pod> succeededState = i -> (runningPhases.contains(i.getStatus().getPhase()));
@@ -81,7 +82,7 @@ public class TaskRunLogWatch implements Runnable{
             } catch ( InterruptedException e) {
                 LOGGER.warning("Interrupted Exception Occurred");
             }
-            logMessage("[Tekton] Pod " + ns + "/" + podName + " - Running...");
+            logMessage(String.format("[Tekton] Pod %s/%s - Running...", ns, podName));
             List<String> taskRunContainerNames = new ArrayList<String>();
             for (Container c : taskRunPod.getSpec().getContainers()) {
                 taskRunContainerNames.add(c.getName());
@@ -89,7 +90,7 @@ public class TaskRunLogWatch implements Runnable{
 
             for (String containerName : taskRunContainerNames) {
                 // lets write a little header per container
-                logMessage("[Tekton] Container " + containerName);
+                logMessage(String.format("[Tekton] Container %s/%s/%s", ns, podName, containerName));
 
                 // wait for the container to start
                 LOGGER.info("waiting for pod: " + ns + "/" + podName + " container: " + containerName + " to start:");
@@ -103,7 +104,7 @@ public class TaskRunLogWatch implements Runnable{
                             if (state != null) {
                                 ContainerStateTerminated terminatedState = state.getTerminated();
                                 if (terminatedState != null && terminatedState.getStartedAt() != null) {
-                                    logMessage("[Tekton] Container " + containerName + " - Completed");
+                                    logMessage(String.format("[Tekton] Container %s/%s/%s - Completed", ns, selectedPodName, containerName));
                                     return true;
                                 }
                             }
