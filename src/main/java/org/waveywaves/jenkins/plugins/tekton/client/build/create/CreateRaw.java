@@ -272,7 +272,7 @@ public class CreateRaw extends BaseStep {
 
         streamPipelineRunLogsToConsole(updatedPipelineRun);
 
-        PipelineRun reloaded = pipelineRunClient.withName(resourceName).get();
+        PipelineRun reloaded = pipelineRunClient.inNamespace(ns).withName(resourceName).get();
         List<Condition> conditions = reloaded
                 .getStatus()
                 .getConditions();
