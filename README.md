@@ -12,6 +12,10 @@ Jenkins plugin to interact with [Tekton Pipelines](https://github.com/tektoncd/p
 
 #### **Current State** : _Beta_
 
+## Quick Demo
+
+[![](http://img.youtube.com/vi/hAWOlJ0CetQ/0.jpg)](http://www.youtube.com/watch?v=hAWOlJ0CetQ "Tekton Client Plugin")
+
 ## Start using the plugin
 
 ### Supported Tekton Resource Types
