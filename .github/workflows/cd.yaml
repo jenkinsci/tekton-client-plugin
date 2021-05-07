@@ -27,7 +27,7 @@ jobs:
 
       - name: Set Version
         run: |
-          mvn versions:set-version -DnewVersion=${{ steps.nextversion.outputs.version }}
+          mvn --no-transfer-progress versions:set -DnewVersion=${{ steps.nextversion.outputs.version }}
 
       - name: Wait for build to succeed
         uses: fountainhead/action-wait-for-check@v1.0.0
