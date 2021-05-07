@@ -25,10 +25,9 @@ jobs:
         id: nextversion
         uses: jenkins-x-plugins/jx-release-version@v2.4.4
 
-          # uncomment this when we are ready for a 1.0.0 release.
-          #- name: Set Version
-          #run: |
-          #mvn versions:set-version -DnewVersion=${{ steps.nextversion.outputs.version }}
+      - name: Set Version
+        run: |
+          mvn versions:set-version -DnewVersion=${{ steps.nextversion.outputs.version }}
 
       - name: Wait for build to succeed
         uses: fountainhead/action-wait-for-check@v1.0.0
