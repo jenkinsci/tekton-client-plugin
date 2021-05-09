@@ -685,6 +685,48 @@ public class JenkinsPipelineTest {
         assertThat(kubernetesRule.getMockServer().getRequestCount(), is(9));
     }
 
+    @Test
+    public void testDeclarativePipelineWithYamlInput_MultipleDocuments() throws Exception {
+        ToolUtils.getJXPipelineBinary(ToolUtils.class.getClassLoader());
+
+        WorkflowJob p = jenkinsRule.jenkins.createProject(WorkflowJob.class, "p");
+        URL zipFile = getClass().getResource("tekton-test-project.zip");
+        assertThat(zipFile, is(notNullValue()));
+
+        p.setDefinition(new CpsFlowDefinition("pipeline { \n"
+                                              + "  agent any\n"
+                                              + "  stages {\n"
+                                              + "    stage('Stage') {\n"
+                                              + "      steps {\n"
+                                              + "        unzip '" + zipFile.getPath() + "'\n"
+                                              + "        tektonCreateRaw(inputType: 'YAML', input: \"\"\"apiVersion: tekton.dev/v1beta1\n"
+                                              + "kind: PipelineRun\n"
+                                              + "metadata:\n"
+                                              + "  name: release\n"
+                                              + "spec:\n"
+                                              + "  params:\n"
+                                              + "---\n"
+                                              + "apiVersion: tekton.dev/v1beta1\n"
+                                              + "kind: Task\n"
+                                              + "metadata:\n"
+                                              + "  name: task\n"
+                                              + "\"\"\", namespace: 'tekton-pipelines')\n"
+                                              + "      }\n"
+                                              + "    }\n"
+                                              + "  }\n"
+                                              + "}\n", true));
+
+        WorkflowRun b = jenkinsRule.assertBuildStatus(Result.FAILURE, p.scheduleBuild2(0).get());
+
+        String log = JenkinsRule.getLog(b);
+        System.out.println(log);
+
+        assertThat(log, containsString("[Pipeline] tektonCreateRaw"));
+        assertThat(log, containsString("Multiple Objects in YAML not supported yet"));
+
+        assertThat(kubernetesRule.getMockServer().getRequestCount(), is(0));
+    }
+
     private OwnerReference ownerReference(String uid) {
         return new OwnerReference("", false, false, "", "", uid);
     }
