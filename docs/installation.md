@@ -12,7 +12,7 @@ with pre-installed plugins to avoid downloading plugins each time the pod restar
 the `tekton-client` plugin, you can add the following to your `plugins.txt`
 
 ```
-tekton-client:1.0-beta1+198
+tekton-client:1.0.0
 ```
 
 This file can be kept up to date using tools like `jenkins-infra/uc` or `plugin-installation-manager`.
