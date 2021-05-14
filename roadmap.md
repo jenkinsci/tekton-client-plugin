@@ -1,13 +1,13 @@
 
-# Road to v1.0
+# Road beyond v1.0.0
 
-## Basic Usage
-- Creation and Deletion of Tekton Typed Resources (using provided YAML, JSON or a Url)
-- Create Resources from Scratch using UI 
-- Ability for editing Tekton Resource after importing from YAML/JSON  
-- YAML and JSON Syntax Highlighting
-- Stream TaskRun/PipelineRun output to Jenkins Console
+## Bugs
+- Avoid using an extra executor 
+- Naming conflicts in resources
 
 ## Features
-- [Tekton Catalog](https://github.com/tektoncd/catalog) Support
-    - Users should be able to choose a task available in the catalog from a dropdown during the Creation of resources and edit it based on their necessity for use.
+- Supporting creating multiple resources from a single input.
+- Pipeline DSL for creating resources
+
+## Tekton Version Support
+- v0.24+
