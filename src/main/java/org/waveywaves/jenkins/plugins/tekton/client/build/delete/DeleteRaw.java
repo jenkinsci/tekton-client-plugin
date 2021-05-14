@@ -1,5 +1,6 @@
 package org.waveywaves.jenkins.plugins.tekton.client.build.delete;
 
+import com.google.common.base.Strings;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
@@ -41,7 +42,8 @@ public class DeleteRaw extends BaseStep {
         super();
         this.resourceType = resourceType;
         this.resourceName = deleteAllStatus != null ? deleteAllStatus.resourceName : null;
-        setTektonClient(TektonUtils.getTektonClient(clusterName));
+        this.clusterName = clusterName;
+        setTektonClient(TektonUtils.getTektonClient(getClusterName()));
     }
 
     public static class DeleteAllBlock {
@@ -53,11 +55,23 @@ public class DeleteRaw extends BaseStep {
         }
     }
 
+    public String getClusterName() {
+        if (Strings.isNullOrEmpty(clusterName)) {
+            clusterName = TektonUtils.DEFAULT_CLIENT_KEY;
+        }
+        return clusterName;
+    }
     public String getResourceType(){
         return this.resourceType;
     }
     public String getResourceName(){
         return this.resourceName;
+    }
+
+    @DataBoundSetter
+    public void setClusterName(String clusterName) {
+        this.clusterName = clusterName;
+        setTektonClient(TektonUtils.getTektonClient(getClusterName()));
     }
 
     @DataBoundSetter
@@ -73,6 +87,8 @@ public class DeleteRaw extends BaseStep {
     private TektonResourceType getTypedResourceType(){
         return TektonResourceType.valueOf(getResourceType());
     }
+
+
 
     @Override
     public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws InterruptedException, IOException {
