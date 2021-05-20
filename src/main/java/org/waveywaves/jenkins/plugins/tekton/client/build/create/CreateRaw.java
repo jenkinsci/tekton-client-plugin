@@ -32,6 +32,7 @@ import io.fabric8.tekton.pipeline.v1beta1.PipelineRun;
 import io.fabric8.tekton.pipeline.v1beta1.PipelineRunSpec;
 import io.fabric8.tekton.pipeline.v1beta1.Task;
 import io.fabric8.tekton.pipeline.v1beta1.TaskRun;
+import io.fabric8.tekton.resource.v1alpha1.PipelineResource;
 import io.jenkins.plugins.checks.api.ChecksConclusion;
 import io.jenkins.plugins.checks.api.ChecksDetails;
 import io.jenkins.plugins.checks.api.ChecksOutput;
@@ -166,6 +167,8 @@ public class CreateRaw extends BaseStep {
                 return createPipeline(inputStream);
             case pipelinerun:
                 return createPipelineRun(inputStream, envVars);
+            case pipelineresource:
+                return createPipelineResource(inputStream);
             default:
                 return "";
         }
@@ -286,6 +289,26 @@ public class CreateRaw extends BaseStep {
             throw new Exception(succeeded.get().getReason() + ": " + succeeded.get().getMessage());
         }
 
+        return resourceName;
+    }
+
+    public String createPipelineResource(InputStream inputStream) {
+        if (pipelineResourceClient == null) {
+            TektonClient tc = (TektonClient) tektonClient;
+            setPipelineResourceClient(tc.v1alpha1().pipelineResources());
+        }
+        String resourceName;
+        PipelineResource pipelineResource = pipelineResourceClient.load(inputStream).get();
+        if (!Strings.isNullOrEmpty(namespace) && Strings.isNullOrEmpty(pipelineResource.getMetadata().getNamespace())) {
+            pipelineResource.getMetadata().setNamespace(namespace);
+        }
+        String ns = pipelineResource.getMetadata().getNamespace();
+        if (Strings.isNullOrEmpty(ns)) {
+            pipelineResource = pipelineResourceClient.create(pipelineResource);
+        } else {
+            pipelineResource = pipelineResourceClient.inNamespace(ns).create(pipelineResource);
+        }
+        resourceName = pipelineResource.getMetadata().getName();
         return resourceName;
     }
 

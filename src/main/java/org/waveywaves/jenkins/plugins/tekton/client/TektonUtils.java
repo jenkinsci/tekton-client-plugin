@@ -31,7 +31,8 @@ public class TektonUtils {
         task,
         taskrun,
         pipeline,
-        pipelinerun
+        pipelinerun,
+        pipelineresource
     }
 
     public synchronized static void initializeKubeClients(Config config) {
