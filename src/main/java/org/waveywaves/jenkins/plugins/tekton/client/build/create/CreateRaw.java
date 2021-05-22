@@ -338,18 +338,16 @@ public class CreateRaw extends BaseStep {
     }
 
     public void streamTaskRunLogsToConsole(TaskRun taskRun) throws Exception {
-        synchronized (consoleLogger) {
-            KubernetesClient kc = (KubernetesClient) kubernetesClient;
-            TektonClient tc = (TektonClient) tektonClient;
-            Thread logWatchTask = null;
-            TaskRunLogWatch logWatch = new TaskRunLogWatch(kc, tc, taskRun, consoleLogger);
-            logWatchTask = new Thread(logWatch);
-            logWatchTask.start();
-            logWatchTask.join();
-            Exception e = logWatch.getException();
-            if (e != null) {
-                throw e;
-            }
+        KubernetesClient kc = (KubernetesClient) kubernetesClient;
+        TektonClient tc = (TektonClient) tektonClient;
+        Thread logWatchTask = null;
+        TaskRunLogWatch logWatch = new TaskRunLogWatch(kc, tc, taskRun, consoleLogger);
+        logWatchTask = new Thread(logWatch);
+        logWatchTask.start();
+        logWatchTask.join();
+        Exception e = logWatch.getException();
+        if (e != null) {
+            throw e;
         }
     }
 
