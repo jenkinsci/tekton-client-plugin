@@ -23,7 +23,7 @@ jobs:
 
       - name: next release version
         id: nextversion
-        uses: jenkins-x-plugins/jx-release-version@v2.4.4
+        uses: jenkins-x-plugins/jx-release-version@v2.4.9
 
       - name: Set Version
         run: |
