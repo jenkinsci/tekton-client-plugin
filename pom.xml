@@ -38,6 +38,7 @@
         <mockwebserver.version>0.1.8</mockwebserver.version>
         <junit-jupiter-engine.version>5.6.2</junit-jupiter-engine.version>
         <jx-pipeline.version>0.0.142</jx-pipeline.version>
+        <jenkins.host.address />
     </properties>
 
     <licenses>
@@ -194,6 +195,15 @@
                         <format>xml</format>
                     </formats>
                     <check />
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.jenkins-ci.tools</groupId>
+                <artifactId>maven-hpi-plugin</artifactId>
+                <configuration>
+                    <systemProperties>
+                        <jenkins.host.address>${jenkins.host.address}</jenkins.host.address>
+                    </systemProperties>
                 </configuration>
             </plugin>
         </plugins>

@@ -57,6 +57,8 @@ public class TektonUtils {
                 ConfigBuilder configBuilder = new ConfigBuilder()
                         .withMasterUrl(cc.getMasterUrl())
                         .withNamespace(cc.getDefaultNamespace());
+//                        .withCaCertData(cc.getKubernetesServerCertificateKey())
+//                        .withHttp2Disable(cc.getDisableHTTPSCheck());
 
                 TektonClient tektonClient = new DefaultTektonClient(configBuilder.build());
                 KubernetesClient kubernetesClient = new DefaultKubernetesClient(configBuilder.build());
