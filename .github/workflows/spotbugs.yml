@@ -1,0 +1,21 @@
+---
+name: SpotBugs
+
+on:
+  pull_request:
+
+jobs:
+  spotbugs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Java
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: 11
+
+      - name: SpotBugs
+        run: |
+          mvn --no-transfer-progress spotbugs:check
