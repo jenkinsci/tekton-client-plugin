@@ -32,12 +32,12 @@
         <revision>1.0.0</revision>
         <changelist>-SNAPSHOT</changelist>
         <jenkins-test-harness.version>2.34</jenkins-test-harness.version>
-        <kubernetes-server-mock.version>5.3.1</kubernetes-server-mock.version>
-        <tekton-client.version>5.3.1</tekton-client.version>
+        <kubernetes-server-mock.version>5.4.0</kubernetes-server-mock.version>
+        <tekton-client.version>5.4.0</tekton-client.version>
         <maven-surefire-plugin.version>2.22.1</maven-surefire-plugin.version>
         <mockwebserver.version>0.1.8</mockwebserver.version>
         <junit-jupiter-engine.version>5.6.2</junit-jupiter-engine.version>
-        <jx-pipeline.version>0.0.142</jx-pipeline.version>
+        <jx-pipeline.version>0.0.151</jx-pipeline.version>
     </properties>
 
     <licenses>
@@ -59,7 +59,6 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>1.7.30</version>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
@@ -70,6 +69,12 @@
             <groupId>io.fabric8</groupId>
             <artifactId>tekton-client</artifactId>
             <version>${tekton-client.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
+                </exclusion>
+            </exclusions> 
         </dependency>
         <dependency>
             <groupId>io.fabric8</groupId>
@@ -125,6 +130,11 @@
           <scope>import</scope>
           <type>pom</type>
         </dependency>
+          <dependency>
+              <groupId>org.slf4j</groupId>
+              <artifactId>slf4j-api</artifactId>
+              <version>1.7.30</version>
+          </dependency>
           <dependency>
               <groupId>org.apache.commons</groupId>
               <artifactId>commons-lang3</artifactId>
