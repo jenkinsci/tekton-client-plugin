@@ -37,7 +37,7 @@ jobs:
           checkName: Jenkins
 
       - name: Release Drafter
-        uses: release-drafter/release-drafter@v5.15.0
+        uses: release-drafter/release-drafter@v5.17.5
         if: steps.wait-for-build.outputs.conclusion == 'success'
         with:
           name: next
