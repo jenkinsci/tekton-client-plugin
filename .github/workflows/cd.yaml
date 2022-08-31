@@ -16,7 +16,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up JDK 8
-        uses: actions/setup-java@v3.2.0
+        uses: actions/setup-java@v3.4.0
         with:
           java-version: 8
           distribution: 'temurin'
@@ -37,7 +37,7 @@ jobs:
           checkName: Jenkins
 
       - name: Release Drafter
-        uses: release-drafter/release-drafter@v5.20.0
+        uses: release-drafter/release-drafter@v5.20.1
         if: steps.wait-for-build.outputs.conclusion == 'success'
         with:
           name: next
