@@ -143,7 +143,7 @@
           <dependency>
               <groupId>org.jenkins-ci.plugins</groupId>
               <artifactId>jackson2-api</artifactId>
-              <version>2.12.1</version>
+              <version>2.13.4-293.vee957901b_6fb</version>
           </dependency>
           <dependency>
               <groupId>com.fasterxml.jackson.module</groupId>
