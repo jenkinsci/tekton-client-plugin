@@ -58,13 +58,13 @@ jobs:
             CATEGORIES=$(gh api /repos/$GITHUB_REPOSITORY/releases | jq -e -r '.[] | select(.draft == true and .name == "next") | .body')
             if echo "${CATEGORIES}" | egrep -q "${INTERESTING_CATEGORIES}"; then
               echo "Interesting release"
-              echo "::set-output name=should_release::true"
+              echo "should_release=true" >> $GITHUB_OUTPUT
             else
               echo "Not interesting release"
-              echo "::set-output name=should_release::false"
+              echo "should_release=false" >> $GITHUB_OUTPUT
             fi
           else
-            echo "::set-output name=should_release::true"
+            echo "should_release=true" >> $GITHUB_OUTPUT
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
