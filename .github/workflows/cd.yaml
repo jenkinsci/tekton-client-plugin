@@ -16,7 +16,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up JDK 8
-        uses: actions/setup-java@v3.5.0
+        uses: actions/setup-java@v3.6.0
         with:
           java-version: 8
           distribution: 'temurin'
@@ -30,7 +30,7 @@ jobs:
           mvn --no-transfer-progress versions:set -DnewVersion=${{ steps.nextversion.outputs.version }}
 
       - name: Wait for build to succeed
-        uses: fountainhead/action-wait-for-check@v1.0.0
+        uses: fountainhead/action-wait-for-check@v1.1.0
         id: wait-for-build
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
