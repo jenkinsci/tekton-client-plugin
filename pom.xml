@@ -97,7 +97,7 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>github-branch-source</artifactId>
-            <version>2.9.7</version>
+            <version>1725.vd391eef681a_e</version>
             <scope>test</scope>
         </dependency>
         <dependency>
