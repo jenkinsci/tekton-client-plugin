@@ -42,7 +42,6 @@ import java.net.MalformedURLException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Optional;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
