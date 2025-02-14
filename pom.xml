@@ -1,18 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
         <version>4.51</version>
-        <relativePath />
+        <relativePath/>
     </parent>
 
     <groupId>org.waveywaves.jenkins.plugins</groupId>
     <artifactId>tekton-client</artifactId>
     <version>${revision}${changelist}</version>
     <name>Tekton Client Plugin</name>
-    <description>Tekton is a Cloud Native CI/CD tool for Kubernetes. This plugin helps in the creation and manipulation of Tekton Resources on you Kubernetes cluster and helps drive your operations from your Jenkins Server itself without having to carry them out from the Command Line Interface or any other User Interface.</description>
+    <description>Tekton is a Cloud Native CI/CD tool for Kubernetes. This plugin helps in the creation and manipulation
+        of Tekton Resources on you Kubernetes cluster and helps drive your operations from your Jenkins Server itself
+        without having to carry them out from the Command Line Interface or any other User Interface.
+    </description>
     <packaging>hpi</packaging>
     <url>https://github.com/jenkinsci/tekton-client-plugin</url>
 
@@ -68,7 +72,7 @@
                     <groupId>org.slf4j</groupId>
                     <artifactId>slf4j-api</artifactId>
                 </exclusion>
-            </exclusions> 
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>io.fabric8</groupId>
@@ -112,53 +116,53 @@
             <scope>test</scope>
         </dependency>
 
-   </dependencies>
+    </dependencies>
 
     <dependencyManagement>
-      <dependencies>
-        <dependency>
-          <groupId>io.jenkins.tools.bom</groupId>
-          <artifactId>bom-${jenkins.baseline}.x</artifactId>
-          <version>1763.v092b_8980a_f5e</version>
-          <scope>import</scope>
-          <type>pom</type>
-        </dependency>
-          <dependency>
-              <groupId>org.slf4j</groupId>
-              <artifactId>slf4j-api</artifactId>
-              <version>1.7.30</version>
-          </dependency>
-          <dependency>
-              <groupId>org.apache.commons</groupId>
-              <artifactId>commons-lang3</artifactId>
-              <version>3.12.0</version>
-          </dependency>
-          <dependency>
-              <groupId>org.jenkins-ci.plugins</groupId>
-              <artifactId>jackson2-api</artifactId>
-              <version>2.12.1</version>
-          </dependency>
-          <dependency>
-              <groupId>com.fasterxml.jackson.module</groupId>
-              <artifactId>jackson-module-jaxb-annotations</artifactId>
-              <version>2.12.1</version>
-          </dependency>
-          <dependency>
-              <groupId>com.squareup.okio</groupId>
-              <artifactId>okio</artifactId>
-              <version>3.4.0</version>
-          </dependency>
-          <dependency>
-              <groupId>com.squareup.okhttp3</groupId>
-              <artifactId>okhttp</artifactId>
-              <version>3.14.9</version>
-          </dependency>
-          <dependency>
-              <groupId>com.squareup.okhttp3</groupId>
-              <artifactId>logging-interceptor</artifactId>
-              <version>3.14.9</version>
-          </dependency>
-      </dependencies>
+        <dependencies>
+            <dependency>
+                <groupId>io.jenkins.tools.bom</groupId>
+                <artifactId>bom-${jenkins.baseline}.x</artifactId>
+                <version>1763.v092b_8980a_f5e</version>
+                <scope>import</scope>
+                <type>pom</type>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>1.7.30</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>3.12.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jenkins-ci.plugins</groupId>
+                <artifactId>jackson2-api</artifactId>
+                <version>2.13.3-285.vc03c0256d517</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.module</groupId>
+                <artifactId>jackson-module-jaxb-annotations</artifactId>
+                <version>2.13.3</version>
+            </dependency>
+            <dependency>
+                <groupId>com.squareup.okio</groupId>
+                <artifactId>okio</artifactId>
+                <version>3.4.0</version>
+            </dependency>
+            <dependency>
+                <groupId>com.squareup.okhttp3</groupId>
+                <artifactId>okhttp</artifactId>
+                <version>3.14.9</version>
+            </dependency>
+            <dependency>
+                <groupId>com.squareup.okhttp3</groupId>
+                <artifactId>logging-interceptor</artifactId>
+                <version>3.14.9</version>
+            </dependency>
+        </dependencies>
     </dependencyManagement>
 
     <repositories>
@@ -169,7 +173,8 @@
         <repository>
             <id>tags</id>
             <name>Custom Tags</name>
-            <url>https://raw.githubusercontent.com/t-wanl/Jenkins-Dynamic-Databinding-UI-Control-Library/master/jar/</url>
+            <url>https://raw.githubusercontent.com/t-wanl/Jenkins-Dynamic-Databinding-UI-Control-Library/master/jar/
+            </url>
         </repository>
     </repositories>
 
@@ -195,7 +200,7 @@
                         <format>html</format>
                         <format>xml</format>
                     </formats>
-                    <check />
+                    <check/>
                 </configuration>
             </plugin>
         </plugins>
@@ -242,8 +247,9 @@
 
                                         <!-- lets remove any docs we don't need -->
                                         <delete>
-                                            <fileset dir="src/main/resources/org/waveywaves/jenkins/plugins/tekton/client/jxp"
-                                                     includes="**/*.md"/>
+                                            <fileset
+                                                    dir="src/main/resources/org/waveywaves/jenkins/plugins/tekton/client/jxp"
+                                                    includes="**/*.md"/>
                                         </delete>
                                     </target>
 
