@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>4.18</version>
+        <version>5.7</version>
         <relativePath />
     </parent>
 
@@ -25,18 +25,18 @@
 
     <properties>
         <!-- Baseline Jenkins version you use to build the plugin. Users must have this version or newer to run. -->
-        <jenkins.version>2.263.1</jenkins.version>
+        <jenkins.version>2.479.1</jenkins.version>
         <java.level>8</java.level>
         <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
         <pipeline-model-definition.version>1.6.0</pipeline-model-definition.version>
         <revision>1.0.0</revision>
         <changelist>-SNAPSHOT</changelist>
-        <jenkins-test-harness.version>2.34</jenkins-test-harness.version>
+        <jenkins-test-harness.version>2403.v256947ecb_c8a_</jenkins-test-harness.version>
         <kubernetes-server-mock.version>5.4.0</kubernetes-server-mock.version>
         <tekton-client.version>5.4.0</tekton-client.version>
         <maven-surefire-plugin.version>2.22.1</maven-surefire-plugin.version>
         <mockwebserver.version>0.1.8</mockwebserver.version>
-        <junit-jupiter-engine.version>5.6.2</junit-jupiter-engine.version>
+        <junit-jupiter-engine.version>5.11.4</junit-jupiter-engine.version>
         <jx-pipeline.version>0.0.163</jx-pipeline.version>
     </properties>
 
@@ -57,32 +57,23 @@
 
     <dependencies>
         <dependency>
+            <groupId>io.jenkins.plugins</groupId>
+            <artifactId>checks-api</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-aggregator</artifactId>
-            <version>2.6</version>
+            <version>600.vb_57cdd26fdd7</version>
         </dependency>
         <dependency>
             <groupId>io.fabric8</groupId>
             <artifactId>tekton-client</artifactId>
             <version>${tekton-client.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-api</artifactId>
-                </exclusion>
-            </exclusions> 
         </dependency>
-        <dependency>
-            <groupId>io.fabric8</groupId>
-            <artifactId>kubernetes-server-mock</artifactId>
-            <version>${kubernetes-server-mock.version}</version>
-            <scope>test</scope>
-        </dependency>
-
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>jackson2-api</artifactId>
@@ -97,14 +88,13 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>github-branch-source</artifactId>
-            <version>2.9.7</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>envinject</artifactId>
-            <version>2.3.0</version>
             <scope>test</scope>
+            <version>2.926.v69c9b_3896a_96</version>
         </dependency>
         <dependency>
             <groupId>org.assertj</groupId>
@@ -115,40 +105,29 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>pipeline-utility-steps</artifactId>
-            <version>2.7.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.fabric8</groupId>
+            <artifactId>kubernetes-server-mock</artifactId>
+            <version>${kubernetes-server-mock.version}</version>
             <scope>test</scope>
         </dependency>
 
    </dependencies>
-
     <dependencyManagement>
       <dependencies>
-        <dependency>
-          <groupId>io.jenkins.tools.bom</groupId>
-          <artifactId>bom-2.249.x</artifactId>
-          <version>29</version>
-          <scope>import</scope>
-          <type>pom</type>
-        </dependency>
+          <dependency>
+                <groupId>io.jenkins.tools.bom</groupId>
+                <artifactId>bom-2.462.x</artifactId>
+                <version>4136.vca_c3202a_7fd1</version>
+                <scope>import</scope>
+                <type>pom</type>
+            </dependency>
           <dependency>
               <groupId>org.slf4j</groupId>
               <artifactId>slf4j-api</artifactId>
               <version>1.7.30</version>
-          </dependency>
-          <dependency>
-              <groupId>org.apache.commons</groupId>
-              <artifactId>commons-lang3</artifactId>
-              <version>3.12.0</version>
-          </dependency>
-          <dependency>
-              <groupId>org.jenkins-ci.plugins</groupId>
-              <artifactId>jackson2-api</artifactId>
-              <version>2.12.1</version>
-          </dependency>
-          <dependency>
-              <groupId>com.fasterxml.jackson.module</groupId>
-              <artifactId>jackson-module-jaxb-annotations</artifactId>
-              <version>2.12.1</version>
           </dependency>
           <dependency>
               <groupId>com.squareup.okio</groupId>
