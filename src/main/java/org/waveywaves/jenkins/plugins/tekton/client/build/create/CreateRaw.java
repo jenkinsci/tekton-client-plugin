@@ -1,5 +1,38 @@
 package org.waveywaves.jenkins.plugins.tekton.client.build.create;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.Symbol;
+import org.jenkinsci.plugins.displayurlapi.DisplayURLProvider;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.QueryParameter;
+import org.waveywaves.jenkins.plugins.tekton.client.LogUtils;
+import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
+import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils.TektonResourceType;
+import org.waveywaves.jenkins.plugins.tekton.client.ToolUtils;
+import org.waveywaves.jenkins.plugins.tekton.client.build.BaseStep;
+import org.waveywaves.jenkins.plugins.tekton.client.logwatch.PipelineRunLogWatch;
+import org.waveywaves.jenkins.plugins.tekton.client.logwatch.TaskRunLogWatch;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -8,6 +41,7 @@ import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
+
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.EnvVars;
 import hudson.Extension;
@@ -38,41 +72,8 @@ import io.jenkins.plugins.checks.api.ChecksOutput;
 import io.jenkins.plugins.checks.api.ChecksPublisher;
 import io.jenkins.plugins.checks.api.ChecksPublisherFactory;
 import io.jenkins.plugins.checks.api.ChecksStatus;
-import java.net.MalformedURLException;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Optional;
-import org.apache.commons.lang.StringUtils;
-import org.jenkinsci.Symbol;
-import org.jenkinsci.plugins.displayurlapi.DisplayURLProvider;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.DataBoundSetter;
-import org.kohsuke.stapler.QueryParameter;
-import org.waveywaves.jenkins.plugins.tekton.client.LogUtils;
-import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
-import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils.TektonResourceType;
-import org.waveywaves.jenkins.plugins.tekton.client.ToolUtils;
-import org.waveywaves.jenkins.plugins.tekton.client.build.BaseStep;
-import org.waveywaves.jenkins.plugins.tekton.client.logwatch.PipelineRunLogWatch;
-import org.waveywaves.jenkins.plugins.tekton.client.logwatch.TaskRunLogWatch;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
-@Symbol("tektonCreateRaw")
 public class CreateRaw extends BaseStep {
     private static final Logger LOGGER = Logger.getLogger(CreateRaw.class.getName());
 
