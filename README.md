@@ -11,8 +11,12 @@
 Jenkins plugin to interact with [Tekton Pipelines](https://github.com/tektoncd/pipeline) on a Kubernetes Cluster. 
 
 ## Quick Demo
+[![](https://img.youtube.com/vi/hAWOlJ0CetQ/0.jpg)](https://www.youtube.com/watch?v=hAWOlJ0CetQ "Tekton Client Plugin")  
 
-[![](https://img.youtube.com/vi/hAWOlJ0CetQ/0.jpg)](https://www.youtube.com/watch?v=hAWOlJ0CetQ "Tekton Client Plugin") <br>[![Join the chat at https://gitter.im/jenkinsci/tekton-client-plugin](https://badges.gitter.im/jenkinsci/tekton-client-plugin.svg)](https://gitter.im/jenkinsci/tekton-client-plugin?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+## Community
+
+[![Join the chat at https://gitter.im/jenkinsci/tekton-client-plugin](https://badges.gitter.im/jenkinsci/tekton-client-plugin.svg)](https://gitter.im/jenkinsci/tekton-client-plugin?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 
 ## Start using the plugin
 
