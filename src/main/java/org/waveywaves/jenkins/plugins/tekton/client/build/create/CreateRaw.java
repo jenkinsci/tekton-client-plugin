@@ -621,7 +621,6 @@ public class CreateRaw extends BaseStep {
         return data;
     }
 
-    @Symbol("tektonCreateRaw")
     @Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
         public FormValidation doCheckInput(@QueryParameter(value = "input") final String input){

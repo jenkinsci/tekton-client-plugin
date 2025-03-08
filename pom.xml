@@ -25,13 +25,13 @@
 
     <properties>
         <!-- Baseline Jenkins version you use to build the plugin. Users must have this version or newer to run. -->
-        <jenkins.version>2.263.1</jenkins.version>
+        <jenkins.version>2.479.1</jenkins.version>
         <java.level>8</java.level>
         <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
         <pipeline-model-definition.version>1.6.0</pipeline-model-definition.version>
         <revision>1.0.0</revision>
         <changelist>-SNAPSHOT</changelist>
-        <jenkins-test-harness.version>2.34</jenkins-test-harness.version>
+        <jenkins-test-harness.version>2403.v256947ecb_c8a_ </jenkins-test-harness.version>
         <kubernetes-server-mock.version>5.4.0</kubernetes-server-mock.version>
         <tekton-client.version>5.4.0</tekton-client.version>
         <maven-surefire-plugin.version>2.22.1</maven-surefire-plugin.version>
@@ -57,13 +57,17 @@
 
     <dependencies>
         <dependency>
+            <groupId>io.jenkins.plugins</groupId>
+            <artifactId>checks-api</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-aggregator</artifactId>
-            <version>2.6</version>
+            <version>600.vb_57cdd26fdd7</version>
         </dependency>
         <dependency>
             <groupId>io.fabric8</groupId>
@@ -115,7 +119,6 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>pipeline-utility-steps</artifactId>
-            <version>2.7.1</version>
             <scope>test</scope>
         </dependency>
 
@@ -123,13 +126,13 @@
 
     <dependencyManagement>
       <dependencies>
-        <dependency>
-          <groupId>io.jenkins.tools.bom</groupId>
-          <artifactId>bom-2.249.x</artifactId>
-          <version>29</version>
-          <scope>import</scope>
-          <type>pom</type>
-        </dependency>
+          <dependency>
+                <groupId>io.jenkins.tools.bom</groupId>
+                <artifactId>bom-2.462.x</artifactId>
+                <version>4136.vca_c3202a_7fd1</version>
+                <scope>import</scope>
+                <type>pom</type>
+          </dependency>
           <dependency>
               <groupId>org.slf4j</groupId>
               <artifactId>slf4j-api</artifactId>
