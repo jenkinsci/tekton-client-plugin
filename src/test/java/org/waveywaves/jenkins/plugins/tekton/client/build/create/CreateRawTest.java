@@ -18,7 +18,6 @@ import org.waveywaves.jenkins.plugins.tekton.client.build.create.mock.FakeCreate
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;

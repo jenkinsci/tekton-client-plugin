@@ -1,16 +1,18 @@
 package org.waveywaves.jenkins.plugins.tekton.client.logwatch;
 
 import com.google.common.base.Strings;
-import io.fabric8.kubernetes.api.model.*;
+import io.fabric8.kubernetes.api.model.ListOptions;
+import io.fabric8.kubernetes.api.model.OwnerReference;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.tekton.client.TektonClient;
-import io.fabric8.tekton.pipeline.v1beta1.*;
+import io.fabric8.tekton.pipeline.v1beta1.PipelineRun;
+import io.fabric8.tekton.pipeline.v1beta1.PipelineTask;
+import io.fabric8.tekton.pipeline.v1beta1.TaskRun;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 public class PipelineRunLogWatch implements Runnable {

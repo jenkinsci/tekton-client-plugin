@@ -2,7 +2,6 @@ package org.waveywaves.jenkins.plugins.tekton.client.build.create;
 
 import hudson.EnvVars;
 import io.fabric8.knative.internal.pkg.apis.Condition;
-import io.fabric8.kubernetes.api.model.ConditionBuilder;
 import io.fabric8.kubernetes.api.model.apiextensions.v1beta1.CustomResourceDefinition;
 import io.fabric8.kubernetes.client.KubernetesClient;
 
