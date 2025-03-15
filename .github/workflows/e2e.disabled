@@ -14,7 +14,7 @@ jobs:
         uses: actions/setup-java@v3.0.0
         with:
           distribution: 'temurin'
-          java-version: 17
+          java-version: 8
 
       - name: Build
         run: mvn --no-transfer-progress install -DskipTests
