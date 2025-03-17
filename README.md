@@ -12,7 +12,14 @@ Jenkins plugin to interact with [Tekton Pipelines](https://github.com/tektoncd/p
 
 ## Quick Demo
 
-[![](https://img.youtube.com/vi/hAWOlJ0CetQ/0.jpg)](https://www.youtube.com/watch?v=hAWOlJ0CetQ "Tekton Client Plugin") [![Join the chat at https://gitter.im/jenkinsci/tekton-client-plugin](https://badges.gitter.im/jenkinsci/tekton-client-plugin.svg)](https://gitter.im/jenkinsci/tekton-client-plugin?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![](https://img.youtube.com/vi/hAWOlJ0CetQ/0.jpg)](https://www.youtube.com/watch?v=hAWOlJ0CetQ "Tekton Client Plugin")
+
+[![](https://i.ytimg.com/vi/17T3-9LeXGA/hqdefault.jpg?sqp=-oaymwEnCNACELwBSFryq4qpAxkIARUAAIhCGAHYAQHiAQoIGBACGAY4AUAB&rs=AOn4CLDYq56OoZBpjrKcUU95f1U_7-d99g )](https://www.youtube.com/watch?v=17T3-9LeXGA&t=67s&ab_channel=ContinuousDeliveryFoundation "Bridging the Gap with Tekton-client-plugin for Jenkins - Vibhav Bobade, Red Hat")
+
+[![](https://i.ytimg.com/vi/2RT9XwIWkVQ/hqdefault.jpg?sqp=-oaymwFBCNACELwBSFryq4qpAzMIARUAAIhCGAHYAQHiAQoIGBACGAY4AUAB8AEB-AHUBoAC4AOKAgwIABABGEcgWihlMA8=&rs=AOn4CLC0dKFVbMLuf6A4GKz6K8yVc7SNkg )](https://www.youtube.com/watch?v=2RT9XwIWkVQ&ab_channel=Jenkins "")
+
+## Community
+[![Join the chat at https://gitter.im/jenkinsci/tekton-client-plugin](https://badges.gitter.im/jenkinsci/tekton-client-plugin.svg)](https://gitter.im/jenkinsci/tekton-client-plugin?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ## Start using the plugin
 
