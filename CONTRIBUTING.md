@@ -8,7 +8,7 @@ Use your best judgment, and feel free to propose changes to this document in a p
 In this project we appreciate any kind of contributions: code, documentation, design, etc.
 Any contribution counts, and the size does not matter!
 
-### Some Supplementary Videos
+## Some Supplementary Videos
 
 [![](https://i.ytimg.com/vi/17T3-9LeXGA/hqdefault.jpg)](https://www.youtube.com/watch?v=17T3-9LeXGA&t=67s&ab_channel=ContinuousDeliveryFoundation "Bridging the Gap with Tekton-client-plugin for Jenkins - Vibhav Bobade, Red Hat")
 
