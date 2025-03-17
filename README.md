@@ -19,6 +19,7 @@ Jenkins plugin to interact with [Tekton Pipelines](https://github.com/tektoncd/p
 [![](https://i.ytimg.com/vi/2RT9XwIWkVQ/hqdefault.jpg?sqp=-oaymwFBCNACELwBSFryq4qpAzMIARUAAIhCGAHYAQHiAQoIGBACGAY4AUAB8AEB-AHUBoAC4AOKAgwIABABGEcgWihlMA8=&rs=AOn4CLC0dKFVbMLuf6A4GKz6K8yVc7SNkg )](https://www.youtube.com/watch?v=2RT9XwIWkVQ&ab_channel=Jenkins "")
 
 ## Community
+
 [![Join the chat at https://gitter.im/jenkinsci/tekton-client-plugin](https://badges.gitter.im/jenkinsci/tekton-client-plugin.svg)](https://gitter.im/jenkinsci/tekton-client-plugin?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ## Start using the plugin
