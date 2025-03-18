@@ -17,7 +17,7 @@ import static java.util.logging.Level.SEVERE;
 @Extension
 public class TektonGlobalConfiguration extends GlobalConfiguration {
     private static final Logger logger = Logger.getLogger(TektonGlobalConfiguration.class.getName());
-    private transient List<ClusterConfig> clusterConfigs = new ArrayList<>();
+    private List<ClusterConfig> clusterConfigs = new ArrayList<>();
 
     public TektonGlobalConfiguration(){
         load();
@@ -39,7 +39,8 @@ public class TektonGlobalConfiguration extends GlobalConfiguration {
     @Override
     public boolean configure(final StaplerRequest req, final JSONObject formData) {
         Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
-         setClusterConfigs(req.bindJSONToList(ClusterConfig.class, formData.get("clusterConfigs")));
+        setClusterConfigs(req.bindJSONToList(ClusterConfig.class, formData.get("clusterConfigs")));
+        configChange();
         save();
         return true;
     }
