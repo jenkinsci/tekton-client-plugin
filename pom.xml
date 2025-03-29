@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>4.18</version>
+        <version>4.88</version>
         <relativePath />
     </parent>
 
@@ -24,14 +24,15 @@
     </scm>
 
     <properties>
+        <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
+        <jenkins.baseline>2.462</jenkins.baseline>
         <!-- Baseline Jenkins version you use to build the plugin. Users must have this version or newer to run. -->
-        <jenkins.version>2.263.1</jenkins.version>
-        <java.level>8</java.level>
+        <jenkins.version>${jenkins.baseline}.3</jenkins.version>
         <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
         <pipeline-model-definition.version>1.6.0</pipeline-model-definition.version>
         <revision>1.0.0</revision>
         <changelist>-SNAPSHOT</changelist>
-        <jenkins-test-harness.version>2.34</jenkins-test-harness.version>
+        <jenkins-test-harness.version>2225.v04fa_3929c9b_5</jenkins-test-harness.version>
         <kubernetes-server-mock.version>5.4.0</kubernetes-server-mock.version>
         <tekton-client.version>5.4.0</tekton-client.version>
         <maven-surefire-plugin.version>2.22.1</maven-surefire-plugin.version>
@@ -47,13 +48,6 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
-
-    <developers>
-        <developer>
-            <id>waveywaves</id>
-            <name>Vibhav Bobade</name>
-        </developer>
-    </developers>
 
     <dependencies>
         <dependency>
@@ -97,7 +91,6 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>github-branch-source</artifactId>
-            <version>2.9.7</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -115,7 +108,6 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>pipeline-utility-steps</artifactId>
-            <version>2.7.1</version>
             <scope>test</scope>
         </dependency>
 
@@ -125,16 +117,11 @@
       <dependencies>
         <dependency>
           <groupId>io.jenkins.tools.bom</groupId>
-          <artifactId>bom-2.249.x</artifactId>
-          <version>29</version>
+          <artifactId>bom-${jenkins.baseline}.x</artifactId>
+          <version>4228.v0a_71308d905b_</version>
           <scope>import</scope>
           <type>pom</type>
         </dependency>
-          <dependency>
-              <groupId>org.slf4j</groupId>
-              <artifactId>slf4j-api</artifactId>
-              <version>1.7.30</version>
-          </dependency>
           <dependency>
               <groupId>org.apache.commons</groupId>
               <artifactId>commons-lang3</artifactId>
