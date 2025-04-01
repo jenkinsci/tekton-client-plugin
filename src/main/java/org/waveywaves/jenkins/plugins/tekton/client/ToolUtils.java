@@ -14,7 +14,6 @@ import java.util.logging.Logger;
  */
 public class ToolUtils {
     private static final Logger LOGGER = Logger.getLogger(ToolUtils.class.getName());
-
     private static String jxPipelineFile = System.getenv("JX_PIPELINE_EFFECTIVE_PATH");
 
     /**
@@ -23,44 +22,74 @@ public class ToolUtils {
      * @param classLoader
      */
     public static synchronized String getJXPipelineBinary(ClassLoader classLoader) throws IOException {
+        // Check if the file path is already cached
         if (jxPipelineFile == null) {
-            File f = File.createTempFile("jx-pipeline-effective-", "");
-            boolean success = f.delete();
-            if (!success) {
-                LOGGER.log(Level.WARNING, "unable to delete temporary file " + f);
-            }
-            f.deleteOnExit();
+            // Create a temporary file
+            File tempFile = createTemporaryFile();
 
-            String platform = "linux";
-            if (SystemUtils.IS_OS_MAC || SystemUtils.IS_OS_MAC_OSX) {
-                platform = "mac";
-            } else if (SystemUtils.IS_OS_WINDOWS) {
-                platform = "windows";
-            }
+            // Determine the platform and resource path
+            String platform = getPlatform();
+            String resourcePath = getResourcePath(platform);
 
-            String resource = "org/waveywaves/jenkins/plugins/tekton/client/jxp/" + platform + "/jx-pipeline-effective";
-            InputStream in = classLoader.getResourceAsStream(resource);
-            if (in == null) {
-                throw new IOException("could not find resource on classpath: " + resource);
-            }
+            // Copy the resource to the temporary file
+            copyResourceToFile(classLoader, resourcePath, tempFile);
 
-            String path = f.getPath();
-            try {
-                Files.copy(in, f.toPath());
-            } catch (IOException e) {
-                LOGGER.log(Level.SEVERE, "failed to copy jx-pipeline-effective to " + path + " due to " + e);
-                throw new IOException("failed to copy jx-pipeline-effective to " + path + " cause: " + e, e);
-            }
+            // Mark the file as executable
+            setFileExecutable(tempFile);
 
-            boolean chmodSuccess = f.setExecutable(true);
-            if (!chmodSuccess) {
-                throw new IOException("failed make the file executable: " + path);
-            }
-
-            jxPipelineFile = path;
-
-            LOGGER.info("saved jx-pipeline-effective binary to " + jxPipelineFile);
+            jxPipelineFile = tempFile.getPath();
+            LOGGER.info("Saved jx-pipeline-effective binary to " + jxPipelineFile);
         }
         return jxPipelineFile;
+    }
+
+    // Creates a temporary file
+    private static File createTemporaryFile() throws IOException {
+        File tempFile = File.createTempFile("jx-pipeline-effective-", "");
+        boolean deleted = tempFile.delete();
+        if (!deleted) {
+            LOGGER.log(Level.WARNING, "Unable to delete temporary file " + tempFile);
+        }
+        tempFile.deleteOnExit();
+        return tempFile;
+    }
+
+    // Determines the platform (mac, windows, linux)
+    private static String getPlatform() {
+        if (SystemUtils.IS_OS_MAC || SystemUtils.IS_OS_MAC_OSX) {
+            return "mac";
+        } else if (SystemUtils.IS_OS_WINDOWS) {
+            return "windows";
+        }
+        return "linux";  // Default platform
+    }
+
+    // Retrieves the resource path based on the platform
+    private static String getResourcePath(String platform) {
+        return "org/waveywaves/jenkins/plugins/tekton/client/jxp/" + platform + "/jx-pipeline-effective";
+    }
+
+    // Copies the resource to the temporary file
+    private static void copyResourceToFile(ClassLoader classLoader, String resourcePath, File tempFile) throws IOException {
+        InputStream in = classLoader.getResourceAsStream(resourcePath);
+        if (in == null) {
+            throw new IOException("could not find resource on classpath: " + resourcePath);
+        }
+
+        String path = tempFile.getPath();
+        try {
+            Files.copy(in, tempFile.toPath());
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Failed to copy jx-pipeline-effective to " + path + " due to " + e);
+            throw new IOException("Failed to copy jx-pipeline-effective to " + path + " cause: " + e, e);
+        }
+    }
+
+    // Marks the file as executable
+    private static void setFileExecutable(File file) throws IOException {
+        boolean chmodSuccess = file.setExecutable(true);
+        if (!chmodSuccess) {
+            throw new IOException("Failed to make the file executable: " + file.getPath());
+        }
     }
 }
