@@ -24,6 +24,7 @@ import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -125,13 +126,24 @@ public class CreateCustomTaskrun extends BaseStep {
     }
 
     public List<WorkspaceBinding> workspacesToWorkspaceBindingList() {
-        List<WorkspaceBinding> wsbList = new ArrayList<>();
-        for (TektonWorkspaceBind w: this.workspaces){
-            WorkspaceBinding wsb = new WorkspaceBinding();
-            wsb.setName(w.getName());
-            wsb.setPersistentVolumeClaim(new PersistentVolumeClaimVolumeSource(w.getClaimName(), false));
 
-            wsbList.add(wsb);
+        // return an empty list or we can add a default workspace
+        if (this.workspaces == null || this.workspaces.isEmpty()) {
+            WorkspaceBinding defaultWorkspace = new WorkspaceBinding();
+            defaultWorkspace.setName("default-workspace");
+            defaultWorkspace.setPersistentVolumeClaim(new PersistentVolumeClaimVolumeSource("default-claim", false));
+            return Collections.singletonList(defaultWorkspace);
+
+        }
+        List<WorkspaceBinding> wsbList = new ArrayList<>();
+        for (TektonWorkspaceBind w: this.workspaces) {
+            WorkspaceBinding wsb = new WorkspaceBinding();
+            {
+                wsb.setName(w.getName());
+                wsb.setPersistentVolumeClaim(new PersistentVolumeClaimVolumeSource(w.getClaimName(), false));
+
+                wsbList.add(wsb);
+            }
         }
         return wsbList;
     }
