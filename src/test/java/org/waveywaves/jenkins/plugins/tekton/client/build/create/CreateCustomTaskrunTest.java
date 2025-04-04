@@ -77,3 +77,4 @@ public class CreateCustomTaskrunTest {
         assertEquals("workspace2", workspaceBindingListWithWorkspaces.get(1).getName());
     }
 }
+
