@@ -1,7 +1,7 @@
 # Development for Tekton Client Plugin
-Tekton is a cloud-native solution for building CI/CD systems. It consists of Tekton Pipelines, which provides the building blocks, and of supporting components, such as Tekton CLI and Tekton Catalog, that make Tekton a complete ecosystem.
+Tekton is a cloud-native solution for building CI/CD systems. It consists of Tekton Pipelines, which provides the building blocks, and of supporting components, such as Tekton CLI and Tekton Catalog, which make Tekton a complete ecosystem.
 
-## Overview
+## Getting Started
 
 ### Prerequisites
 - Basic understanding of [Plugin Development in Jenkins](https://www.jenkins.io/doc/developer/plugin-development/).
@@ -14,6 +14,7 @@ Tekton is a cloud-native solution for building CI/CD systems. It consists of Tek
 1. Install [minikube](https://minikube.sigs.k8s.io/docs/start/?arch=%2Fwindows%2Fx86-64%2Fstable%2F.exe+download). You only have to complete the step 1, “Installation”.
 
 2. Install [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl).
+
 ## Set up and run your first Tekton Task and Pipeline
 1. [Create a Kubernetes cluster with minikube](#Create-a-Kubernetes-cluster).
 
@@ -63,9 +64,7 @@ Hit Ctrl + C to stop monitoring.
 3. Install the Tekton Client Plugin in Jenkins
 
 - In Jenkins, go to Manage Jenkins > Manage Plugins.
-
 - Search for "Tekton Client Plugin" in the "Available" tab, install it, and restart Jenkins if required.
-  
 - Verify installation under Manage Jenkins > Configure System; look for Tekton-related options
 
 ### Create and Run a Task and a Pipeline 
@@ -199,7 +198,7 @@ mvn hpi:run
 
 Ideally Jenkins should be available at **localhost:8080/jenkins**
 
-#### Other Implementations to try
+#### Playing Around
 Visit [the tutorial](docs/tutorial.md) for help with doing various things with the plugin.
 ## Releasing
 
