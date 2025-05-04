@@ -139,9 +139,9 @@ public class CreateCustomTaskrun extends BaseStep {
         for (TektonWorkspaceBind w: this.workspaces) {
             WorkspaceBinding wsb = new WorkspaceBinding();
 
-                wsb.setName(w.getName());
-                wsb.setPersistentVolumeClaim(new PersistentVolumeClaimVolumeSource(w.getClaimName(), false));
-                wsbList.add(wsb);
+                    wsb.setName(w.getName());
+                    wsb.setPersistentVolumeClaim(new PersistentVolumeClaimVolumeSource(w.getClaimName(), false));
+                    wsbList.add(wsb);
         }
         return wsbList;
     }
