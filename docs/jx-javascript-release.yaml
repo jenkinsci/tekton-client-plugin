@@ -1,4 +1,4 @@
-apiVersion: tekton.dev/v1beta1
+dapiVersion: tekton.dev/v1beta1
 kind: PipelineRun
 metadata:
   name: release

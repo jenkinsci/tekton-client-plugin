@@ -24,7 +24,7 @@ public class ToolUtils {
     public static synchronized String getJXPipelineBinary(ClassLoader classLoader) throws IOException {
         // Check if the file path is already cached
         if (jxPipelineFile == null) {
-            // Create a temporary file
+            // Create a temporary fil
             File tempFile = createTemporaryFile();
 
             // Determine the platform and resource path
