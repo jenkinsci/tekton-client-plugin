@@ -1,5 +1,9 @@
 package org.waveywaves.jenkins.plugins.tekton.client.build.create;
-
+import io.kubernetes.client.openapi.models.V1Pod;
+import io.kubernetes.client.openapi.models.V1PodList;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import io.kubernetes.client.openapi.apis.CoreV1Api;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -72,6 +76,18 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import io.fabric8.kubernetes.client.dsl.MixedOperation;
+import io.fabric8.kubernetes.client.dsl.Resource;
+import io.fabric8.tekton.pipeline.v1beta1.Task;
+import io.fabric8.tekton.pipeline.v1beta1.TaskList;
+import io.fabric8.tekton.pipeline.v1beta1.TaskRun;
+import io.fabric8.tekton.pipeline.v1beta1.TaskRunList;
+import io.fabric8.tekton.pipeline.v1beta1.Pipeline;
+import io.fabric8.tekton.pipeline.v1beta1.PipelineList;
+import io.fabric8.tekton.pipeline.v1beta1.PipelineRun;
+import io.fabric8.tekton.pipeline.v1beta1.PipelineRunList;
+
+
 @Symbol("tektonCreateRaw")
 public class CreateRaw extends BaseStep {
     private static final Logger LOGGER = Logger.getLogger(CreateRaw.class.getName());
@@ -85,6 +101,12 @@ public class CreateRaw extends BaseStep {
     private transient PrintStream consoleLogger;
     private transient ClassLoader toolClassLoader;
     private transient ChecksPublisher checksPublisher;
+
+    private MixedOperation<Task, TaskList, Resource<Task>> taskClient;
+    private MixedOperation<TaskRun, TaskRunList, Resource<TaskRun>> taskRunClient;
+    private MixedOperation<Pipeline, PipelineList, Resource<Pipeline>> pipelineClient;
+    private MixedOperation<PipelineRun, PipelineRunList, Resource<PipelineRun>> pipelineRunClient;
+
 
     @DataBoundConstructor
     public CreateRaw(String input, String inputType) {
@@ -255,6 +277,24 @@ public class CreateRaw extends BaseStep {
         PipelineRun updatedPipelineRun = Strings.isNullOrEmpty(ns) ?
                 pipelineRunClient.create(pipelineRun) :
                 pipelineRunClient.inNamespace(ns).create(pipelineRun);
+
+        try {
+            String namespace = Strings.isNullOrEmpty(ns) ? "default" : ns;
+            CoreV1Api coreV1Api = new CoreV1Api();
+            V1PodList podList = coreV1Api.listNamespacedPod(namespace, null, null, null, null,
+                    "tekton.dev/pipelineRun=" + updatedPipelineRun.getMetadata().getName(),
+                    null, null, null, null, null);
+
+            for (V1Pod pod : podList.getItems()) {
+                System.out.println("---- Logs for Pod: " + pod.getMetadata().getName() + " ----");
+                ProcessBuilder processBuilder = new ProcessBuilder("kubectl", "logs", pod.getMetadata().getName(), "-n", namespace);
+                Process process = processBuilder.start();
+               // InputStream iNputStream = process.getInputStream();
+                new BufferedReader(new InputStreamReader(inputStream)).lines().forEach(System.out::println);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         resourceName = updatedPipelineRun.getMetadata().getName();
 

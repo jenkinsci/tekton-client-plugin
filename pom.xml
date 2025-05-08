@@ -57,6 +57,12 @@
 
     <dependencies>
         <dependency>
+            <groupId>io.kubernetes</groupId>
+            <artifactId>client-java</artifactId>
+            <version>18.0.1</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>
@@ -173,6 +179,12 @@
             <id>repo.jenkins-ci.org</id>
             <url>https://repo.jenkins-ci.org/public/</url>
         </repository>
+
+        <repository>
+            <id>jenkins-releases</id>
+            <url>https://repo.jenkins-ci.org/releases/</url>
+        </repository>
+
         <repository>
             <id>tags</id>
             <name>Custom Tags</name>
@@ -194,6 +206,12 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.0.0-M5</version>
             </plugin>
+
+            <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-enforcer-plugin</artifactId>
+            </plugin>
+            
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>cobertura-maven-plugin</artifactId>

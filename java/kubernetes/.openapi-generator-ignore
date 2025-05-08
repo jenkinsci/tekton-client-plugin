@@ -1,0 +1,7 @@
+.gitignore
+.travis.yml
+*gradle*
+*sbt*
+git_push.sh
+README.md
+pom.xml
