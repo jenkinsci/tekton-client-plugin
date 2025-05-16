@@ -45,9 +45,8 @@ import io.jenkins.plugins.checks.api.ChecksStatus;
 import java.net.MalformedURLException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Optional;
+import java.util.*;
+
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.displayurlapi.DisplayURLProvider;
@@ -71,10 +70,11 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
@@ -198,6 +198,16 @@ public class CreateRaw extends BaseStep {
             TektonClient tc = (TektonClient) tektonClient;
             setTaskRunClient(tc.v1beta1().taskRuns());
         }
+        if (taskRunClient == null) {
+            throw new IllegalStateException("taskRunClient is still null after setup.");
+        }
+
+
+// Explicit second check to satisfy static analyzers
+        if (taskRunClient == null) {
+            throw new IllegalStateException("taskRunClient is still null after setup.");
+        }
+
         String resourceName;
         TaskRun taskrun = taskRunClient.load(inputStream).get();
         if (!Strings.isNullOrEmpty(namespace) && Strings.isNullOrEmpty(taskrun.getMetadata().getNamespace())) {
@@ -216,10 +226,12 @@ public class CreateRaw extends BaseStep {
     }
 
     public String createTask(InputStream inputStream) {
-        if (taskClient == null) {
-            TektonClient tc = (TektonClient) tektonClient;
-            setTaskClient(tc.v1beta1().tasks());
-        }
+//        if (taskClient == null) {
+//            TektonClient tc = (TektonClient) tektonClient;
+//            setTaskClient(tc.v1beta1().tasks());
+//        }
+        if(taskClient == null)throw new IllegalStateException("taskClient is still null after setup");
+
         String resourceName;
         Task task = taskClient.load(inputStream).get();
         if (!Strings.isNullOrEmpty(namespace) && Strings.isNullOrEmpty(task.getMetadata().getNamespace())) {
@@ -236,12 +248,18 @@ public class CreateRaw extends BaseStep {
     }
 
     public String createPipeline(InputStream inputStream) {
+        
         if (pipelineClient == null) {
             TektonClient tc = (TektonClient) tektonClient;
             setPipelineClient(tc.v1beta1().pipelines());
         }
+        if (pipelineClient == null) {
+            throw new IllegalStateException("pipelineClient is still null after setup.");
+        }
         String resourceName;
         Pipeline pipeline = pipelineClient.load(inputStream).get();
+        Objects.requireNonNull(pipelineRunClient, "pipelineRunClient is null");
+
         if (!Strings.isNullOrEmpty(namespace) && Strings.isNullOrEmpty(pipeline.getMetadata().getNamespace())) {
             pipeline.getMetadata().setNamespace(namespace);
         }
@@ -260,8 +278,10 @@ public class CreateRaw extends BaseStep {
             TektonClient tc = (TektonClient) tektonClient;
             setPipelineRunClient(tc.v1beta1().pipelineRuns());
         }
+        PipelineRun pipelineRun = pipelineRunClient.load(inputStream).get();
+
         String resourceName;
-        final PipelineRun pipelineRun = pipelineRunClient.load(inputStream).get();
+        final PipelineRun PipelineRun = pipelineRunClient.load(inputStream).get();
         if (!Strings.isNullOrEmpty(namespace) && Strings.isNullOrEmpty(pipelineRun.getMetadata().getNamespace())) {
             pipelineRun.getMetadata().setNamespace(namespace);
         }
@@ -289,8 +309,8 @@ public class CreateRaw extends BaseStep {
                 System.out.println("---- Logs for Pod: " + pod.getMetadata().getName() + " ----");
                 ProcessBuilder processBuilder = new ProcessBuilder("kubectl", "logs", pod.getMetadata().getName(), "-n", namespace);
                 Process process = processBuilder.start();
-               // InputStream iNputStream = process.getInputStream();
-                new BufferedReader(new InputStreamReader(inputStream)).lines().forEach(System.out::println);
+                InputStream iNputStream = process.getInputStream();
+                new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8)).lines().forEach(System.out::println);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -615,6 +635,8 @@ public class CreateRaw extends BaseStep {
      * @return the processed data
      * @throws Exception
      */
+
+
     private byte[] processTektonCatalog(EnvVars envVars, File dir, File file, byte[] data) throws Exception {
         boolean deleteInputFile = false;
         if (file == null) {
