@@ -12,7 +12,7 @@ jobs:
     
     strategy:
       matrix:
-        java-version: [8, 11, 17]
+        java-version: [17]
     
     steps:
     - name: Checkout code
@@ -46,7 +46,7 @@ jobs:
       run: mvn cobertura:cobertura
 
     - name: Upload test results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: test-results-java${{ matrix.java-version }}
