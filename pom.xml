@@ -247,12 +247,19 @@
     <build>
         <pluginManagement>
             <plugins>
-            <plugin>
-                <groupId>org.jenkins-ci.tools</groupId>
-                <artifactId>maven-hpi-plugin</artifactId>
-                <version>3.65</version>
-                <extensions>true</extensions>
-            </plugin>
+                <plugin>
+                    <groupId>org.jenkins-ci.tools</groupId>
+                    <artifactId>maven-hpi-plugin</artifactId>
+                    <version>3.65</version>
+                    <executions>
+                        <execution>
+                        <goals>
+                            <goal>validate-hpi</goal>
+                            <goal>test-runtime</goal>
+                        </goals>
+                        </execution>
+                    </executions>
+                </plugin>
             </plugins>
         </pluginManagement>
         <plugins>
