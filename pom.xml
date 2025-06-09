@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>5.17</version>
+        <version>4.18</version>
         <relativePath />
     </parent>
 
@@ -25,15 +25,13 @@
 
     <properties>
         <!-- Baseline Jenkins version you use to build the plugin. Users must have this version or newer to run. -->
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
-        <jenkins.baseline>2.492.3</jenkins.baseline>
-        <jenkins.version>${jenkins.baseline}</jenkins.version>
+        <jenkins.version>2.263.1</jenkins.version>
+        <java.level>8</java.level>
         <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
         <pipeline-model-definition.version>1.6.0</pipeline-model-definition.version>
         <revision>1.0.0</revision>
         <changelist>-SNAPSHOT</changelist>
-        <jenkins-test-harness.version>2395.v8256a_2157798</jenkins-test-harness.version>
+        <jenkins-test-harness.version>2.34</jenkins-test-harness.version>
         <kubernetes-server-mock.version>5.4.0</kubernetes-server-mock.version>
         <tekton-client.version>5.4.0</tekton-client.version>
         <maven-surefire-plugin.version>2.22.1</maven-surefire-plugin.version>
@@ -62,46 +60,10 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>
-        <!-- <dependency>
+        <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-aggregator</artifactId>
             <version>2.6</version>
-        </dependency> -->
-        <dependency>
-            <groupId>io.jenkins.plugins</groupId>
-            <artifactId>checks-api</artifactId>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>display-url-api</artifactId>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.plugins.workflow</groupId>
-            <artifactId>workflow-step-api</artifactId>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.plugins.workflow</groupId>
-            <artifactId>workflow-job</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.plugins.workflow</groupId>
-            <artifactId>workflow-cps</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.plugins.workflow</groupId>
-            <artifactId>workflow-basic-steps</artifactId>
-            <scope>test</scope>
-        </dependency>
-        
-        <dependency>
-            <groupId>org.jenkins-ci.plugins.workflow</groupId>
-            <artifactId>workflow-durable-task-step</artifactId>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>io.fabric8</groupId>
@@ -157,45 +119,26 @@
             <scope>test</scope>
         </dependency>
 
-        <dependency>
-            <groupId>org.jenkins-ci.main</groupId>
-            <artifactId>jenkins-test-harness</artifactId>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                <groupId>javax.servlet</groupId>
-                <artifactId>javax.servlet-api</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
    </dependencies>
 
     <dependencyManagement>
       <dependencies>
         <dependency>
           <groupId>io.jenkins.tools.bom</groupId>
-          <artifactId>bom-2.492.x</artifactId>
-          <version>4862.vc32a_71c3e731</version>
+          <artifactId>bom-2.249.x</artifactId>
+          <version>29</version>
           <scope>import</scope>
           <type>pom</type>
         </dependency>
-
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.17.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.ivy</groupId>
-            <artifactId>ivy</artifactId>
-            <version>2.5.3</version>
-        </dependency>
-<!--         
           <dependency>
               <groupId>org.slf4j</groupId>
               <artifactId>slf4j-api</artifactId>
               <version>1.7.30</version>
+          </dependency>
+          <dependency>
+              <groupId>org.apache.commons</groupId>
+              <artifactId>commons-lang3</artifactId>
+              <version>3.12.0</version>
           </dependency>
           <dependency>
               <groupId>org.jenkins-ci.plugins</groupId>
@@ -221,7 +164,7 @@
               <groupId>com.squareup.okhttp3</groupId>
               <artifactId>logging-interceptor</artifactId>
               <version>3.14.9</version>
-          </dependency> -->
+          </dependency>
       </dependencies>
     </dependencyManagement>
 
@@ -245,29 +188,11 @@
     </pluginRepositories>
 
     <build>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>org.jenkins-ci.tools</groupId>
-                    <artifactId>maven-hpi-plugin</artifactId>
-                    <version>3.65</version>
-                    <extensions>true</extensions>
-                    <executions>
-                        <execution>
-                        <goals>
-                            <goal>validate-hpi</goal>
-                            <goal>test-runtime</goal>
-                        </goals>
-                        </execution>
-                    </executions>
-                </plugin>
-            </plugins>
-        </pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.2.5</version>
+                <version>3.0.0-M5</version>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>

@@ -50,9 +50,3 @@ jobs:
         name: tekton-client-plugin-java${{ matrix.java-version }}
         path: target/*.hpi
         retention-days: 7
-
-    - name: Check for javadoc generation
-      run: mvn javadoc:javadoc
-
-    - name: Run SpotBugs
-      run: mvn spotbugs:check
