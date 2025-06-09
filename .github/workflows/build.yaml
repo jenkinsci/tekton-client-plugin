@@ -1,0 +1,53 @@
+name: Build
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        java-version: [8, 11, 17]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up JDK ${{ matrix.java-version }}
+      uses: actions/setup-java@v3
+      with:
+        java-version: ${{ matrix.java-version }}
+        distribution: 'temurin'
+
+    - name: Cache Maven dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+
+    - name: Build with Maven
+      run: mvn clean compile -DskipTests
+
+    - name: Package plugin
+      run: mvn package -DskipTests
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: tekton-client-plugin-java${{ matrix.java-version }}
+        path: target/*.hpi
+        retention-days: 7
+
+    - name: Check for javadoc generation
+      run: mvn javadoc:javadoc
+
+    - name: Run SpotBugs
+      run: mvn spotbugs:check
