@@ -9,11 +9,11 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     strategy:
       matrix:
         java-version: [17]
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -37,7 +37,35 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y maven
-    
+
+    - name: Configure Maven for Jenkins plugins
+      run: |
+        mkdir -p ~/.m2
+        cat > ~/.m2/settings.xml <<EOF
+        <settings>
+          <profiles>
+            <profile>
+              <id>jenkins</id>
+              <repositories>
+                <repository>
+                  <id>repo.jenkins-ci.org</id>
+                  <url>https://repo.jenkins-ci.org/public/</url>
+                </repository>
+              </repositories>
+              <pluginRepositories>
+                <pluginRepository>
+                  <id>repo.jenkins-ci.org</id>
+                  <url>https://repo.jenkins-ci.org/public/</url>
+                </pluginRepository>
+              </pluginRepositories>
+            </profile>
+          </profiles>
+          <activeProfiles>
+            <activeProfile>jenkins</activeProfile>
+          </activeProfiles>
+        </settings>
+        EOF
+
     - name: Build with Maven
       run: mvn clean compile -DskipTests
 
