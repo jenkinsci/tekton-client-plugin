@@ -10,7 +10,7 @@
 
     <groupId>org.waveywaves.jenkins.plugins</groupId>
     <artifactId>tekton-client</artifactId>
-    <version>${revision}${changelist}</version>
+    <version>1.0.0-SNAPSHOT</version>
     <name>Tekton Client Plugin</name>
     <description>Tekton is a Cloud Native CI/CD tool for Kubernetes. This plugin helps in the creation and manipulation of Tekton Resources on you Kubernetes cluster and helps drive your operations from your Jenkins Server itself without having to carry them out from the Command Line Interface or any other User Interface.</description>
     <packaging>hpi</packaging>
@@ -27,17 +27,16 @@
         <!-- Baseline Jenkins version you use to build the plugin. Users must have this version or newer to run. -->
         <jenkins.version>2.492.3</jenkins.version>
         <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
-        <pipeline-model-definition.version>1.6.0</pipeline-model-definition.version>
+        <pipeline-model-definition.version>2.2255.v56a_15e805f12</pipeline-model-definition.version>
         <revision>1.0.0</revision>
         <changelist>-SNAPSHOT</changelist>
         <jenkins-test-harness.version>2395.v8256a_2157798</jenkins-test-harness.version>
         <kubernetes-server-mock.version>5.4.0</kubernetes-server-mock.version>
         <tekton-client.version>5.4.0</tekton-client.version>
-        <maven-surefire-plugin.version>2.22.1</maven-surefire-plugin.version>
+        <maven-surefire-plugin.version>	3.2.5</maven-surefire-plugin.version>
         <mockwebserver.version>0.1.8</mockwebserver.version>
         <junit-jupiter-engine.version>5.6.2</junit-jupiter-engine.version>
         <jx-pipeline.version>0.0.163</jx-pipeline.version>
-        <skipTests>true</skipTests>
     </properties>
 
     <licenses>
@@ -143,8 +142,8 @@
       <dependencies>
         <dependency>
           <groupId>io.jenkins.tools.bom</groupId>
-          <artifactId>bom-2.492.x</artifactId>
-          <version>4862.vc32a_71c3e731</version>
+          <artifactId>bom-2.462.x</artifactId>
+          <version>4228.v0a_71308d905b_</version>
           <scope>import</scope>
           <type>pom</type>
         </dependency>
@@ -217,14 +216,20 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.0.0</version>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.14.0</version>
+                <configuration>
+                    <source>17</source> 
+                    <target>17</target>
+                </configuration>
             </plugin>
+
             <plugin>
                 <groupId>org.jenkins-ci.tools</groupId>
                 <artifactId>maven-hpi-plugin</artifactId>
                 <version>3.65</version>
             </plugin>
+            
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>cobertura-maven-plugin</artifactId>

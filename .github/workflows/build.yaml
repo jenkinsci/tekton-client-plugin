@@ -9,11 +9,11 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    
     strategy:
       matrix:
         java-version: [17]
-
+    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -37,12 +37,16 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y maven
-
-    - name: Configure Maven for Jenkins plugins
+      
+    - name: Set up Maven settings.xml for Jenkins
       run: |
         mkdir -p ~/.m2
-        cat > ~/.m2/settings.xml <<EOF
+        cat <<EOF > ~/.m2/settings.xml
         <settings>
+          <pluginGroups>
+            <pluginGroup>org.jenkins-ci.plugins</pluginGroup>
+            <pluginGroup>org.jenkins-ci.tools</pluginGroup>
+          </pluginGroups>
           <profiles>
             <profile>
               <id>jenkins</id>
@@ -66,11 +70,9 @@ jobs:
         </settings>
         EOF
 
-    - name: Build with Maven
-      run: mvn clean compile -DskipTests
-
-    - name: Package plugin
-      run: mvn package -DskipTests
+    - name: Build & Package Plugin
+      run: |
+        mvn clean verify -DskipTests
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
