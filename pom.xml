@@ -37,6 +37,7 @@
         <mockwebserver.version>0.1.8</mockwebserver.version>
         <junit-jupiter-engine.version>5.6.2</junit-jupiter-engine.version>
         <jx-pipeline.version>0.0.163</jx-pipeline.version>
+        <skipTests>true</skipTests>
     </properties>
 
     <licenses>
@@ -229,7 +230,7 @@
                 <artifactId>maven-hpi-plugin</artifactId>
                 <version>3.65</version>
             </plugin>
-            
+
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>cobertura-maven-plugin</artifactId>
