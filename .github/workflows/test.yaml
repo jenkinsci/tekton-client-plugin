@@ -95,4 +95,3 @@ jobs:
           target/failsafe-reports/
           target/site/cobertura/
         retention-days: 7
-      
