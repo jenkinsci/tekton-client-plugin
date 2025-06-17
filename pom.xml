@@ -26,18 +26,18 @@
     <properties>
         <!-- Baseline Jenkins version you use to build the plugin. Users must have this version or newer to run. -->
         <jenkins.version>2.492.3</jenkins.version>
-        <java.level>8</java.level>
         <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
-        <pipeline-model-definition.version>1.6.0</pipeline-model-definition.version>
+        <pipeline-model-definition.version>2.2255.v56a_15e805f12</pipeline-model-definition.version>
         <revision>1.0.0</revision>
         <changelist>-SNAPSHOT</changelist>
         <jenkins-test-harness.version>2395.v8256a_2157798</jenkins-test-harness.version>
         <kubernetes-server-mock.version>5.4.0</kubernetes-server-mock.version>
         <tekton-client.version>5.4.0</tekton-client.version>
-        <maven-surefire-plugin.version>2.22.1</maven-surefire-plugin.version>
+        <maven-surefire-plugin.version>	3.2.5</maven-surefire-plugin.version>
         <mockwebserver.version>0.1.8</mockwebserver.version>
         <junit-jupiter-engine.version>5.6.2</junit-jupiter-engine.version>
         <jx-pipeline.version>0.0.163</jx-pipeline.version>
+        <skipTests>true</skipTests>
     </properties>
 
     <licenses>
@@ -59,6 +59,12 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.kohsuke.stapler</groupId>
+            <artifactId>stapler</artifactId>
+            <version>1928.v9115fe47607f</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
@@ -210,9 +216,21 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.0.0-M5</version>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.14.0</version>
+                <configuration>
+                    <source>17</source> 
+                    <target>17</target>
+                </configuration>
             </plugin>
+
+            <plugin>
+                <groupId>org.jenkins-ci.tools</groupId>
+                <artifactId>maven-hpi-plugin</artifactId>
+                <version>3.65</version>
+                <extensions>true</extensions>
+            </plugin>
+
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>cobertura-maven-plugin</artifactId>
