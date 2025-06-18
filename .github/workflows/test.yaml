@@ -1,0 +1,99 @@
+name: Test
+
+on:
+  push:
+    branches: 
+      - master
+  pull_request:
+    branches: 
+      - master
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        java-version: [17]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up JDK ${{ matrix.java-version }}
+      uses: actions/setup-java@v4.7.1
+      with:
+        java-version: ${{ matrix.java-version }}
+        distribution: 'temurin'
+
+    - name: Cache Maven dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+
+    - name: Set up Maven settings.xml for Jenkins
+      run: |
+        mkdir -p ~/.m2
+        cat <<EOF > ~/.m2/settings.xml
+        <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 
+                                      https://maven.apache.org/xsd/settings-1.0.0.xsd">
+          <pluginGroups>
+            <pluginGroup>org.jenkins-ci.plugins</pluginGroup>
+            <pluginGroup>org.jenkins-ci.tools</pluginGroup>
+          </pluginGroups>
+          <profiles>
+            <profile>
+              <id>jenkins</id>
+              <repositories>
+                <repository>
+                  <id>repo.jenkins-ci.org</id>
+                  <url>https://repo.jenkins-ci.org/public/</url>
+                  <releases><enabled>true</enabled></releases>
+                  <snapshots><enabled>true</enabled></snapshots>
+                </repository>
+              </repositories>
+              <pluginRepositories>
+                <pluginRepository>
+                  <id>repo.jenkins-ci.org</id>
+                  <url>https://repo.jenkins-ci.org/public/</url>
+                  <releases><enabled>true</enabled></releases>
+                  <snapshots><enabled>true</enabled></snapshots>
+                </pluginRepository>
+              </pluginRepositories>
+            </profile>
+          </profiles>
+          <activeProfiles>
+            <activeProfile>jenkins</activeProfile>
+          </activeProfiles>
+        </settings>
+        EOF
+
+    - name: Download jx-pipeline binaries (for tests)
+      run: mvn compile -P download-binaries -DskipTests
+
+    - name: Run unit tests
+      run: mvn test
+
+    - name: Run integration tests
+      run: mvn verify -DskipUnitTests
+
+    - name: Generate test coverage report
+      run: mvn cobertura:cobertura
+      continue-on-error: true
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results-java${{ matrix.java-version }}
+        path: |
+          target/surefire-reports/
+          target/failsafe-reports/
+          target/site/cobertura/
+        retention-days: 7

@@ -5,7 +5,7 @@ import io.fabric8.kubernetes.client.KubernetesClientException;
 import jenkins.model.GlobalConfiguration;
 import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
-import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerRequest2;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
 
 import java.util.ArrayList;
@@ -37,7 +37,7 @@ public class TektonGlobalConfiguration extends GlobalConfiguration {
     }
 
     @Override
-    public boolean configure(final StaplerRequest req, final JSONObject formData) {
+    public boolean configure(final StaplerRequest2 req, final JSONObject formData) {
         Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
         setClusterConfigs(req.bindJSONToList(ClusterConfig.class, formData.get("clusterConfigs")));
         configChange();
