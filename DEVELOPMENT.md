@@ -18,6 +18,7 @@ Currently the plugin is in development state and a lot of things such as unit te
 Currently the plugin uses the default Kubernetes Client available to it through it the local kubeconfig and operates at the current local kubecontext available during development. 
 
 - _Use the following command to start a instance of Jenkins locally with the plugin installed_
+
 ```
 mvn hpi:run
 ```
@@ -25,6 +26,7 @@ mvn hpi:run
 Ideally Jenkins should be available at **localhost:8080/jenkins**
 
 #### Playing around
+
 Visit [the tutorial](docs/tutorial.md) for help with doing various things with the plugin.
 
 
