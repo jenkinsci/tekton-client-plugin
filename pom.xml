@@ -42,7 +42,7 @@
         <maven-surefire-plugin.version>	3.2.5</maven-surefire-plugin.version>
         <mockwebserver.version>0.1.8</mockwebserver.version>
         <junit-jupiter-engine.version>5.6.2</junit-jupiter-engine.version>
-        <jx-pipeline.version>0.0.163</jx-pipeline.version>
+        <jx-pipeline.version>0.1.5</jx-pipeline.version>
     </properties>
 
     <licenses>
@@ -113,7 +113,7 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>envinject</artifactId>
-            <version>2.3.0</version>
+            <version>2.908.v66a_774b_31d93</version>
             <scope>test</scope>
         </dependency>
         <dependency>
