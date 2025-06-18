@@ -7,7 +7,6 @@
 [![Jenkins Plugin Installs](https://img.shields.io/jenkins/plugin/i/tekton-client.svg?color=blue)](https://plugins.jenkins.io/tekton-client)
 [![Codecov](https://codecov.io/gh/jenkinsci/tekton-client-plugin/branch/master/graph/badge.svg)](https://codecov.io/gh/jenkinsci/tekton-client-plugin)
 
-
 Jenkins plugin to interact with [Tekton Pipelines](https://github.com/tektoncd/pipeline) on a Kubernetes Cluster. 
 
 ## Quick Demo
@@ -21,7 +20,6 @@ For a quick demo of the plugin, please check out the following video:
 To chat with the community, ask questions, or get help, you can join us on Gitter:
 
 [![Join the chat at https://gitter.im/jenkinsci/tekton-client-plugin](https://badges.gitter.im/jenkinsci/tekton-client-plugin.svg)](https://gitter.im/jenkinsci/tekton-client-plugin?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
 
 ## Start using the plugin
 
