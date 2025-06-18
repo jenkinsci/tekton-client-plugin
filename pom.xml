@@ -34,7 +34,7 @@
         <jenkins.version>${jenkins.baseline}.3</jenkins.version>
         <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
         <pipeline-model-definition.version>2.2255.v56a_15e805f12</pipeline-model-definition.version>
-        <revision>1.0.0</revision>
+        <revision>1.0.4</revision>
         <changelist>-SNAPSHOT</changelist>
         <jenkins-test-harness.version>2395.v8256a_2157798</jenkins-test-harness.version>
         <kubernetes-server-mock.version>5.4.0</kubernetes-server-mock.version>
