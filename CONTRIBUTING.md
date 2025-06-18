@@ -12,6 +12,8 @@ Any contribution counts, and the size does not matter!
 
 [Commit Messages](#commit-messages)
 
+[Supplementary Videos](#some-supplementary-videos)
+
 ## Commit Messages
 
 All commit messages should follow
@@ -30,3 +32,9 @@ Not sure what to put? Try to Include:
 - What other approaches did you consider?
 - What side effects will this approach have?
 - What future work remains to be done?
+
+## Some Supplementary Videos
+
+[![](https://i.ytimg.com/vi/17T3-9LeXGA/hqdefault.jpg)](https://www.youtube.com/watch?v=17T3-9LeXGA&t=67s&ab_channel=ContinuousDeliveryFoundation "Bridging the Gap with Tekton-client-plugin for Jenkins - Vibhav Bobade, Red Hat")
+
+[![](https://i.ytimg.com/vi/2RT9XwIWkVQ/hqdefault.jpg)](https://www.youtube.com/watch?v=2RT9XwIWkVQ&ab_channel=Jenkins "Using the Tekton Client Plugin for Jenkins")
