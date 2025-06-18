@@ -18,3 +18,5 @@ work/
 
 .vscode/
 jenkins.war
+
+release.properties
