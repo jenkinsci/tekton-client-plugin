@@ -1,6 +1,6 @@
 package org.waveywaves.jenkins.plugins.tekton.client;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -13,17 +13,17 @@ import static org.assertj.core.api.Assertions.*;
 
 /**
  */
-public class LogUtilsTest {
+class LogUtilsTest {
     String expected = "hello\nworld";
     boolean verbose = System.getenv("TEST_VERBOSE") == "true";
 
     @Test
-    public void testLogUtilsInfo() throws Exception {
+    void testLogUtilsInfo() throws Exception {
         assertLogOutput(false, Level.INFO);
     }
 
     @Test
-    public void testLogUtilsError() throws Exception {
+    void testLogUtilsError() throws Exception {
         assertLogOutput(true, Level.WARNING);
     }
 

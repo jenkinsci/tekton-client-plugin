@@ -24,9 +24,8 @@ import java.net.URL;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
-import org.junit.Before;
 import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 import org.jvnet.hudson.test.JenkinsRule;
@@ -49,8 +48,8 @@ public class JenkinsPipelineTest {
             RuleChain.outerRule(kubernetesRule)
                     .around(jenkinsRule);
 
-    @Before
-    public void before() {
+    @BeforeEach
+    void before() {
         KubernetesClient client = kubernetesRule.getClient();
         Config config = client.getConfiguration();
         TektonUtils.initializeKubeClients(config);
