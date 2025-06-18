@@ -20,3 +20,4 @@ work/
 jenkins.war
 
 release.properties
+pom.xml.releaseBackup
