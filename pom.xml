@@ -29,7 +29,7 @@
 
     <properties>
         <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
-        <jenkins.baseline>2.479</jenkins.baseline>
+        <jenkins.baseline>2.492</jenkins.baseline>
         <!-- Baseline Jenkins version you use to build the plugin. Users must have this version or newer to run. -->
         <jenkins.version>${jenkins.baseline}.3</jenkins.version>
         <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
@@ -52,6 +52,13 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
+
+    <developers>
+        <developer>
+            <id>waveywaves</id>
+            <name>Vibhav Bobade</name>
+        </developer>
+    </developers>
 
     <dependencies>
         <dependency>
@@ -169,7 +176,7 @@
             <dependency>
                 <groupId>org.jenkins-ci.plugins</groupId>
                 <artifactId>jackson2-api</artifactId>
-                <version>2.17.0-379.v02de8ec9f64c</version>
+                <version>2.17.0-389.va_5c7e45cd806</version>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.module</groupId>
