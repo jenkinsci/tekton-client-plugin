@@ -6,10 +6,11 @@ import hudson.model.Run;
 import io.fabric8.tekton.pipeline.v1beta1.Param;
 import io.fabric8.tekton.pipeline.v1beta1.PipelineRun;
 import io.fabric8.tekton.pipeline.v1beta1.PipelineRunBuilder;
+import org.junit.jupiter.api.AfterEach;
+
 import java.util.List;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
 import org.waveywaves.jenkins.plugins.tekton.client.build.FakeChecksPublisher;
 import org.waveywaves.jenkins.plugins.tekton.client.build.create.mock.CreateRawMock;
@@ -23,19 +24,19 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class CreateRawTest {
+class CreateRawTest {
 
     private Run<?,?> run;
     private String namespace;
     private FakeChecksPublisher checksPublisher;
 
-    @Before
-    public void before() {
+    @BeforeEach
+    void before() {
         checksPublisher = new FakeChecksPublisher();
     }
 
-    @After
-    public void after() {
+    @AfterEach
+    void after() {
         checksPublisher.validate();
     }
 
@@ -97,7 +98,7 @@ public class CreateRawTest {
 //    }
 
     @Test
-    public void testCreateRawWithTektonCatalog() throws Exception {
+    void testCreateRawWithTektonCatalog() throws Exception {
         String testTaskYaml = "apiVersion: tekton.dev/v1beta1\n" +
                 "kind: Task\n" +
                 "metadata:\n" +
@@ -123,7 +124,7 @@ public class CreateRawTest {
     }
 
     @Test
-    public void testEnhancePipelineWithParams() {
+    void testEnhancePipelineWithParams() {
         PipelineRun pr = new PipelineRunBuilder()
                 .withNewSpec()
                     .withParams()

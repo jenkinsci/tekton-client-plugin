@@ -25,7 +25,7 @@ import io.fabric8.tekton.pipeline.v1beta1.TaskRunBuilder;
 import io.fabric8.tekton.pipeline.v1beta1.TaskRunList;
 import io.fabric8.tekton.pipeline.v1beta1.TaskRunListBuilder;
 import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
 import org.waveywaves.jenkins.plugins.tekton.client.build.FakeChecksPublisher;
 import org.waveywaves.jenkins.plugins.tekton.client.build.create.CreateRaw;
@@ -48,7 +48,7 @@ public class DeleteRawMockServerTest {
     public KubernetesServer server = new KubernetesServer();
 
     @Test
-    public void testTaskDelete() {
+    void testTaskDelete() {
         // Given
         String testTaskYaml = "apiVersion: tekton.dev/v1beta1\n" +
                 "kind: Task\n" +
@@ -103,7 +103,7 @@ public class DeleteRawMockServerTest {
     }
 
     @Test
-    public void testTaskDeleteAll() {
+    void testTaskDeleteAll() {
         // Given
         String testTask1Yaml = "apiVersion: tekton.dev/v1beta1\n" +
                 "kind: Task\n" +
@@ -190,7 +190,7 @@ public class DeleteRawMockServerTest {
     }
 
     @Test
-    public void testTaskRunDelete() {
+    void testTaskRunDelete() {
         // Given
         String testTaskRunYaml = "apiVersion: tekton.dev/v1beta1\n" +
                 "kind: TaskRun\n" +
@@ -255,7 +255,7 @@ public class DeleteRawMockServerTest {
     }
 
     @Test
-    public void testTaskRunDeleteAll() {
+    void testTaskRunDeleteAll() {
         // Given
         String testTaskRun1Yaml = "apiVersion: tekton.dev/v1beta1\n" +
                 "kind: TaskRun\n" +
@@ -360,7 +360,7 @@ public class DeleteRawMockServerTest {
     }
 
     @Test
-    public void testPipelineDelete() {
+    void testPipelineDelete() {
         // Given
         String testPipelineYaml = "apiVersion: tekton.dev/v1beta1\n" +
                 "kind: Pipeline\n" +
@@ -416,7 +416,7 @@ public class DeleteRawMockServerTest {
     }
 
     @Test
-    public void testPipelineDeleteAll() {
+    void testPipelineDeleteAll() {
         // Given
         String testPipelineYaml1 = "apiVersion: tekton.dev/v1beta1\n" +
                 "kind: Pipeline\n" +
@@ -504,7 +504,7 @@ public class DeleteRawMockServerTest {
     }
 
     @Test
-    public void testPipelineRunDelete() {
+    void testPipelineRunDelete() {
         // Given
         String testPipelineRunYaml = "apiVersion: tekton.dev/v1beta1\n" +
                 "kind: PipelineRun\n" +
@@ -579,7 +579,7 @@ public class DeleteRawMockServerTest {
     }
 
     @Test
-    public void testPipelineRunDeleteAll() {
+    void testPipelineRunDeleteAll() {
         // Given
         String testPipelineRun1Yaml = "apiVersion: tekton.dev/v1beta1\n" +
                 "kind: PipelineRun\n" +
