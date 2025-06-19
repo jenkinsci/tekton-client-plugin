@@ -36,6 +36,7 @@ public class DeleteRaw extends BaseStep {
     private String resourceType;
     private String resourceName;
     private String clusterName;
+    private String nameSpace;
 
     @DataBoundConstructor
     public DeleteRaw(String resourceType, String clusterName, DeleteAllBlock deleteAllStatus) {
@@ -67,6 +68,9 @@ public class DeleteRaw extends BaseStep {
     public String getResourceName(){
         return this.resourceName;
     }
+    public String getNameSpace(){
+        return this.nameSpace;
+    }
 
     @DataBoundSetter
     public void setClusterName(String clusterName) {
@@ -84,11 +88,14 @@ public class DeleteRaw extends BaseStep {
         this.resourceName = resourceName;
     }
 
+    @DataBoundSetter
+    public void setNameSpace(String nameSpace) {
+        this.nameSpace = nameSpace;
+    }
+
     private TektonResourceType getTypedResourceType(){
         return TektonResourceType.valueOf(getResourceType());
     }
-
-
 
     @Override
     public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws InterruptedException, IOException {
@@ -119,15 +126,21 @@ public class DeleteRaw extends BaseStep {
             TektonClient tc = (TektonClient) tektonClient;
             setTaskClient(tc.v1beta1().tasks());
         }
-        List<Task> taskList = taskClient.list().getItems();
+        List<Task> taskList = Strings.isNullOrEmpty(nameSpace)
+            ? taskClient.list().getItems()
+                : taskClient.inNamespace(nameSpace).list().getItems();
         Boolean isDeleted = false;
         if (this.getResourceName() == null) {
-            return taskClient.delete(taskList);
+            return Strings.isNullOrEmpty(nameSpace)
+                    ? taskClient.delete(taskList)
+                    : taskClient.inNamespace(nameSpace).delete(taskList);
         }
         for (Task task : taskList) {
             String taskName = task.getMetadata().getName();
             if (taskName.equals(this.getResourceName())) {
-                isDeleted = taskClient.delete(task);
+                isDeleted = Strings.isNullOrEmpty(nameSpace)
+                        ? taskClient.delete(task)
+                        : taskClient.inNamespace(nameSpace).delete(task);
                 break;
             }
         }
@@ -139,15 +152,21 @@ public class DeleteRaw extends BaseStep {
             TektonClient tc = (TektonClient) tektonClient;
             setTaskRunClient(tc.v1beta1().taskRuns());
         }
-        List<TaskRun> taskRunList = taskRunClient.list().getItems();
+        List<TaskRun> taskRunList = Strings.isNullOrEmpty(nameSpace)
+                ? taskRunClient.list().getItems()
+                : taskRunClient.inNamespace(nameSpace).list().getItems();
         Boolean isDeleted = false;
         if (this.getResourceName() == null) {
-            return taskRunClient.delete(taskRunList);
+            return Strings.isNullOrEmpty(nameSpace)
+                    ? taskRunClient.delete(taskRunList)
+                    : taskRunClient.inNamespace(nameSpace).delete(taskRunList);
         }
         for (TaskRun taskRun : taskRunList) {
             String taskRunName = taskRun.getMetadata().getName();
             if (taskRunName.equals(this.getResourceName())) {
-                isDeleted = taskRunClient.delete(taskRun);
+                isDeleted = Strings.isNullOrEmpty(nameSpace)
+                        ? taskRunClient.delete(taskRun)
+                        : taskRunClient.inNamespace(nameSpace).delete(taskRun);
                 break;
             }
         }
@@ -159,15 +178,21 @@ public class DeleteRaw extends BaseStep {
             TektonClient tc = (TektonClient) tektonClient;
             setPipelineClient(tc.v1beta1().pipelines());
         }
-        List<Pipeline> pipelineList = pipelineClient.list().getItems();
+        List<Pipeline> pipelineList = Strings.isNullOrEmpty(nameSpace)
+                ? pipelineClient.list().getItems()
+                : pipelineClient.inNamespace(nameSpace).list().getItems();
         Boolean isDeleted = false;
         if (this.getResourceName() == null) {
-            return pipelineClient.delete(pipelineList);
+            return Strings.isNullOrEmpty(nameSpace)
+                    ? pipelineClient.delete(pipelineList)
+                    : pipelineClient.inNamespace(nameSpace).delete(pipelineList);
         }
         for (Pipeline pipeline : pipelineList) {
             String pipelineName = pipeline.getMetadata().getName();
             if (pipelineName.equals(this.getResourceName())) {
-                isDeleted = pipelineClient.delete(pipeline);
+                isDeleted = Strings.isNullOrEmpty(nameSpace)
+                        ? pipelineClient.delete(pipeline)
+                        : pipelineClient.inNamespace(nameSpace).delete(pipeline);
                 break;
             }
         }
@@ -179,15 +204,21 @@ public class DeleteRaw extends BaseStep {
             TektonClient tc = (TektonClient) tektonClient;
             setPipelineRunClient(tc.v1beta1().pipelineRuns());
         }
-        List<PipelineRun> pipelineRunList = pipelineRunClient.list().getItems();
+        List<PipelineRun> pipelineRunList = Strings.isNullOrEmpty(nameSpace)
+                ? pipelineRunClient.list().getItems()
+                : pipelineRunClient.inNamespace(nameSpace).list().getItems();
         Boolean isDeleted = false;
         if (this.getResourceName() == null) {
-            return pipelineRunClient.delete(pipelineRunList);
+            return Strings.isNullOrEmpty(nameSpace)
+                    ? pipelineRunClient.delete(pipelineRunList)
+                    : pipelineRunClient.inNamespace(nameSpace).delete(pipelineRunList);
         }
         for (PipelineRun pipelineRun : pipelineRunList) {
             String pipelineRunName = pipelineRun.getMetadata().getName();
             if (pipelineRunName.equals(this.getResourceName())) {
-                isDeleted = pipelineRunClient.delete(pipelineRun);
+                isDeleted = Strings.isNullOrEmpty(nameSpace)
+                        ? pipelineRunClient.delete(pipelineRun)
+                        : pipelineRunClient.inNamespace(nameSpace).delete(pipelineRun);
                 break;
             }
         }
@@ -199,6 +230,13 @@ public class DeleteRaw extends BaseStep {
         public FormValidation doCheckResourceName(@QueryParameter(value = "resourceName") final String resourceName){
             if (resourceName.length() == 0){
                 return FormValidation.error("Resource Name not provided");
+            }
+            return FormValidation.ok();
+        }
+
+        public FormValidation doCheckNameSpace(@QueryParameter(value = "nameSpace") final String nameSpace) {
+            if (nameSpace != null && nameSpace.trim().length() > 0 && !nameSpace.matches("[a-z0-9]([-a-z0-9]*[a-z0-9])?")) {
+                return FormValidation.error("NameSpace must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character");
             }
             return FormValidation.ok();
         }
