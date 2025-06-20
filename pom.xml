@@ -73,9 +73,8 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>org.jenkins-ci.plugins.workflow</groupId>
-            <artifactId>workflow-aggregator</artifactId>
-            <version>2.7</version>
+            <groupId>io.jenkins.plugins</groupId>
+            <artifactId>checks-api</artifactId>
         </dependency>
         <dependency>
             <groupId>io.fabric8</groupId>
@@ -135,24 +134,24 @@
             <dependency>
                 <groupId>io.jenkins.tools.bom</groupId>
                 <artifactId>bom-${jenkins.baseline}.x</artifactId>
-                <version>4228.v0a_71308d905b_</version>
+                <version>4924.v6b_eb_a_79a_d9d0</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
-                <version>3.12.0</version>
+                <version>3.17.0</version>
             </dependency>
             <dependency>
                 <groupId>org.jenkins-ci.plugins</groupId>
                 <artifactId>jackson2-api</artifactId>
-                <version>2.17.0-389.va_5c7e45cd806</version>
+                <version>2.18.3-402.v74c4eb_f122b_2</version>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.module</groupId>
                 <artifactId>jackson-module-jaxb-annotations</artifactId>
-                <version>2.12.1</version>
+                <version>2.18.3</version>
             </dependency>
             <dependency>
                 <groupId>com.squareup.okio</groupId>
@@ -178,16 +177,6 @@
                 <groupId>org.apache.ivy</groupId>
                 <artifactId>ivy</artifactId>
                 <version>2.5.3</version>
-            </dependency>
-            <dependency>
-                <groupId>org.jenkins-ci.plugins</groupId>
-                <artifactId>jackson2-api</artifactId>
-                <version>2.17.0-389.va_5c7e45cd806</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.module</groupId>
-                <artifactId>jackson-module-jaxb-annotations</artifactId>
-                <version>2.17.0</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -222,6 +211,15 @@
                 <preparationGoals>clean verify</preparationGoals>
             </configuration>
         </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>3.1.1</version>
+                <configuration>
+                    <preparationGoals>clean verify</preparationGoals>
+                </configuration>
+            </plugin>
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
