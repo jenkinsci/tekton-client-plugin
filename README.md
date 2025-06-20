@@ -7,26 +7,31 @@
 [![Jenkins Plugin Installs](https://img.shields.io/jenkins/plugin/i/tekton-client.svg?color=blue)](https://plugins.jenkins.io/tekton-client)
 [![Codecov](https://codecov.io/gh/jenkinsci/tekton-client-plugin/branch/master/graph/badge.svg)](https://codecov.io/gh/jenkinsci/tekton-client-plugin)
 
-
 Jenkins plugin to interact with [Tekton Pipelines](https://github.com/tektoncd/pipeline) on a Kubernetes Cluster. 
 
 ## Quick Demo
+
+For a quick demo of the plugin, please check out the following video:
+
 [![](https://img.youtube.com/vi/hAWOlJ0CetQ/0.jpg)](https://www.youtube.com/watch?v=hAWOlJ0CetQ "Tekton Client Plugin")  
 
 ## Community
 
-[![Join the chat at https://gitter.im/jenkinsci/tekton-client-plugin](https://badges.gitter.im/jenkinsci/tekton-client-plugin.svg)](https://gitter.im/jenkinsci/tekton-client-plugin?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+To chat with the community, ask questions, or get help, you can join us on Gitter:
 
+[![Join the chat at https://gitter.im/jenkinsci/tekton-client-plugin](https://badges.gitter.im/jenkinsci/tekton-client-plugin.svg)](https://gitter.im/jenkinsci/tekton-client-plugin?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ## Start using the plugin
 
 ### Supported Tekton Resource Types
+
 - Task 
 - TaskRun
 - Pipeline
 - PipelineRun
 
 ### Supported Actions on Resources
+
 - Create 
 - Delete
 
@@ -36,9 +41,9 @@ _Currently in the tekton-client-plugin we are able to create and delete Tekton R
 - Check out the [roadmap](roadmap.md) for a better idea of what's planned for the future.
 - [Installation Guide](docs/installation.md)
 
-## Want to contribute
+## Contributing
 
-Awesome ! Let's get started !
+If you want to contribute to the plugin, refer to the following documents:
 
-- Check out [DEVELOPMENT.md](DEVELOPMENT.md) for getting started with setup and jenkins plugin hackery.
+- Check out [DEVELOPMENT.md](DEVELOPMENT.md) for getting started with the setup required and plugin development details.
 - Check out [CONTRIBUTING.md](CONTRIBUTING.md) for an overview of the process.
