@@ -16,21 +16,21 @@ jobs:
           fetch-depth: 0
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v3.11.0
+        uses: actions/setup-java@v4.7.1
         with:
           java-version: 17
           distribution: 'temurin'
 
       - name: next release version
         id: nextversion
-        uses: jenkins-x-plugins/jx-release-version@v2.7.1
+        uses: jenkins-x-plugins/jx-release-version@v2.7.10
 
       - name: Set Version
         run: |
           mvn --no-transfer-progress versions:set -DnewVersion=${{ steps.nextversion.outputs.version }}
 
       - name: Wait for build to succeed
-        uses: fountainhead/action-wait-for-check@v1.1.0
+        uses: fountainhead/action-wait-for-check@v1.2.0
         id: wait-for-build
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
