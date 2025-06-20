@@ -38,8 +38,8 @@
         <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
         <pipeline-model-definition.version>2.2255.v56a_15e805f12</pipeline-model-definition.version>
         <jenkins-test-harness.version>2395.v8256a_2157798</jenkins-test-harness.version>
-        <kubernetes-server-mock.version>5.4.0</kubernetes-server-mock.version>
-        <tekton-client.version>5.4.0</tekton-client.version>
+        <kubernetes-server-mock.version>5.4.1</kubernetes-server-mock.version>
+        <tekton-client.version>5.4.1</tekton-client.version>
         <maven-surefire-plugin.version>	3.2.5</maven-surefire-plugin.version>
         <mockwebserver.version>0.1.8</mockwebserver.version>
         <junit-jupiter-engine.version>5.6.2</junit-jupiter-engine.version>
@@ -203,15 +203,6 @@
 
     <build>
         <plugins>
-            <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-release-plugin</artifactId>
-            <version>3.1.1</version>
-            <configuration>
-                <preparationGoals>clean verify</preparationGoals>
-            </configuration>
-        </plugin>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
