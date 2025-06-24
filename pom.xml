@@ -37,7 +37,7 @@
         <jenkins.version>${jenkins.baseline}.3</jenkins.version>
         <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
         <pipeline-model-definition.version>2.2255.v56a_15e805f12</pipeline-model-definition.version>
-        <jenkins-test-harness.version>2395.v8256a_2157798</jenkins-test-harness.version>
+        <jenkins-test-harness.version>2462.v7cd38b_7a_361b_</jenkins-test-harness.version>
         <kubernetes-server-mock.version>5.4.1</kubernetes-server-mock.version>
         <tekton-client.version>5.4.1</tekton-client.version>
         <maven-surefire-plugin.version>	3.2.5</maven-surefire-plugin.version>
@@ -54,13 +54,6 @@
         </license>
     </licenses>
 
-    <developers>
-        <developer>
-            <id>waveywaves</id>
-            <name>Vibhav Bobade</name>
-        </developer>
-    </developers>
-
     <dependencies>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -69,7 +62,6 @@
         <dependency>
             <groupId>org.kohsuke.stapler</groupId>
             <artifactId>stapler</artifactId>
-            <version>1928.v9115fe47607f</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -113,7 +105,6 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>envinject</artifactId>
-            <version>2.908.v66a_774b_31d93</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -134,7 +125,7 @@
             <dependency>
                 <groupId>io.jenkins.tools.bom</groupId>
                 <artifactId>bom-${jenkins.baseline}.x</artifactId>
-                <version>4924.v6b_eb_a_79a_d9d0</version>
+                <version>4948.vcf1d17350668</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
@@ -206,7 +197,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
-                <version>3.1.1</version>
                 <configuration>
                     <preparationGoals>clean verify</preparationGoals>
                 </configuration>
@@ -215,7 +205,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.14.0</version>
                 <configuration>
                     <source>17</source>
                     <target>17</target>
@@ -225,7 +214,6 @@
             <plugin>
                 <groupId>org.jenkins-ci.tools</groupId>
                 <artifactId>maven-hpi-plugin</artifactId>
-                <version>3.65</version>
                 <extensions>true</extensions>
             </plugin>
 
