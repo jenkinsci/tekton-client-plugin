@@ -19,5 +19,5 @@ work/
 .vscode/
 jenkins.war
 
-release.properties
 pom.xml.releaseBackup
+release.properties
