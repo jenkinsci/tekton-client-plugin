@@ -22,6 +22,8 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
+
+import org.waveywaves.jenkins.plugins.tekton.client.build.BaseStep;
 import org.waveywaves.jenkins.plugins.tekton.client.build.FakeChecksPublisher;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -77,7 +79,7 @@ public class CreateRawMockServerTest {
                 .andReturn(HttpURLConnection.HTTP_OK, taskList).once();
 
         // When
-        CreateRaw createRaw = new CreateRaw(CreateRaw.InputType.YAML.toString(), testTaskYaml);
+        CreateRaw createRaw = new CreateRaw(testTaskYaml, BaseStep.InputType.YAML.toString());
         createRaw.setNamespace(namespace);
         createRaw.setClusterName(TektonUtils.DEFAULT_CLIENT_KEY);
         createRaw.setEnableCatalog(enableCatalog);
@@ -122,7 +124,7 @@ public class CreateRawMockServerTest {
                 .andReturn(HttpURLConnection.HTTP_OK, taskRunList).once();
 
         // When
-        CreateRaw createRaw = new CreateRaw(testTaskRunYaml, CreateRaw.InputType.YAML.toString()) {
+        CreateRaw createRaw = new CreateRaw(testTaskRunYaml, BaseStep.InputType.YAML.toString()) {
             @Override
             public void streamTaskRunLogsToConsole(TaskRun taskRun) {
                 return;
@@ -178,7 +180,7 @@ public class CreateRawMockServerTest {
                 .andReturn(HttpURLConnection.HTTP_OK, pipelineList).once();
 
         // When
-        CreateRaw createRaw = new CreateRaw(testPipelineYaml, CreateRaw.InputType.YAML.toString());
+        CreateRaw createRaw = new CreateRaw(testPipelineYaml, BaseStep.InputType.YAML.toString());
         createRaw.setNamespace(namespace);
         createRaw.setClusterName(TektonUtils.DEFAULT_CLIENT_KEY);
         createRaw.setEnableCatalog(enableCatalog);
@@ -233,7 +235,7 @@ public class CreateRawMockServerTest {
                 .andReturn(HttpURLConnection.HTTP_OK, pipelineRunBuilder.build()).once();
 
         // When
-        CreateRaw createRaw = new CreateRaw(testPipelineRunYaml, CreateRaw.InputType.YAML.toString()) {
+        CreateRaw createRaw = new CreateRaw(testPipelineRunYaml, BaseStep.InputType.YAML.toString()) {
             @Override
             public void streamPipelineRunLogsToConsole(PipelineRun pipelineRun) {
                 return;
@@ -303,7 +305,7 @@ public class CreateRawMockServerTest {
                 .andReturn(HttpURLConnection.HTTP_OK, pipelineRunBuilder.build()).once();
 
         // When
-        CreateRaw createRaw = new CreateRaw(testPipelineRunYaml, CreateRaw.InputType.YAML.toString()) {
+        CreateRaw createRaw = new CreateRaw(testPipelineRunYaml, BaseStep.InputType.YAML.toString()) {
             @Override
             public void streamPipelineRunLogsToConsole(PipelineRun pipelineRun) {
                 return;

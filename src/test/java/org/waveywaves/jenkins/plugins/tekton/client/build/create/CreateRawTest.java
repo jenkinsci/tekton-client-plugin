@@ -39,62 +39,62 @@ public class CreateRawTest {
         checksPublisher.validate();
     }
 
-//    @Test
-//    public void runCreateTaskTest() {
-//        String testTaskYaml = "apiVersion: tekton.dev/v1beta1\n" +
-//                "kind: Task\n" +
-//                "metadata:\n" +
-//                "  name: testTask\n";
-//        CreateRaw createRaw = new CreateRawMock(testTaskYaml, CreateRaw.InputType.YAML.toString());
-//        createRaw.setNamespace(namespace);
-//        createRaw.setClusterName(TektonUtils.DEFAULT_CLIENT_KEY);
-//        createRaw.setEnableCatalog(false);
-//        String created = createRaw.runCreate(run, null, null);
-//        assertThat(created, is(TektonUtils.TektonResourceType.task.toString()));
-//    }
+   @Test
+   public void runCreateTaskTest() {
+       String testTaskYaml = "apiVersion: tekton.dev/v1beta1\n" +
+               "kind: Task\n" +
+               "metadata:\n" +
+               "  name: testTask\n";
+       CreateRaw createRaw = new CreateRawMock(testTaskYaml, CreateRaw.InputType.YAML.toString());
+       createRaw.setNamespace(namespace);
+       createRaw.setClusterName(TektonUtils.DEFAULT_CLIENT_KEY);
+       createRaw.setEnableCatalog(false);
+       String created = createRaw.runCreate(run, null, null);
+       assertThat(created, is(TektonUtils.TektonResourceType.task.toString()));
+   }
 
-//    @Test
-//    public void runCreateTaskRunTest() {
-//        String testTaskRunYaml = "apiVersion: tekton.dev/v1beta1\n" +
-//                "kind: TaskRun\n" +
-//                "metadata:\n" +
-//                "  generateName: home-is-set-\n";
-//        CreateRaw createRaw = new CreateRawMock(testTaskRunYaml, CreateRaw.InputType.YAML.toString());
-//        createRaw.setNamespace(namespace);
-//        createRaw.setClusterName(TektonUtils.DEFAULT_CLIENT_KEY);
-//        createRaw.setEnableCatalog(false);
-//        String created = createRaw.runCreate(run, null, null);
-//        assertThat(created, is(TektonUtils.TektonResourceType.taskrun.toString()));
-//    }
+   @Test
+   public void runCreateTaskRunTest() {
+       String testTaskRunYaml = "apiVersion: tekton.dev/v1beta1\n" +
+               "kind: TaskRun\n" +
+               "metadata:\n" +
+               "  generateName: home-is-set-\n";
+       CreateRaw createRaw = new CreateRawMock(testTaskRunYaml, CreateRaw.InputType.YAML.toString());
+       createRaw.setNamespace(namespace);
+       createRaw.setClusterName(TektonUtils.DEFAULT_CLIENT_KEY);
+       createRaw.setEnableCatalog(false);
+       String created = createRaw.runCreate(run, null, null);
+       assertThat(created, is(TektonUtils.TektonResourceType.taskrun.toString()));
+   }
 
-//    @Test
-//    public void runCreatePipelineTest() {
-//        String testPipelineYaml = "apiVersion: tekton.dev/v1beta1\n" +
-//                "kind: Pipeline\n" +
-//                "metadata:\n" +
-//                "  name: testPipeline\n";
-//        CreateRaw createRaw = new CreateRawMock(testPipelineYaml, CreateRaw.InputType.YAML.toString());
-//        createRaw.setNamespace(namespace);
-//        createRaw.setClusterName(TektonUtils.DEFAULT_CLIENT_KEY);
-//        createRaw.setEnableCatalog(false);
-//        String created = createRaw.runCreate(run, null, null);
-//        assertThat(created, is(TektonUtils.TektonResourceType.pipeline.toString()));
-//    }
+   @Test
+   public void runCreatePipelineTest() {
+       String testPipelineYaml = "apiVersion: tekton.dev/v1beta1\n" +
+               "kind: Pipeline\n" +
+               "metadata:\n" +
+               "  name: testPipeline\n";
+       CreateRaw createRaw = new CreateRawMock(testPipelineYaml, CreateRaw.InputType.YAML.toString());
+       createRaw.setNamespace(namespace);
+       createRaw.setClusterName(TektonUtils.DEFAULT_CLIENT_KEY);
+       createRaw.setEnableCatalog(false);
+       String created = createRaw.runCreate(run, null, null);
+       assertThat(created, is(TektonUtils.TektonResourceType.pipeline.toString()));
+   }
 
-//    @Test
-//    public void runCreatePipelineRunTest() {
-//        String testPipelineRunYaml = "apiVersion: tekton.dev/v1beta1\n" +
-//                "kind: PipelineRun\n" +
-//                "metadata:\n" +
-//                "  name: testPipelineRun\n";
-//        CreateRaw createRaw = new CreateRawMock(testPipelineRunYaml, CreateRaw.InputType.YAML.toString());
-//        createRaw.setNamespace(namespace);
-//        createRaw.setClusterName(TektonUtils.DEFAULT_CLIENT_KEY);
-//        createRaw.setEnableCatalog(false);
-//        createRaw.setChecksPublisher(checksPublisher);
-//        String created = createRaw.runCreate(run, null, null);
-//        assertThat(created, is(TektonUtils.TektonResourceType.pipelinerun.toString()));
-//    }
+   @Test
+   public void runCreatePipelineRunTest() {
+       String testPipelineRunYaml = "apiVersion: tekton.dev/v1beta1\n" +
+               "kind: PipelineRun\n" +
+               "metadata:\n" +
+               "  name: testPipelineRun\n";
+       CreateRaw createRaw = new CreateRawMock(testPipelineRunYaml, CreateRaw.InputType.YAML.toString());
+       createRaw.setNamespace(namespace);
+       createRaw.setClusterName(TektonUtils.DEFAULT_CLIENT_KEY);
+       createRaw.setEnableCatalog(false);
+       createRaw.setChecksPublisher(checksPublisher);
+       String created = createRaw.runCreate(run, null, null);
+       assertThat(created, is(TektonUtils.TektonResourceType.pipelinerun.toString()));
+   }
 
     @Test
     public void testCreateRawWithTektonCatalog() throws Exception {
@@ -112,14 +112,14 @@ public class CreateRawTest {
 
         String cheese = "edam";
         EnvVars envVars = new EnvVars("CHEESE", cheese);
-//        createRaw.runCreate(run, workspace, envVars);
-//
-//        String created = createRaw.getLastResource();
-//
-//        String expectedYaml = testTaskYaml +
-//                "labels:\n" +
-//                "  cheese: " + cheese + "\n";
-//        assertThat(created, is(expectedYaml));
+       createRaw.runCreate(run, workspace, envVars);
+
+       String created = createRaw.getLastResource();
+
+       String expectedYaml = testTaskYaml +
+               "labels:\n" +
+               "  cheese: " + cheese + "\n";
+       assertThat(created, is(expectedYaml));
     }
 
     @Test

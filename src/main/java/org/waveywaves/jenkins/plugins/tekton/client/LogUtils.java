@@ -1,7 +1,6 @@
 package org.waveywaves.jenkins.plugins.tekton.client;
 
-import com.google.common.io.LineReader;
-
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -15,16 +14,14 @@ import java.util.logging.Logger;
 public class LogUtils {
 
     public static void logStream(InputStream in, Logger logger, boolean error) throws IOException {
-        LineReader reader = new LineReader(new InputStreamReader(in, StandardCharsets.UTF_8));
-        while (true) {
-            String line = reader.readLine();
-            if (line == null) {
-                break;
-            }
-            if (error) {
-                logger.log(Level.WARNING, line);
-            } else {
-                logger.info(line);
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (error) {
+                    logger.log(Level.WARNING, line);
+                } else {
+                    logger.info(line);
+                }
             }
         }
     }

@@ -8,7 +8,7 @@ import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import jakarta.annotation.Nonnull;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
@@ -44,7 +44,7 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Optional;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.displayurlapi.DisplayURLProvider;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -72,7 +72,6 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-@Symbol("tektonCreateRaw")
 public class CreateRaw extends BaseStep {
     private static final Logger LOGGER = Logger.getLogger(CreateRaw.class.getName());
 
@@ -322,7 +321,7 @@ public class CreateRaw extends BaseStep {
         return part;
     }
 
-    private void setParamOnPipelineRunSpec(@NonNull PipelineRunSpec spec, String paramName, String paramValue) {
+    private void setParamOnPipelineRunSpec(@Nonnull PipelineRunSpec spec, String paramName, String paramValue) {
         if (paramValue == null) {
             paramValue = "";
         }
@@ -366,7 +365,7 @@ public class CreateRaw extends BaseStep {
     }
 
     @Override
-    public void perform(@NonNull Run<?, ?> run, @NonNull FilePath workspace, @NonNull EnvVars envVars, @NonNull Launcher launcher, @NonNull TaskListener listener) throws InterruptedException, IOException {
+    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull EnvVars envVars, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws InterruptedException, IOException {
         consoleLogger = listener.getLogger();
 
         String clusterName = getClusterName();
@@ -401,12 +400,12 @@ public class CreateRaw extends BaseStep {
         String createdResourceName = "";
         TektonResourceType resourceType = null;
         try {
-            if (inputType.equals(InputType.URL.toString())) {
+            if (inputType.equals(BaseStep.InputType.URL.toString())) {
                 url = new URL(inputData);
                 data = Resources.toByteArray(url);
-            } else if (inputType.equals(InputType.YAML.toString())) {
+            } else if (inputType.equals(BaseStep.InputType.YAML.toString())) {
                 data = inputData.getBytes(StandardCharsets.UTF_8);
-            } else if (inputType.equals(InputType.FILE.toString())) {
+            } else if (inputType.equals(BaseStep.InputType.FILE.toString())) {
                 FilePath inputFile = workspace.child(inputData);
                 LOGGER.info("Reading from " + inputFile + ", exists:" + inputFile.exists());
                 data = ByteStreams.toByteArray(inputFile.read());
@@ -633,9 +632,9 @@ public class CreateRaw extends BaseStep {
 
         public ListBoxModel doFillInputTypeItems(@QueryParameter(value = "inputType") final String inputType){
             ListBoxModel items =  new ListBoxModel();
-            items.add(InputType.FILE.toString());
-            items.add(InputType.URL.toString());
-            items.add(InputType.YAML.toString());
+            items.add(BaseStep.InputType.FILE.toString());
+            items.add(BaseStep.InputType.URL.toString());
+            items.add(BaseStep.InputType.YAML.toString());
             return items;
         }
 

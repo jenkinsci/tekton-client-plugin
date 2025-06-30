@@ -1,7 +1,5 @@
 package org.waveywaves.jenkins.plugins.tekton.client;
 
-import org.apache.commons.lang.SystemUtils;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,12 +29,13 @@ public class ToolUtils {
             }
             f.deleteOnExit();
 
+            String osName = System.getProperty("os.name").toLowerCase();
             String platform = "linux";
-            if (SystemUtils.IS_OS_MAC || SystemUtils.IS_OS_MAC_OSX) {
+            if (osName.contains("mac")) {
                 platform = "mac";
-            } else if (SystemUtils.IS_OS_WINDOWS) {
+            } else if (osName.contains("windows")) {
                 platform = "windows";
-            }
+}
 
             String resource = "org/waveywaves/jenkins/plugins/tekton/client/jxp/" + platform + "/jx-pipeline-effective";
             InputStream in = classLoader.getResourceAsStream(resource);
