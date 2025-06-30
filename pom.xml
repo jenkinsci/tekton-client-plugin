@@ -29,7 +29,7 @@
     </scm>
 
     <properties>
-        <revision>1.1.2</revision>
+        <revision>1.1.1</revision>
         <changelist>-SNAPSHOT</changelist>
         <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
         <jenkins.baseline>2.492</jenkins.baseline>
@@ -37,9 +37,9 @@
         <jenkins.version>${jenkins.baseline}.3</jenkins.version>
         <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
         <pipeline-model-definition.version>2.2255.v56a_15e805f12</pipeline-model-definition.version>
-        <jenkins-test-harness.version>2395.v8256a_2157798</jenkins-test-harness.version>
-        <kubernetes-server-mock.version>5.4.0</kubernetes-server-mock.version>
-        <tekton-client.version>5.4.0</tekton-client.version>
+        <jenkins-test-harness.version>2462.v7cd38b_7a_361b_</jenkins-test-harness.version>
+        <kubernetes-server-mock.version>5.4.1</kubernetes-server-mock.version>
+        <tekton-client.version>5.4.1</tekton-client.version>
         <maven-surefire-plugin.version>	3.2.5</maven-surefire-plugin.version>
         <mockwebserver.version>0.1.8</mockwebserver.version>
         <junit-jupiter-engine.version>5.6.2</junit-jupiter-engine.version>
@@ -53,13 +53,6 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
-
-    <developers>
-        <developer>
-            <id>waveywaves</id>
-            <name>Vibhav Bobade</name>
-        </developer>
-    </developers>
 
     <dependencies>
         <dependency>
@@ -98,6 +91,11 @@
             <groupId>com.google.code.findbugs</groupId>
             <artifactId>jsr305</artifactId>
             <version>3.0.2</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jenkins.plugins</groupId>
+            <artifactId>checks-api</artifactId>
         </dependency>
         <dependency>
             <groupId>io.fabric8</groupId>
@@ -136,7 +134,6 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>envinject</artifactId>
-            <version>2.908.v66a_774b_31d93</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -157,7 +154,7 @@
             <dependency>
                 <groupId>io.jenkins.tools.bom</groupId>
                 <artifactId>bom-${jenkins.baseline}.x</artifactId>
-                <version>4228.v0a_71308d905b_</version>
+                <version>4948.vcf1d17350668</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
@@ -169,12 +166,12 @@
             <dependency>
                 <groupId>org.jenkins-ci.plugins</groupId>
                 <artifactId>jackson2-api</artifactId>
-                <version>2.17.0-389.va_5c7e45cd806</version>
+                <version>2.19.0-404.vb_b_0fd2fea_e10</version>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.module</groupId>
                 <artifactId>jackson-module-jaxb-annotations</artifactId>
-                <version>2.12.1</version>
+                <version>2.19.0</version>
             </dependency>
             <dependency>
                 <groupId>com.squareup.okio</groupId>
@@ -200,16 +197,6 @@
                 <groupId>org.apache.ivy</groupId>
                 <artifactId>ivy</artifactId>
                 <version>2.5.3</version>
-            </dependency>
-            <dependency>
-                <groupId>org.jenkins-ci.plugins</groupId>
-                <artifactId>jackson2-api</artifactId>
-                <version>2.17.0-389.va_5c7e45cd806</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.module</groupId>
-                <artifactId>jackson-module-jaxb-annotations</artifactId>
-                <version>2.17.0</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -237,18 +224,16 @@
     <build>
         <plugins>
             <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-release-plugin</artifactId>
-            <version>3.1.1</version>
-            <configuration>
-                <preparationGoals>clean verify</preparationGoals>
-            </configuration>
-        </plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <configuration>
+                    <preparationGoals>clean verify</preparationGoals>
+                </configuration>
+            </plugin>
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.14.0</version>
                 <configuration>
                     <source>21</source>
                     <target>21</target>
@@ -258,7 +243,6 @@
             <plugin>
                 <groupId>org.jenkins-ci.tools</groupId>
                 <artifactId>maven-hpi-plugin</artifactId>
-                <version>3.65</version>
                 <extensions>true</extensions>
             </plugin>
 
