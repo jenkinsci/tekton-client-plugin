@@ -26,9 +26,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import org.apache.commons.io.IOUtils;
-import org.junit.Before;
 import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 import org.jvnet.hudson.test.ExtractResourceSCM;
@@ -51,8 +50,7 @@ public class JenkinsFreestyleTest {
             RuleChain.outerRule(kubernetesRule)
                     .around(jenkinsRule);
 
-    @Before
-    public void before() {
+    @BeforeEach void before() {
         KubernetesClient client = kubernetesRule.getClient();
         Config config = client.getConfiguration();
         TektonUtils.initializeKubeClients(config);
