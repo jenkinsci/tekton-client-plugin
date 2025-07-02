@@ -128,6 +128,18 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>org.jenkins-ci.plugins.workflow</groupId>
+            <artifactId>workflow-basic-steps</artifactId>
+            <version>1079.vce64b_a_929c5a_</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins.workflow</groupId>
+            <artifactId>workflow-durable-task-step</artifactId>
+            <version>1434.v1b_595c29ddd7</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
@@ -165,9 +177,22 @@
             <artifactId>tekton-model-v1beta1</artifactId>
             <version>5.12.0</version> 
         </dependency>
-
-
-
+        <dependency>
+        <groupId>org.jvnet.hudson.main</groupId>
+        <artifactId>hudson-test-utils</artifactId>
+        <version>2.2.1</version>
+        <scope>test</scope>
+        <exclusions>
+            <exclusion>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-module-junit4</artifactId>
+            </exclusion>
+            <exclusion>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-api-support</artifactId>
+            </exclusion>
+        </exclusions>
+        </dependency>
     </dependencies>
 
     <dependencyManagement>
