@@ -21,9 +21,8 @@ import io.fabric8.tekton.pipeline.v1beta1.TaskRunList;
 import io.fabric8.tekton.pipeline.v1beta1.TaskRunListBuilder;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import org.junit.Before;
 import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 import org.jvnet.hudson.test.JenkinsRule;
@@ -46,8 +45,7 @@ public class JenkinsPipelineTest {
             RuleChain.outerRule(kubernetesRule)
                     .around(jenkinsRule);
 
-    @Before
-    public void before() {
+    @BeforeEach void before() {
         KubernetesClient client = kubernetesRule.getClient();
         Config config = client.getConfiguration();
         TektonUtils.initializeKubeClients(config);
