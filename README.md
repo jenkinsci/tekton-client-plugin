@@ -66,6 +66,8 @@ Delete Tekton resources
 [![](https://img.youtube.com/vi/hAWOlJ0CetQ/0.jpg)](https://www.youtube.com/watch?v=hAWOlJ0CetQ "Tekton Client Plugin")  
 
 ## Support & Community
+To chat with the community, ask questions, or get help, you can join us on Gitter. Alternatively, you can refer to our documentation via the links below to find out more:
+
 - **Chat**: [![Gitter](https://badges.gitter.im/jenkinsci/tekton-client-plugin.svg)](https://gitter.im/jenkinsci/tekton-client-plugin)
 - **Documentation**: [Tutorial](docs/tutorial.md) | [Installation Guide](docs/installation.md)
 - **Issues**: [GitHub Issues](https://github.com/jenkinsci/tekton-client-plugin/issues)
