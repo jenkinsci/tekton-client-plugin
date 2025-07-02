@@ -39,7 +39,7 @@
         <pipeline-model-definition.version>2.2255.v56a_15e805f12</pipeline-model-definition.version>
         <jenkins-test-harness.version>2462.v7cd38b_7a_361b_</jenkins-test-harness.version>
         <kubernetes-server-mock.version>5.4.1</kubernetes-server-mock.version>
-        <tekton-client.version>5.4.1</tekton-client.version>
+        <tekton-client.version>7.3.1</tekton-client.version>
         <maven-surefire-plugin.version>	3.2.5</maven-surefire-plugin.version>
         <mockwebserver.version>0.1.8</mockwebserver.version>
         <junit-jupiter-engine.version>5.6.2</junit-jupiter-engine.version>
