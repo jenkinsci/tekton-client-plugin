@@ -12,10 +12,11 @@ import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
 
 import io.fabric8.tekton.pipeline.v1beta1.*;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
 
 import java.io.ByteArrayInputStream;
@@ -38,18 +39,15 @@ public class CreateRawMockServerTest {
     @Rule
     public KubernetesServer server = new KubernetesServer();
 
-    @Before
-    public void before() {
+    @BeforeEach void before() {
         checksPublisher = new FakeChecksPublisher();
     }
 
-    @After
-    public void after() {
+    @AfterEach void after() {
         checksPublisher.validate();
     }
 
-    @Test
-    public void testTaskCreate() {
+    @Test void testTaskCreate() {
         // Given
         String testTaskYaml = "apiVersion: tekton.dev/v1beta1\n" +
                 "kind: Task\n" +
@@ -93,8 +91,7 @@ public class CreateRawMockServerTest {
         assertThat(testTaskList.getItems().size(), is(1));
     }
 
-    @Test
-    public void testTaskRunCreate() {
+    @Test void testTaskRunCreate() {
         // Given
         String testTaskRunYaml = "apiVersion: tekton.dev/v1beta1\n" +
                 "kind: TaskRun\n" +
@@ -149,8 +146,7 @@ public class CreateRawMockServerTest {
         assertThat(testTaskRunList.getItems().size(), is(1));
     }
 
-    @Test
-    public void testPipelineCreate() {
+    @Test void testPipelineCreate() {
         // Given
         String testPipelineYaml = "apiVersion: tekton.dev/v1beta1\n" +
                 "kind: Pipeline\n" +
@@ -193,8 +189,7 @@ public class CreateRawMockServerTest {
         assertThat(testPipelineList.getItems().size(), is(1));
     }
 
-    @Test
-    public void testPipelineRunCreate() {
+    @Test void testPipelineRunCreate() {
         // Given
         String testPipelineRunYaml = "apiVersion: tekton.dev/v1beta1\n" +
                 "kind: PipelineRun\n" +
@@ -263,8 +258,7 @@ public class CreateRawMockServerTest {
         assertThat(testPipelineRunList.getItems().size(), is(1));
     }
 
-    @Test
-    public void testPipelineRunCreateWithFailingPod() {
+    @Test void testPipelineRunCreateWithFailingPod() {
         // Given
         String testPipelineRunYaml = "apiVersion: tekton.dev/v1beta1\n" +
                                      "kind: PipelineRun\n" +
