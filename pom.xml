@@ -40,8 +40,7 @@
         <jenkins-test-harness.version>2462.v7cd38b_7a_361b_</jenkins-test-harness.version>
         <kubernetes-server-mock.version>5.4.1</kubernetes-server-mock.version>
         <tekton-client.version>5.4.1</tekton-client.version>
-        <maven-surefire-plugin.version>	3.2.5</maven-surefire-plugin.version>
-        <mockwebserver.version>0.1.8</mockwebserver.version>
+        <maven-surefire-plugin.version>3.2.5</maven-surefire-plugin.version>
         <junit-jupiter-engine.version>5.6.2</junit-jupiter-engine.version>
         <jx-pipeline.version>0.1.5</jx-pipeline.version>
     </properties>
@@ -118,6 +117,57 @@
             <artifactId>pipeline-utility-steps</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins.workflow</groupId>
+            <artifactId>workflow-job</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins.workflow</groupId>
+            <artifactId>workflow-cps</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>junit-vintage-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest</artifactId>
+            <version>2.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.fabric8</groupId>
+            <artifactId>kubernetes-junit-jupiter</artifactId>
+            <version>7.3.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>mockwebserver</artifactId>
+            <version>3.14.9</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.fabric8</groupId>
+            <artifactId>tekton-model-v1beta1</artifactId>
+            <version>5.12.0</version> 
+        </dependency>
+
+
+
     </dependencies>
 
     <dependencyManagement>
@@ -229,6 +279,20 @@
                     <check />
                 </configuration>
             </plugin>
+
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>3.2.5</version>
+            <configuration>
+                <useSystemClassLoader>false</useSystemClassLoader>
+                <includes>
+                    <include>**/*Test.java</include>
+                    <include>**/*Tests.java</include>
+                </includes>
+            </configuration>
+        </plugin>
+
         </plugins>
     </build>
 
