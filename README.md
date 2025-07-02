@@ -72,5 +72,7 @@ Delete Tekton resources
 - **Roadmap**: [Future Plans](roadmap.md)
 
 ## Contributing
+If you want to contribute to the plugin, please refer to the following documents:
+
 - [DEVELOPMENT.md](DEVELOPMENT.md) - Setup and development guidelines
 - [CONTRIBUTING.md](CONTRIBUTING.md) - Contribution process overview
