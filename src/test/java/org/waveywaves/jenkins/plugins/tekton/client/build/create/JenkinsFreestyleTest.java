@@ -14,35 +14,36 @@ import hudson.model.FreeStyleProject;
 import hudson.model.Result;
 import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
 import io.fabric8.knative.internal.pkg.apis.Condition;
-import io.fabric8.tekton.client.TektonClient;
 import io.fabric8.tekton.pipeline.v1beta1.*;
-import io.fabric8.kubernetes.api.model.ContainerStateTerminatedBuilder;
-import io.fabric8.kubernetes.api.model.Pod;
-import io.fabric8.kubernetes.api.model.PodBuilder;
-import io.fabric8.kubernetes.api.model.PodList;
-import io.fabric8.kubernetes.api.model.PodListBuilder;
-import io.fabric8.kubernetes.api.model.ContainerBuilder;
-import io.fabric8.kubernetes.api.model.ContainerStateBuilder;
-import io.fabric8.kubernetes.api.model.ContainerStatusBuilder;
-import io.fabric8.kubernetes.api.model.OwnerReference;
+import io.fabric8.kubernetes.api.model.*;
 import io.fabric8.kubernetes.client.Config;
+import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.tekton.client.TektonClient;
 
 import org.jvnet.hudson.test.ExtractResourceSCM;
 import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+
+// Mockito imports
+import org.mockito.MockedStatic;
+import org.mockito.junit.jupiter.MockitoExtension;
+import static org.mockito.Mockito.*;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
+
 import org.apache.commons.io.IOUtils;
 import com.google.common.io.Resources;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.CoreMatchers.*;
 
+@ExtendWith(MockitoExtension.class)
 @WithJenkins
 public class JenkinsFreestyleTest {
 
@@ -51,12 +52,26 @@ public class JenkinsFreestyleTest {
     @BeforeEach
     void before() {
         kubernetesServer = new KubernetesServer(false, true);
-        kubernetesServer.before();
+        kubernetesServer.before(); 
 
         Config config = kubernetesServer.getClient().getConfiguration();
         config.setNamespace("test");
-        TektonUtils.initializeKubeClients(config);
-
+        
+        // Shutdown existing clients
+        TektonUtils.shutdownKubeClients();
+        
+        // Get the static maps và inject mock clients
+        Map<String, KubernetesClient> k8sMap = TektonUtils.getKubernetesClientMap();
+        Map<String, TektonClient> tektonMap = TektonUtils.getTektonClientMap();
+        
+        // Clear existing clients
+        k8sMap.clear();
+        tektonMap.clear();
+        
+        // Inject mock clients
+        k8sMap.put("default", kubernetesServer.getClient());
+        tektonMap.put("default", kubernetesServer.getClient().adapt(TektonClient.class));
+        
         System.setProperty("KUBERNETES_NAMESPACE", "test");
     }
 

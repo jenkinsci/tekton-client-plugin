@@ -89,11 +89,26 @@ public class CreateRaw extends BaseStep {
 
     @DataBoundConstructor
     public CreateRaw(String input, String inputType) {
+        this(input, inputType, true);
+    }
+    
+    protected CreateRaw(String input, String inputType, boolean autoInitClients) {
         super();
         this.inputType = inputType;
         this.input = input;
-        setKubernetesClient(TektonUtils.getKubernetesClient(getClusterName()));
-        setTektonClient(TektonUtils.getTektonClient(getClusterName()));
+        
+        if (autoInitClients) {
+            setKubernetesClient(TektonUtils.getKubernetesClient(getClusterName()));
+            setTektonClient(TektonUtils.getTektonClient(getClusterName()));
+        }
+    }
+
+    public void setKubernetesClient(KubernetesClient client) {
+            super.setKubernetesClient(client);
+        }
+
+    public void setTektonClient(TektonClient client) {
+        super.setTektonClient(client);
     }
 
     @DataBoundSetter
