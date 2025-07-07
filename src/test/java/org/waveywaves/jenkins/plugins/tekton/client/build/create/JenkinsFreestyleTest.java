@@ -52,8 +52,12 @@ public class JenkinsFreestyleTest {
     void before() {
         kubernetesServer = new KubernetesServer(false, true);
         kubernetesServer.before(); 
+
         Config config = kubernetesServer.getClient().getConfiguration();
+        config.setNamespace("test"); 
         TektonUtils.initializeKubeClients(config);
+        
+        System.setProperty("KUBERNETES_NAMESPACE", "test");
     }
 
     @AfterEach
