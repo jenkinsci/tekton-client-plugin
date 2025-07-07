@@ -124,8 +124,6 @@ public class JenkinsFreestyleTest {
 
     @AfterEach
     void after() {
-        System.out.println("=== Test Cleanup ===");
-
         try {
             TektonUtils.shutdownKubeClients();
             System.out.println("TektonUtils clients shutdown");
@@ -162,9 +160,6 @@ public class JenkinsFreestyleTest {
 
     @Test
     void testFreestyleJobWithFileInput(JenkinsRule jenkins) throws Exception {
-        System.out.println("=== Starting testFreestyleJobWithFileInput ===");
-
-        // CRITICAL: Re-inject mock clients sau khi Jenkins đã init
         ensureMockClientsInjected();
 
         KubernetesClient mockClient = TektonUtils.getKubernetesClient("default");
@@ -200,7 +195,6 @@ public class JenkinsFreestyleTest {
 
         project.getBuildersList().add(createRaw);
 
-        System.out.println("Starting Jenkins build...");
         FreeStyleBuild build = jenkins.assertBuildStatus(Result.SUCCESS, project.scheduleBuild2(0).get());
 
         assertThat("Mock server should receive exactly 1 request",
@@ -211,46 +205,67 @@ public class JenkinsFreestyleTest {
                 log, containsString("Legacy code started this job"));
         assertThat("Build log should not contain Forbidden errors",
                 log, not(containsString("Forbidden")));
-
-        System.out.println("=== testFreestyleJobWithFileInput completed successfully ===");
     }
 
-    // @Test
-    // public void testFreestyleJobWithYamlInput(JenkinsRule jenkins) throws
-    // Exception {
-    // TaskBuilder taskBuilder = new TaskBuilder()
-    // .withNewMetadata()
-    // .withName("testTask")
-    // .endMetadata();
+// @Test
+// public void testFreestyleJobWithYamlInput(JenkinsRule jenkins) throws Exception {
+//     ensureMockClientsInjected();
+    
+//     KubernetesClient mockClient = TektonUtils.getKubernetesClient("default");
+//     TektonClient mockTektonClient = TektonUtils.getTektonClient("default");
+    
+//     TaskBuilder taskBuilder = new TaskBuilder()
+//             .withNewMetadata()
+//             .withName("testTask")
+//             .withNamespace("test")  
+//             .endMetadata()
+//             .withNewSpec()
+//             .endSpec();
 
-    // kubernetesServer.expect()
-    // .post()
-    // .withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
-    // .andReturn(200, taskBuilder.build())
-    // .once();
+//     kubernetesServer.expect()
+//             .post()
+//             .withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
+//             .andReturn(200, taskBuilder.build())
+//             .once();
 
-    // URL zipFile = getClass()
-    // .getResource("/org/waveywaves/jenkins/plugins/tekton/client/build/create/tekton-test-project.zip");
-    // assertThat(zipFile, is(notNullValue()));
+//     URL zipFile = getClass()
+//             .getResource("/org/waveywaves/jenkins/plugins/tekton/client/build/create/tekton-test-project.zip");
+//     assertThat("Test zip file must exist", zipFile, is(notNullValue()));
 
-    // FreeStyleProject p = jenkins.createFreeStyleProject("p");
-    // p.setScm(new ExtractResourceSCM(zipFile));
+//     FreeStyleProject project = jenkins.createFreeStyleProject("p");
+//     project.setScm(new ExtractResourceSCM(zipFile));
 
-    // p.getBuildersList().add(new CreateRaw("apiVersion: tekton.dev/v1beta1\n"
-    // + "kind: Task\n"
-    // + "metadata:\n"
-    // + " name: testTask\n", "YAML"));
+//     String yamlContent = "apiVersion: tekton.dev/v1beta1\n"
+//             + "kind: Task\n"
+//             + "metadata:\n"
+//             + "  name: testTask\n"
+//             + "  namespace: test\n"
+//             + "spec:\n"
+//             + "  steps:\n"
+//             + "  - name: hello\n"
+//             + "    image: alpine\n"
+//             + "    command: [\"echo\"]\n"
+//             + "    args: [\"Hello World\"]\n";
 
-    // FreeStyleBuild b = jenkins.assertBuildStatus(Result.SUCCESS,
-    // p.scheduleBuild2(0).get());
+//     CreateRaw createRaw = new CreateRaw(yamlContent, "YAML");
+//     createRaw.setNamespace("test");
+    
+//     createRaw.setKubernetesClient(mockClient);
+//     createRaw.setTektonClient(mockTektonClient);
 
-    // assertThat(kubernetesServer.getMockServer().getRequestCount(), is(1));
+//     project.getBuildersList().add(createRaw);
 
-    // String log = JenkinsRule.getLog(b);
-    // System.out.println(log);
+//     System.out.println("Starting Jenkins build with YAML input...");
+//     FreeStyleBuild build = jenkins.assertBuildStatus(Result.SUCCESS, project.scheduleBuild2(0).get());
 
-    // assertThat(log, containsString("Legacy code started this job"));
-    // }
+//     assertThat("Mock server should receive exactly 1 request",
+//             kubernetesServer.getMockServer().getRequestCount(), is(1));
+
+//     String log = JenkinsRule.getLog(build);
+
+//     assertThat("Build log should indicate successful execution", log, containsString("Legacy code started this job"));
+//     assertThat("Build log should not contain Forbidden errors", log, not(containsString("Forbidden")));
+// }
     //////////////////////////// testFreestyleJobWithComplexYamlInput
     //////////////////////////// //////////////////////////////////
     // @Test

@@ -71,7 +71,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import hudson.model.Descriptor;
 
 @Symbol("tektonCreateRaw")
 public class CreateRaw extends BaseStep {
@@ -147,6 +146,10 @@ public class CreateRaw extends BaseStep {
 
     public void setChecksPublisher(ChecksPublisher checksPublisher) {
         this.checksPublisher = checksPublisher;
+    }
+
+    public void setConsoleLogger(PrintStream consoleLogger) {
+        this.consoleLogger = consoleLogger;
     }
 
     // the getters must be public to work with the Configure page...
@@ -499,12 +502,16 @@ public class CreateRaw extends BaseStep {
     }
 
     protected void logMessage(String text) {
-        synchronized (this.consoleLogger) {
-            try {
-                this.consoleLogger.write((text + "\n").getBytes(StandardCharsets.UTF_8));
-            } catch (IOException e) {
-                LOGGER.warning("failed to log to console: " + e);
+        if (this.consoleLogger != null) {
+            synchronized (this.consoleLogger) {
+                try {
+                    this.consoleLogger.write((text + "\n").getBytes(StandardCharsets.UTF_8));
+                } catch (IOException e) {
+                    LOGGER.warning("failed to log to console: " + e);
+                }
             }
+        } else {
+            LOGGER.info("Console logger not available: " + text);
         }
     }
 

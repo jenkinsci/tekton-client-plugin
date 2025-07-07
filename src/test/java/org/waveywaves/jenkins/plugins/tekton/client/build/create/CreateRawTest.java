@@ -17,12 +17,15 @@ import org.waveywaves.jenkins.plugins.tekton.client.build.FakeChecksPublisher;
 import org.waveywaves.jenkins.plugins.tekton.client.build.create.mock.CreateRawMock;
 import org.waveywaves.jenkins.plugins.tekton.client.build.create.mock.FakeCreateRaw;
 
+import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.mock;
+
 
 class CreateRawTest {
 
@@ -51,6 +54,7 @@ class CreateRawTest {
         createRaw.setNamespace("test");
         createRaw.setClusterName(TektonUtils.DEFAULT_CLIENT_KEY);
         createRaw.setEnableCatalog(false);
+        createRaw.setConsoleLogger(mock(PrintStream.class));
 
         String created = createRaw.runCreate(run, null, null);
 
@@ -68,6 +72,7 @@ class CreateRawTest {
         createRaw.setNamespace("test");
         createRaw.setClusterName(TektonUtils.DEFAULT_CLIENT_KEY);
         createRaw.setEnableCatalog(false);
+        createRaw.setConsoleLogger(mock(PrintStream.class));
 
         String created = createRaw.runCreate(run, null, null);
 
@@ -85,6 +90,7 @@ class CreateRawTest {
         createRaw.setNamespace(namespace);
         createRaw.setClusterName(TektonUtils.DEFAULT_CLIENT_KEY);
         createRaw.setEnableCatalog(false);
+        createRaw.setConsoleLogger(mock(PrintStream.class));
 
         String created = createRaw.runCreate(run, null, null);
         assertThat(created, is(TektonUtils.TektonResourceType.pipeline.toString()));
@@ -102,6 +108,7 @@ class CreateRawTest {
         createRaw.setClusterName(TektonUtils.DEFAULT_CLIENT_KEY);
         createRaw.setEnableCatalog(false);
         createRaw.setChecksPublisher(checksPublisher);
+        createRaw.setConsoleLogger(mock(PrintStream.class));
 
         String created = createRaw.runCreate(run, null, null);
 
@@ -120,6 +127,7 @@ class CreateRawTest {
         createRaw.setClusterName(TektonUtils.DEFAULT_CLIENT_KEY);
         createRaw.setEnableCatalog(true);
         createRaw.setChecksPublisher(checksPublisher);
+        createRaw.setConsoleLogger(mock(PrintStream.class));
 
         Path tmpDir = Files.createTempDirectory("");
         FilePath workspace = new FilePath(tmpDir.toFile());
@@ -156,7 +164,9 @@ class CreateRawTest {
         envVars.put("GIT_COMMIT", "e9f3c472fea4661b2142c5e88928c5a35e03f51f");
         envVars.put("GIT_BRANCH", "main");
 
-        new CreateRaw("", "YAML").enhancePipelineRunWithEnvVars(pr, envVars);
+        CreateRaw createRaw = new CreateRaw("", "YAML");
+        createRaw.setConsoleLogger(mock(PrintStream.class));
+        createRaw.enhancePipelineRunWithEnvVars(pr, envVars);
 
         List<Param> params = pr.getSpec().getParams();
         assertThat(params.stream().filter(p -> p.getName().equals("REPO_URL")).findFirst().get(), is(notNullValue()));
