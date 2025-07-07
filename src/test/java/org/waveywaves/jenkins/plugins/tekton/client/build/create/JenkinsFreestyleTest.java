@@ -14,25 +14,30 @@ import hudson.model.FreeStyleProject;
 import hudson.model.Result;
 import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
 import io.fabric8.knative.internal.pkg.apis.Condition;
+import io.fabric8.tekton.client.TektonClient;
 import io.fabric8.tekton.pipeline.v1beta1.*;
-import io.fabric8.kubernetes.api.model.*;
+import io.fabric8.kubernetes.api.model.ContainerStateTerminatedBuilder;
+import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.PodBuilder;
+import io.fabric8.kubernetes.api.model.PodList;
+import io.fabric8.kubernetes.api.model.PodListBuilder;
+import io.fabric8.kubernetes.api.model.ContainerBuilder;
+import io.fabric8.kubernetes.api.model.ContainerStateBuilder;
+import io.fabric8.kubernetes.api.model.ContainerStatusBuilder;
+import io.fabric8.kubernetes.api.model.OwnerReference;
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.tekton.client.TektonClient;
 
 import org.jvnet.hudson.test.ExtractResourceSCM;
 import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-// Mockito imports
-import org.mockito.MockedStatic;
-import org.mockito.junit.jupiter.MockitoExtension;
-import static org.mockito.Mockito.*;
-
 import java.net.HttpURLConnection;
 import java.net.URL;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
@@ -41,6 +46,12 @@ import org.apache.commons.io.IOUtils;
 import com.google.common.io.Resources;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mockStatic;
+import org.mockito.MockedStatic;
+import org.mockito.junit.jupiter.MockitoExtension;
+import static org.mockito.Mockito.*;
 import static org.hamcrest.CoreMatchers.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -49,81 +60,159 @@ public class JenkinsFreestyleTest {
 
     private KubernetesServer kubernetesServer;
 
-    @BeforeEach
-    void before() {
-        kubernetesServer = new KubernetesServer(false, true);
-        kubernetesServer.before(); 
+@BeforeEach
+void before() {
+    kubernetesServer = new KubernetesServer(false, true);
+    kubernetesServer.before(); 
 
-        Config config = kubernetesServer.getClient().getConfiguration();
-        config.setNamespace("test");
-        
-        // Shutdown existing clients
+    Config config = kubernetesServer.getClient().getConfiguration();
+    config.setNamespace("test"); 
+    
+    System.out.println("=== Test Environment Setup ===");
+    System.out.println("Mock server URL: " + config.getMasterUrl());
+    System.out.println("Mock namespace: " + config.getNamespace());
+    
+    TektonUtils.shutdownKubeClients();
+    
+    Map<String, KubernetesClient> k8sMap = TektonUtils.getKubernetesClientMap();
+    Map<String, TektonClient> tektonMap = TektonUtils.getTektonClientMap();
+    
+    k8sMap.clear();
+    tektonMap.clear();
+    
+    KubernetesClient mockK8sClient = kubernetesServer.getClient();
+    TektonClient mockTektonClient = mockK8sClient.adapt(TektonClient.class);
+    
+    k8sMap.put("default", mockK8sClient);
+    tektonMap.put("default", mockTektonClient);
+    
+    assertThat("Mock K8s client should be injected", 
+        TektonUtils.getKubernetesClient("default"), 
+        is(notNullValue()));
+    assertThat("Mock Tekton client should be injected", 
+        TektonUtils.getTektonClient("default"), 
+        is(notNullValue()));
+    
+    System.setProperty("KUBERNETES_NAMESPACE", "test");
+    
+    System.out.println("Injected K8s client: " + TektonUtils.getKubernetesClient("default").getClass().getSimpleName());
+    System.out.println("Injected Tekton client: " + TektonUtils.getTektonClient("default").getClass().getSimpleName());
+    System.out.println("Client map size: " + k8sMap.size());
+    System.out.println("=== Setup Complete ===");
+    
+    String mockUrl = mockK8sClient.getConfiguration().getMasterUrl();
+    assertThat("Should use mock server URL", mockUrl, containsString("localhost"));
+}
+
+@AfterEach
+void after() {
+    System.out.println("=== Test Cleanup ===");
+    
+    try {
         TektonUtils.shutdownKubeClients();
-        
-        // Get the static maps và inject mock clients
+        System.out.println("TektonUtils clients shutdown");
+    
         Map<String, KubernetesClient> k8sMap = TektonUtils.getKubernetesClientMap();
         Map<String, TektonClient> tektonMap = TektonUtils.getTektonClientMap();
         
-        // Clear existing clients
-        k8sMap.clear();
-        tektonMap.clear();
+        if (k8sMap != null) {
+            k8sMap.clear();
+            System.out.println("K8s client map cleared");
+        }
         
-        // Inject mock clients
-        k8sMap.put("default", kubernetesServer.getClient());
-        tektonMap.put("default", kubernetesServer.getClient().adapt(TektonClient.class));
+        if (tektonMap != null) {
+            tektonMap.clear();
+            System.out.println("Tekton client map cleared");
+        }
         
-        System.setProperty("KUBERNETES_NAMESPACE", "test");
+        System.clearProperty("KUBERNETES_NAMESPACE");
+        System.out.println("System properties cleared");
+        
+        if (kubernetesServer != null) {
+            kubernetesServer.after();
+            System.out.println("Mock Kubernetes server stopped");
+        }
+        
+    } catch (Exception e) {
+        System.err.println("Error during cleanup: " + e.getMessage());
+        e.printStackTrace();
+    } finally {
+        kubernetesServer = null;
+        System.out.println("=== Cleanup Complete ===");
     }
+}
 
-    @AfterEach
-    void after() {
-        kubernetesServer.after();
-    }
-
-    @Test
-    void testFreestyleJobWithFileInput(JenkinsRule jenkins) throws Exception {
-        // Setup mock response
-        TaskBuilder taskBuilder = new TaskBuilder()
-                .withNewMetadata()
-                .withName("testTask")
-                .withNamespace("test")
-                .endMetadata();
-
-        kubernetesServer.expect()
-                .post()
-                .withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
-                .andReturn(200, taskBuilder.build())
-                .once();
-
-        // Load test resource
-        URL zipFile = getClass()
-                .getResource("/org/waveywaves/jenkins/plugins/tekton/client/build/create/tekton-test-project.zip");
-        assertThat("Test zip file must exist", zipFile, is(notNullValue()));
-
-        // Create freestyle project
-        FreeStyleProject project = jenkins.createFreeStyleProject("p");
-        project.setScm(new ExtractResourceSCM(zipFile));
-
-        CreateRaw createRaw = new CreateRaw(".tekton/task.yaml", "FILE");
-        createRaw.setNamespace("test");
-
-        createRaw.setKubernetesClient(kubernetesServer.getClient());
-
-        // Create TektonClient mock
-        TektonClient tektonClient = kubernetesServer.getClient().adapt(TektonClient.class);
-        createRaw.setTektonClient(tektonClient);
-
-        project.getBuildersList().add(createRaw);
-
-        // Act: Build job
-        FreeStyleBuild build = jenkins.assertBuildStatus(Result.SUCCESS, project.scheduleBuild2(0).get());
-
-        // Assert
-        assertThat(kubernetesServer.getMockServer().getRequestCount(), is(1));
-
-        String log = JenkinsRule.getLog(build);
-        assertThat(log, not(containsString("Forbidden")));
-    }
+@Test
+void testFreestyleJobWithFileInput(JenkinsRule jenkins) throws Exception {
+    System.out.println("=== Starting testFreestyleJobWithFileInput ===");
+  
+    KubernetesClient mockClient = TektonUtils.getKubernetesClient("default");
+    TektonClient mockTektonClient = TektonUtils.getTektonClient("default");
+    
+    assertThat("Mock K8s client must be available", mockClient, is(notNullValue()));
+    assertThat("Mock Tekton client must be available", mockTektonClient, is(notNullValue()));
+    assertThat("Must use mock server", 
+        mockClient.getConfiguration().getMasterUrl(), 
+        containsString("localhost"));
+    
+    System.out.println("Mock clients verified successfully");
+    
+    TaskBuilder taskBuilder = new TaskBuilder()
+            .withNewMetadata()
+            .withName("testTask")
+            .withNamespace("test")
+            .endMetadata()
+            .withNewSpec()
+            .endSpec();
+    
+    Task expectedTask = taskBuilder.build();
+    
+    kubernetesServer.expect()
+            .post()
+            .withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
+            .andReturn(200, expectedTask)
+            .once();
+    
+    System.out.println("Mock server expectation configured for: /apis/tekton.dev/v1beta1/namespaces/test/tasks");
+    
+    URL zipFile = getClass()
+            .getResource("/org/waveywaves/jenkins/plugins/tekton/client/build/create/tekton-test-project.zip");
+    assertThat("Test zip file must exist", zipFile, is(notNullValue()));
+    
+    FreeStyleProject project = jenkins.createFreeStyleProject("test-project");
+    project.setScm(new ExtractResourceSCM(zipFile));
+    
+    CreateRaw createRaw = new CreateRaw(".tekton/task.yaml", "FILE");
+    createRaw.setNamespace("test");
+    
+    createRaw.setKubernetesClient(mockClient);
+    createRaw.setTektonClient(mockTektonClient);
+    
+    assertThat("CreateRaw should use test namespace", 
+        createRaw.getNamespace(), is("test"));
+    
+    System.out.println("CreateRaw configured with mock clients and test namespace");
+    
+    project.getBuildersList().add(createRaw);
+    
+    System.out.println("Starting Jenkins build...");
+    FreeStyleBuild build = jenkins.assertBuildStatus(Result.SUCCESS, project.scheduleBuild2(0).get());
+    
+    assertThat("Mock server should receive exactly 1 request", 
+        kubernetesServer.getMockServer().getRequestCount(), is(1));
+    
+    String buildLog = JenkinsRule.getLog(build);
+    System.out.println("Build log excerpt: " + buildLog.substring(0, Math.min(buildLog.length(), 500)));
+    
+    assertThat("Build log should not contain Forbidden errors", 
+        buildLog, not(containsString("Forbidden")));
+    assertThat("Build log should not contain jenkins-agents namespace", 
+        buildLog, not(containsString("jenkins-agents")));
+    assertThat("Build log should indicate successful execution", 
+        buildLog, containsString("Legacy code started this job"));
+    
+    System.out.println("=== testFreestyleJobWithFileInput completed successfully ===");
+}
 
     @Test
     public void testFreestyleJobWithYamlInput(JenkinsRule jenkins) throws Exception {

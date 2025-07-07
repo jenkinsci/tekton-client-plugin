@@ -71,7 +71,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
+import hudson.model.Descriptor;
 
 @Symbol("tektonCreateRaw")
 public class CreateRaw extends BaseStep {
@@ -91,12 +91,12 @@ public class CreateRaw extends BaseStep {
     public CreateRaw(String input, String inputType) {
         this(input, inputType, true);
     }
-    
+
     protected CreateRaw(String input, String inputType, boolean autoInitClients) {
         super();
         this.inputType = inputType;
         this.input = input;
-        
+
         if (autoInitClients) {
             setKubernetesClient(TektonUtils.getKubernetesClient(getClusterName()));
             setTektonClient(TektonUtils.getTektonClient(getClusterName()));
@@ -104,8 +104,8 @@ public class CreateRaw extends BaseStep {
     }
 
     public void setKubernetesClient(KubernetesClient client) {
-            super.setKubernetesClient(client);
-        }
+        super.setKubernetesClient(client);
+    }
 
     public void setTektonClient(TektonClient client) {
         super.setTektonClient(client);
@@ -136,7 +136,8 @@ public class CreateRaw extends BaseStep {
     }
 
     /**
-     * Only exposed for testing so that we can use a test class loader to load test tools
+     * Only exposed for testing so that we can use a test class loader to load test
+     * tools
      *
      * @param toolClassLoader
      */
@@ -172,7 +173,8 @@ public class CreateRaw extends BaseStep {
         return clusterName;
     }
 
-    protected String createWithResourceSpecificClient(TektonResourceType resourceType, InputStream inputStream, EnvVars envVars) throws Exception {
+    protected String createWithResourceSpecificClient(TektonResourceType resourceType, InputStream inputStream,
+            EnvVars envVars) throws Exception {
         switch (resourceType) {
             case task:
                 return createTask(inputStream);
@@ -268,9 +270,8 @@ public class CreateRaw extends BaseStep {
 
         LOGGER.info("Creating PipelineRun\n" + marshall(pipelineRun));
 
-        PipelineRun updatedPipelineRun = Strings.isNullOrEmpty(ns) ?
-                pipelineRunClient.create(pipelineRun) :
-                pipelineRunClient.inNamespace(ns).create(pipelineRun);
+        PipelineRun updatedPipelineRun = Strings.isNullOrEmpty(ns) ? pipelineRunClient.create(pipelineRun)
+                : pipelineRunClient.inNamespace(ns).create(pipelineRun);
 
         resourceName = updatedPipelineRun.getMetadata().getName();
 
@@ -382,7 +383,8 @@ public class CreateRaw extends BaseStep {
     }
 
     @Override
-    public void perform(@NonNull Run<?, ?> run, @NonNull FilePath workspace, @NonNull EnvVars envVars, @NonNull Launcher launcher, @NonNull TaskListener listener) throws InterruptedException, IOException {
+    public void perform(@NonNull Run<?, ?> run, @NonNull FilePath workspace, @NonNull EnvVars envVars,
+            @NonNull Launcher launcher, @NonNull TaskListener listener) throws InterruptedException, IOException {
         consoleLogger = listener.getLogger();
 
         String clusterName = getClusterName();
@@ -434,15 +436,17 @@ public class CreateRaw extends BaseStep {
 
             data = convertTektonData(workspace, envVars, null, data);
             if (data != null) {
-                List<TektonResourceType> kind = TektonUtils.getKindFromInputStream(new ByteArrayInputStream(data), this.getInputType());
-                if (kind.size() > 1){
+                List<TektonResourceType> kind = TektonUtils.getKindFromInputStream(new ByteArrayInputStream(data),
+                        this.getInputType());
+                if (kind.size() > 1) {
                     LOGGER.warning("Multiple Objects in YAML not supported yet");
                     logMessage("Multiple Objects in YAML not supported yet");
                     run.setResult(Result.FAILURE);
                 } else {
                     resourceType = kind.get(0);
                     LOGGER.info("creating kind " + resourceType.name());
-                    createdResourceName = createWithResourceSpecificClient(resourceType, new ByteArrayInputStream(data), envVars);
+                    createdResourceName = createWithResourceSpecificClient(resourceType, new ByteArrayInputStream(data),
+                            envVars);
                 }
             }
 
@@ -505,9 +509,11 @@ public class CreateRaw extends BaseStep {
     }
 
     /**
-     * Performs any conversion on the Tekton resources before we apply it to Kubernetes
+     * Performs any conversion on the Tekton resources before we apply it to
+     * Kubernetes
      */
-    private byte[] convertTektonData(FilePath workspace, EnvVars envVars, File inputFile, byte[] data) throws Exception {
+    private byte[] convertTektonData(FilePath workspace, EnvVars envVars, File inputFile, byte[] data)
+            throws Exception {
         if (enableCatalog) {
             // lets use the workspace relative path
             if (workspace == null) {
@@ -577,32 +583,35 @@ public class CreateRaw extends BaseStep {
         return data;
     }
 
-
     /**
-     * Lets process any <code>image: uses:sourceURI</code> blocks in the tekton <code>Pipeline</code>,
-     * <code>PipelineRun</code>, <code>Task</code> or <code>TaskRun</code> resources so that we can reuse Tasks or Steps
+     * Lets process any <code>image: uses:sourceURI</code> blocks in the tekton
+     * <code>Pipeline</code>,
+     * <code>PipelineRun</code>, <code>Task</code> or <code>TaskRun</code> resources
+     * so that we can reuse Tasks or Steps
      * from Tekton Catalog or any other git repository.
      *
      * For background see: https://jenkins-x.io/blog/2021/02/25/gitops-pipelines/
      *
      * @param envVars
-     * @param file optional file name to process
-     * @param data data to process if no file name is given
+     * @param file    optional file name to process
+     * @param data    data to process if no file name is given
      * @return the processed data
      * @throws Exception
      */
     private byte[] processTektonCatalog(EnvVars envVars, File dir, File file, byte[] data) throws Exception {
         boolean deleteInputFile = false;
         if (file == null) {
-            // the following fails when not running in the controller so lets not use a temp file for now
-            //file = File.createTempFile("tekton-input-", ".yaml", dir);
+            // the following fails when not running in the controller so lets not use a temp
+            // file for now
+            // file = File.createTempFile("tekton-input-", ".yaml", dir);
             file = new File(dir, "tekton-input-pipeline.yaml");
             Files.write(data, file);
             LOGGER.info("Saved file: " + file.getPath());
         }
 
-        // the following fails when not running in the controller so lets not use a temp file for now
-        //File outputFile = File.createTempFile("tekton-effective-", ".yaml", dir);
+        // the following fails when not running in the controller so lets not use a temp
+        // file for now
+        // File outputFile = File.createTempFile("tekton-effective-", ".yaml", dir);
         File outputFile = new File(dir, "tekton-effective-pipeline.yaml");
 
         String filePath = file.getPath();
@@ -640,24 +649,24 @@ public class CreateRaw extends BaseStep {
     @Symbol("tektonCreateRaw")
     @Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
-        public FormValidation doCheckInput(@QueryParameter(value = "input") final String input){
-            if (input.length() == 0){
+        public FormValidation doCheckInput(@QueryParameter(value = "input") final String input) {
+            if (input.length() == 0) {
                 return FormValidation.error("Input not provided");
             }
             return FormValidation.ok();
         }
 
-        public ListBoxModel doFillInputTypeItems(@QueryParameter(value = "inputType") final String inputType){
-            ListBoxModel items =  new ListBoxModel();
+        public ListBoxModel doFillInputTypeItems(@QueryParameter(value = "inputType") final String inputType) {
+            ListBoxModel items = new ListBoxModel();
             items.add(InputType.FILE.toString());
             items.add(InputType.URL.toString());
             items.add(InputType.YAML.toString());
             return items;
         }
 
-        public ListBoxModel doFillClusterNameItems(@QueryParameter(value = "clusterName") final String clusterName){
-            ListBoxModel items =  new ListBoxModel();
-            for (String cn: TektonUtils.getTektonClientMap().keySet()){
+        public ListBoxModel doFillClusterNameItems(@QueryParameter(value = "clusterName") final String clusterName) {
+            ListBoxModel items = new ListBoxModel();
+            for (String cn : TektonUtils.getTektonClientMap().keySet()) {
                 items.add(cn);
             }
             return items;
@@ -673,8 +682,6 @@ public class CreateRaw extends BaseStep {
             return "Tekton : Create Resource (Raw)";
         }
     }
-
-
 
     private String marshall(PipelineRun pipelineRun) {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory().disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER));
