@@ -70,7 +70,7 @@ public class JenkinsFreestyleTest {
 
         kubernetesServer.expect()
                 .post()
-                .withPath("/apis/tekton.dev/v1beta1/namespaces/jenkins-agents/tasks")
+                .withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
                 .andReturn(200, taskBuilder.build())
                 .once();
 
@@ -102,7 +102,7 @@ public class JenkinsFreestyleTest {
 
 kubernetesServer.expect()
                 .post()
-                .withPath("/apis/tekton.dev/v1beta1/namespaces/jenkins-agents/tasks")
+                .withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
                 .andReturn(200, taskBuilder.build())
                 .once();
 
