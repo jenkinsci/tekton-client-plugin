@@ -207,65 +207,49 @@ public class JenkinsFreestyleTest {
                 log, not(containsString("Forbidden")));
     }
 
-// @Test
-// public void testFreestyleJobWithYamlInput(JenkinsRule jenkins) throws Exception {
-//     ensureMockClientsInjected();
-    
-//     KubernetesClient mockClient = TektonUtils.getKubernetesClient("default");
-//     TektonClient mockTektonClient = TektonUtils.getTektonClient("default");
-    
-//     TaskBuilder taskBuilder = new TaskBuilder()
-//             .withNewMetadata()
-//             .withName("testTask")
-//             .withNamespace("test")  
-//             .endMetadata()
-//             .withNewSpec()
-//             .endSpec();
+    @Test
+    public void testFreestyleJobWithYamlInput(JenkinsRule jenkins) throws Exception {
+        ensureMockClientsInjected();
 
-//     kubernetesServer.expect()
-//             .post()
-//             .withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
-//             .andReturn(200, taskBuilder.build())
-//             .once();
+        TaskBuilder taskBuilder = new TaskBuilder()
+                .withNewMetadata()
+                .withName("testTask")
+                .endMetadata();
 
-//     URL zipFile = getClass()
-//             .getResource("/org/waveywaves/jenkins/plugins/tekton/client/build/create/tekton-test-project.zip");
-//     assertThat("Test zip file must exist", zipFile, is(notNullValue()));
+        kubernetesServer.expect()
+                .post()
+                .withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
+                .andReturn(200, taskBuilder.build())
+                .once();
 
-//     FreeStyleProject project = jenkins.createFreeStyleProject("p");
-//     project.setScm(new ExtractResourceSCM(zipFile));
+        FreeStyleProject p = jenkins.createFreeStyleProject("p");
+        URL zipFile = getClass()
+                .getResource("/org/waveywaves/jenkins/plugins/tekton/client/build/create/tekton-test-project.zip");
+        assertThat(zipFile, is(notNullValue()));
 
-//     String yamlContent = "apiVersion: tekton.dev/v1beta1\n"
-//             + "kind: Task\n"
-//             + "metadata:\n"
-//             + "  name: testTask\n"
-//             + "  namespace: test\n"
-//             + "spec:\n"
-//             + "  steps:\n"
-//             + "  - name: hello\n"
-//             + "    image: alpine\n"
-//             + "    command: [\"echo\"]\n"
-//             + "    args: [\"Hello World\"]\n";
+        p.setScm(new ExtractResourceSCM(zipFile));
 
-//     CreateRaw createRaw = new CreateRaw(yamlContent, "YAML");
-//     createRaw.setNamespace("test");
-    
-//     createRaw.setKubernetesClient(mockClient);
-//     createRaw.setTektonClient(mockTektonClient);
+        CreateRaw createRaw = new CreateRaw("apiVersion: tekton.dev/v1beta1\n"
+                + "kind: Task\n"
+                + "metadata:\n"
+                + "  name: testTask\n", "YAML");
 
-//     project.getBuildersList().add(createRaw);
+        KubernetesClient mockClient = TektonUtils.getKubernetesClient("default");
+        TektonClient mockTektonClient = TektonUtils.getTektonClient("default");
 
-//     System.out.println("Starting Jenkins build with YAML input...");
-//     FreeStyleBuild build = jenkins.assertBuildStatus(Result.SUCCESS, project.scheduleBuild2(0).get());
+        createRaw.setKubernetesClient(mockClient);
+        createRaw.setTektonClient(mockTektonClient);
 
-//     assertThat("Mock server should receive exactly 1 request",
-//             kubernetesServer.getMockServer().getRequestCount(), is(1));
+        p.getBuildersList().add(createRaw);
 
-//     String log = JenkinsRule.getLog(build);
+        FreeStyleBuild b = jenkins.assertBuildStatus(Result.SUCCESS, p.scheduleBuild2(0).get());
 
-//     assertThat("Build log should indicate successful execution", log, containsString("Legacy code started this job"));
-//     assertThat("Build log should not contain Forbidden errors", log, not(containsString("Forbidden")));
-// }
+        assertThat(kubernetesServer.getMockServer().getRequestCount(), is(1));
+
+        String log = JenkinsRule.getLog(b);
+
+        assertThat(log, containsString("Legacy code started this job"));
+    }
     //////////////////////////// testFreestyleJobWithComplexYamlInput
     //////////////////////////// //////////////////////////////////
     // @Test
