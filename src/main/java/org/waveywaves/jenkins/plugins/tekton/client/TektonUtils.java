@@ -78,15 +78,32 @@ public class TektonUtils {
         if (!tektonClientMap.isEmpty() && !kubernetesClientMap.isEmpty()) {
             for (TektonClient c : tektonClientMap.values()) {
                 if (c != null) {
-                    c.close();
+                    try {
+                        c.close();
+                    } catch (Exception e) {
+                        logger.warning("Error closing TektonClient: " + e.getMessage());
+                    }
                 }
             }
             for (KubernetesClient c : kubernetesClientMap.values()) {
                 if (c != null) {
-                    c.close();
+                    try {
+                        c.close();
+                    } catch (Exception e) {
+                        logger.warning("Error closing KubernetesClient: " + e.getMessage());
+                    }
                 }
             }
         }
+        tektonClientMap.clear();
+        kubernetesClientMap.clear();
+        logger.info("Client maps cleared after shutdown");
+    }
+
+    public synchronized static void clearClientMaps() {
+        tektonClientMap.clear();
+        kubernetesClientMap.clear();
+        logger.info("Client maps force cleared");
     }
 
     public static List<TektonResourceType> getKindFromInputStream(InputStream inputStream, String inputType) {
