@@ -39,6 +39,14 @@ public class TektonUtils {
         kubernetesClientMap = new HashMap<>();
 
         logger.info("Initializing Kube and Tekton Clients");
+        
+        // For Kind clusters and test environments, ensure SSL certificate trust is enabled
+        if (isKindCluster(config.getMasterUrl()) || isTestEnvironment()) {
+            config.setTrustCerts(true);
+            config.setDisableHostnameVerification(true);
+            logger.info("Enabling SSL certificate trust for default cluster");
+        }
+        
         TektonClient tektonClient = new DefaultTektonClient(config);
         KubernetesClient kubernetesClient = new DefaultKubernetesClient(config);
 
@@ -57,9 +65,16 @@ public class TektonUtils {
                 ConfigBuilder configBuilder = new ConfigBuilder()
                         .withMasterUrl(cc.getMasterUrl())
                         .withNamespace(cc.getDefaultNamespace());
+                
+                // For Kind clusters and test environments, trust self-signed certificates
+                if (isKindCluster(cc.getMasterUrl()) || isTestEnvironment()) {
+                    configBuilder.withTrustCerts(true).withDisableHostnameVerification(true);
+                    logger.info("Enabling SSL certificate trust for cluster: " + cc.getName());
+                }
 
-                TektonClient tektonClient = new DefaultTektonClient(configBuilder.build());
-                KubernetesClient kubernetesClient = new DefaultKubernetesClient(configBuilder.build());
+                Config config = configBuilder.build();
+                TektonClient tektonClient = new DefaultTektonClient(config);
+                KubernetesClient kubernetesClient = new DefaultKubernetesClient(config);
 
                 tektonClientMap.put(cc.getName(), tektonClient);
                 kubernetesClientMap.put(cc.getName(), kubernetesClient);
@@ -159,6 +174,26 @@ public class TektonUtils {
 
     public synchronized static KubernetesClient getKubernetesClient(String name) {
         return kubernetesClientMap.get(name);
+    }
+    
+    /**
+     * Determines if the cluster URL is a Kind cluster (localhost or 127.0.0.1)
+     */
+    private static boolean isKindCluster(String masterUrl) {
+        if (masterUrl == null) {
+            return false;
+        }
+        return masterUrl.contains("localhost") || masterUrl.contains("127.0.0.1");
+    }
+    
+    /**
+     * Determines if we're running in a test environment
+     */
+    private static boolean isTestEnvironment() {
+        // Check for test environment indicators
+        return System.getProperty("java.class.path").contains("junit") || 
+               System.getProperty("java.class.path").contains("surefire") ||
+               "true".equals(System.getProperty("jenkins.test.mode"));
     }
 }
 
