@@ -5,6 +5,7 @@ import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
 import io.fabric8.tekton.pipeline.v1beta1.TaskBuilder;
+import io.fabric8.tekton.client.TektonClient;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
 import org.jenkinsci.plugins.workflow.job.WorkflowJob;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
@@ -12,112 +13,130 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.TestExtension;
 import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
 import io.fabric8.kubernetes.api.model.OwnerReference;
 
-import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-
 @WithJenkins
 public class JenkinsPipelineTest {
 
-    // private KubernetesServer kubernetesRule;
+    private KubernetesServer kubernetesServer;
 
-    // @BeforeEach
-    // void setUp() {
-    //     kubernetesRule = new KubernetesServer(false, true);
-    //     kubernetesRule.before(); // start the mock server manually
-    //     KubernetesClient client = kubernetesRule.getClient();
-    //     Config config = client.getConfiguration();
-    //     TektonUtils.initializeKubeClients(config);
-    // }
+    @BeforeEach
+    void before() {
+        kubernetesServer = new KubernetesServer(false, true);
+        kubernetesServer.before();
 
-    // @AfterEach
-    // void tearDown() {
-    //     if (kubernetesRule != null) {
-    //         kubernetesRule.after(); // shutdown the mock server
-    //     }
-    // }
+        Config config = kubernetesServer.getClient().getConfiguration();
+        config.setNamespace("test");
 
-    // @Test
-    // public void testScriptedPipelineWithFileInput_Task(JenkinsRule jenkins) throws Exception {
-    //     TaskBuilder taskBuilder = new TaskBuilder()
-    //             .withNewMetadata()
-    //             .withName("testTask")
-    //             .endMetadata();
+        TektonUtils.shutdownKubeClients();
 
-    //     kubernetesRule.expect()
-    //             .post()
-    //             .withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
-    //             .andReturn(HttpURLConnection.HTTP_OK, taskBuilder.build())
-    //             .once();
+        Map<String, KubernetesClient> k8sMap = TektonUtils.getKubernetesClientMap();
+        Map<String, TektonClient> tektonMap = TektonUtils.getTektonClientMap();
 
-    //     WorkflowJob job = jenkins.createProject(WorkflowJob.class, "p");
-    //     URL zipFile = getClass().getResource("/org/waveywaves/jenkins/plugins/tekton/client/build/create/tekton-test-project.zip");
-    //     assertThat(zipFile, is(notNullValue()));
+        k8sMap.clear();
+        tektonMap.clear();
 
-    //     job.setDefinition(new CpsFlowDefinition(
-    //             "node {\n" +
-    //             "  unzip '" + zipFile.getPath() + "'\n" +
-    //             "  tektonCreateRaw(inputType: 'FILE', input: '.tekton/task.yaml')\n" +
-    //             "}", true));
+        KubernetesClient mockK8sClient = kubernetesServer.getClient();
+        TektonClient mockTektonClient = mockK8sClient.adapt(TektonClient.class);
 
-    //     WorkflowRun run = jenkins.assertBuildStatus(Result.SUCCESS, job.scheduleBuild2(0).get());
+        k8sMap.put("default", mockK8sClient);
+        tektonMap.put("default", mockTektonClient);
 
-    //     assertThat(kubernetesRule.getMockServer().getRequestCount(), is(1));
+        System.setProperty("KUBERNETES_NAMESPACE", "test");
+    }
 
-    //     String log = JenkinsRule.getLog(run);
-    //     System.out.println(log);
+    private void ensureMockClientsInjected() {
+        Map<String, KubernetesClient> k8sMap = TektonUtils.getKubernetesClientMap();
+        Map<String, TektonClient> tektonMap = TektonUtils.getTektonClientMap();
 
-    //     assertThat(log, containsString("Extracting: .tekton/task.yaml"));
-    //     assertThat(log, containsString("[Pipeline] tektonCreateRaw"));
-    //     assertThat(log, not(containsString(".tekton/task.yaml (No such file or directory)")));
-    // }
+        KubernetesClient mockK8sClient = kubernetesServer.getClient();
+        TektonClient mockTektonClient = mockK8sClient.adapt(TektonClient.class);
 
+        KubernetesClient currentClient = TektonUtils.getKubernetesClient("default");
+        if (currentClient == null || !currentClient.getConfiguration().getMasterUrl().contains("localhost")) {
+            k8sMap.put("default", mockK8sClient);
+            tektonMap.put("default", mockTektonClient);
+        }
 
-//    @Test
-//    public void testDeclarativePipelineWithFileInput_Task() throws Exception {
-//        TaskBuilder taskBuilder = new TaskBuilder()
-//                .withNewMetadata()
-//                    .withName("testTask")
-//                .endMetadata();
-//
-//        kubernetesRule.expect()
-//                .post()
-//                .withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
-//                .andReturn(HttpURLConnection.HTTP_OK, taskBuilder.build()).once();
-//
-//        WorkflowJob p = jenkinsRule.jenkins.createProject(WorkflowJob.class, "p");
-//        URL zipFile = getClass().getResource("tekton-test-project.zip");
-//        assertThat(zipFile, is(notNullValue()));
-//
-//        p.setDefinition(new CpsFlowDefinition("pipeline { \n"
-//                                              + "  agent any\n"
-//                                              + "  stages {\n"
-//                                              + "    stage('Stage') {\n"
-//                                              + "      steps {\n"
-//                                              + "        unzip '" + zipFile.getPath() + "'\n"
-//                                              + "        tektonCreateRaw(inputType: 'FILE', input: '.tekton/task.yaml')\n"
-//                                              + "      }\n"
-//                                              + "    }\n"
-//                                              + "  }\n"
-//                                              + "}\n", true));
-//
-//        WorkflowRun b = jenkinsRule.assertBuildStatus(Result.SUCCESS, p.scheduleBuild2(0).get());
-//
-//        assertThat(kubernetesRule.getMockServer().getRequestCount(), is(1));
-//
-//        String log = JenkinsRule.getLog(b);
-//        System.out.println(log);
-//
-//        assertThat(log, containsString("Extracting: .tekton/task.yaml"));
-//        assertThat(log, containsString("[Pipeline] tektonCreateRaw"));
-//        assertThat(log, not(containsString(".tekton/task.yaml (No such file or directory)")));
-//    }
+        assertThat("Must use mock server URL after injection",
+                TektonUtils.getKubernetesClient("default").getConfiguration().getMasterUrl(),
+                containsString("localhost"));
+    }
+
+    @AfterEach
+    void after() {
+        try {
+            TektonUtils.shutdownKubeClients();
+            
+            Map<String, KubernetesClient> k8sMap = TektonUtils.getKubernetesClientMap();
+            Map<String, TektonClient> tektonMap = TektonUtils.getTektonClientMap();
+            
+            if (k8sMap != null) {
+                k8sMap.clear();
+            }
+            
+            if (tektonMap != null) {
+                tektonMap.clear();
+            }
+            
+            System.clearProperty("KUBERNETES_NAMESPACE");
+            
+            if (kubernetesServer != null) {
+                kubernetesServer.after();
+            }
+            
+        } catch (Exception e) {
+            System.err.println("Error during cleanup: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            kubernetesServer = null;
+        }
+    }
+
+    @Test
+    public void testScriptedPipelineWithFileInput_Task(JenkinsRule jenkins) throws Exception {
+        jenkins.jenkins.getExtensionList(hudson.tasks.BuildStepDescriptor.class).add(new CreateRaw.DescriptorImpl());
+        ensureMockClientsInjected();
+        
+        TaskBuilder taskBuilder = new TaskBuilder()
+                .withNewMetadata()
+                .withName("testTask")
+                .endMetadata();
+
+        kubernetesServer.expect()
+                .post()
+                .withPath("/apis/tekton.dev/v1beta1/namespaces/test/tasks")
+                .andReturn(200, taskBuilder.build())
+                .once();
+
+        WorkflowJob job = jenkins.createProject(WorkflowJob.class, "p");
+        URL zipFile = getClass().getResource("/org/waveywaves/jenkins/plugins/tekton/client/build/create/tekton-test-project.zip");
+        assertThat(zipFile, is(notNullValue()));
+
+        job.setDefinition(new CpsFlowDefinition(
+                "node {\n" +
+                "  unzip '" + zipFile.getPath() + "'\n" +
+                "  tektonCreateRaw(inputType: 'FILE', input: '.tekton/task.yaml')\n" +
+                "}", true));
+
+        WorkflowRun run = jenkins.assertBuildStatus(Result.SUCCESS, job.scheduleBuild2(0).get());
+
+        assertThat(kubernetesServer.getMockServer().getRequestCount(), is(1));
+
+        String log = JenkinsRule.getLog(run);
+
+        assertThat(log, containsString("Extracting: .tekton/task.yaml"));
+        assertThat(log, containsString("[Pipeline] tektonCreateRaw"));
+        assertThat(log, not(containsString(".tekton/task.yaml (No such file or directory)")));
+    }
 
 //    @Test
 //    public void testDeclarativePipelineWithYamlInput_Task() throws Exception {

@@ -250,121 +250,140 @@ public class JenkinsFreestyleTest {
 
         assertThat(log, containsString("Legacy code started this job"));
     }
-    //////////////////////////// testFreestyleJobWithComplexYamlInput
-    //////////////////////////// //////////////////////////////////
-    // @Test
-    // public void testFreestyleJobWithComplexYamlInput(JenkinsRule jenkins) throws
-    //////////////////////////// Exception {
-    // ToolUtils.getJXPipelineBinary(ToolUtils.class.getClassLoader());
-    // PipelineRunBuilder pipelineRunBuilder = new PipelineRunBuilder()
-    // .withNewMetadata()
-    // .withName("release")
-    // .withNamespace("test")
-    // .withUid("pipeline-run-uid")
-    // .endMetadata()
-    // .withNewSpec()
-    // .withNewPipelineSpec()
-    // .addNewTask()
-    // .withName("pipelineTaskName")
-    // .endTask()
-    // .endPipelineSpec()
-    // .endSpec()
-    // .withNewStatus()
-    // .withConditions(new Condition("lastTransitionTime", "", "", "", "True",
-    //////////////////////////// "Succeeded"))
-    // .endStatus();
 
-    // kubernetesServer.expect()
-    // .post()
-    // .withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns")
-    // .andReturn(HttpURLConnection.HTTP_OK, pipelineRunBuilder.build())
-    // .once();
+@Test
+public void testFreestyleJobWithComplexYamlInput(JenkinsRule jenkins) throws Exception {
+    ensureMockClientsInjected();
+    
+    // Register CreateRaw descriptor manually for test environment
+    jenkins.getInstance().getExtensionList(hudson.tasks.BuildStepDescriptor.class)
+        .add(new CreateRaw.DescriptorImpl());
 
-    // kubernetesServer.expect()
-    // .get()
-    // .withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns/release")
-    // .andReturn(HttpURLConnection.HTTP_OK, pipelineRunBuilder.build())
-    // .once();
+    PipelineRunBuilder pipelineRunBuilder = new PipelineRunBuilder()
+            .withNewMetadata()
+            .withName("release")
+            .withNamespace("test")
+            .withUid("pipeline-run-uid")
+            .endMetadata()
+            .withNewSpec()
+            .withNewPipelineSpec()
+            .addNewTask()
+            .withName("pipelineTaskName")
+            .endTask()
+            .endPipelineSpec()
+            .endSpec()
+            .withNewStatus()
+            .withConditions(new Condition("lastTransitionTime", "", "", "", "True", "Succeeded"))
+            .endStatus();
 
-    // TaskRunList taskRunList = new TaskRunListBuilder()
-    // .addToItems(
-    // new TaskRunBuilder()
-    // .withNewMetadata()
-    // .withName("testTaskRun")
-    // .withOwnerReferences(ownerReference("pipeline-run-uid"))
-    // .endMetadata()
-    // .build())
-    // .build();
+    kubernetesServer.expect()
+            .post()
+            .withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns")
+            .andReturn(200, pipelineRunBuilder.build())
+            .once();
 
-    // kubernetesServer.expect()
-    // .get()
-    // .withPath("/apis/tekton.dev/v1beta1/namespaces/test/taskruns?labelSelector=tekton.dev%2FpipelineTask%3DpipelineTaskName%2Ctekton.dev%2FpipelineRun%3Drelease")
-    // .andReturn(HttpURLConnection.HTTP_OK, taskRunList)
-    // .once();
+    kubernetesServer.expect()
+            .get()
+            .withPath("/apis/tekton.dev/v1beta1/namespaces/test/pipelineruns/release")
+            .andReturn(200, pipelineRunBuilder.build())
+            .once();
 
-    // Pod pod = new PodBuilder()
-    // .withNewMetadata()
-    // .withName("hello-world-pod")
-    // .withNamespace("test")
-    // .withOwnerReferences(ownerReference("TaskRun","testTaskRun"))
-    // .endMetadata()
-    // .withNewSpec()
-    // .withContainers(
-    // new ContainerBuilder()
-    // .withName("hello-world-container")
-    // .build()
-    // )
-    // .endSpec()
-    // .withNewStatus()
-    // .withPhase("Succeeded")
-    // .withContainerStatuses(
-    // new ContainerStatusBuilder()
-    // .withName("hello-world-container")
-    // .withState(
-    // new ContainerStateBuilder()
-    // .withTerminated(new
-    // ContainerStateTerminatedBuilder().withStartedAt("timestamp").build())
-    // .build()
-    // )
-    // .build())
-    // .endStatus()
-    // .build();
+    TaskRunList taskRunList = new TaskRunListBuilder()
+            .addToItems(
+                    new TaskRunBuilder()
+                            .withNewMetadata()
+                            .withName("testTaskRun")
+                            .withOwnerReferences(ownerReference("pipeline-run-uid"))
+                            .endMetadata()
+                            .build())
+            .build();
 
-    // PodList podList = new PodListBuilder()
-    // .addToItems(pod)
-    // .build();
+    kubernetesServer.expect()
+            .get()
+            .withPath("/apis/tekton.dev/v1beta1/namespaces/test/taskruns?labelSelector=tekton.dev%2FpipelineTask%3DpipelineTaskName%2Ctekton.dev%2FpipelineRun%3Drelease")
+            .andReturn(200, taskRunList)
+            .once();
 
-    // kubernetesServer.expect().get().withPath("/api/v1/namespaces/test/pods?labelSelector=tekton.dev%2FtaskRun%3DtestTaskRun")
-    // .andReturn(HttpURLConnection.HTTP_OK, podList).once();
+    Pod pod = new PodBuilder()
+            .withNewMetadata()
+            .withName("hello-world-pod")
+            .withNamespace("test")
+            .withOwnerReferences(ownerReference("TaskRun", "testTaskRun"))
+            .endMetadata()
+            .withNewSpec()
+            .withContainers(
+                    new ContainerBuilder()
+                            .withName("hello-world-container")
+                            .build()
+            )
+            .endSpec()
+            .withNewStatus()
+            .withPhase("Succeeded")
+            .withContainerStatuses(
+                    new ContainerStatusBuilder()
+                            .withName("hello-world-container")
+                            .withState(
+                                    new ContainerStateBuilder()
+                                            .withTerminated(new ContainerStateTerminatedBuilder().withStartedAt("timestamp").build())
+                                            .build()
+                            )
+                            .build())
+            .endStatus()
+            .build();
 
-    // kubernetesServer.expect().get().withPath("/api/v1/namespaces/test/pods/hello-world-pod")
-    // .andReturn(HttpURLConnection.HTTP_OK, pod).always();
+    PodList podList = new PodListBuilder()
+            .addToItems(pod)
+            .build();
 
-    // kubernetesServer.expect().get().withPath("/api/v1/namespaces/test/pods/hello-world-pod/log?pretty=false&container=hello-world-container&follow=true")
-    // .andReturn(HttpURLConnection.HTTP_OK, "Whoop! This is the pod log").once();
+    kubernetesServer.expect().get().withPath("/api/v1/namespaces/test/pods?labelSelector=tekton.dev%2FtaskRun%3DtestTaskRun")
+            .andReturn(200, podList).once();
 
-    // FreeStyleProject p = jenkins.jenkins.createProject(FreeStyleProject.class,
-    // "p");
-    // URL zipFile =
-    // getClass().getResource("/org/waveywaves/jenkins/plugins/tekton/client/build/create/tekton-test-project.zip");
-    // assertThat(zipFile, is(notNullValue()));
+    kubernetesServer.expect().get().withPath("/api/v1/namespaces/test/pods/hello-world-pod")
+            .andReturn(200, pod).always();
 
-    // p.setScm(new ExtractResourceSCM(zipFile));
-    // CreateRaw createRaw = new CreateRaw(contents("jx-pipeline.yaml"), "YAML");
-    // createRaw.setEnableCatalog(true);
-    // p.getBuildersList().add(createRaw);
+    kubernetesServer.expect().get().withPath("/api/v1/namespaces/test/pods/hello-world-pod/log?pretty=false&container=hello-world-container&follow=true")
+            .andReturn(200, "Whoop! This is the pod log").once();
 
-    // FreeStyleBuild b = jenkins.assertBuildStatus(Result.SUCCESS,
-    // p.scheduleBuild2(0).get());
+    FreeStyleProject p = jenkins.createFreeStyleProject("p");
+    URL zipFile = getClass()
+            .getResource("/org/waveywaves/jenkins/plugins/tekton/client/build/create/tekton-test-project.zip");
+    assertThat(zipFile, is(notNullValue()));
 
-    // String log = JenkinsRule.getLog(b);
-    // System.out.println(log);
+    p.setScm(new ExtractResourceSCM(zipFile));
+    
+    String pipelineRunYaml = "apiVersion: tekton.dev/v1beta1\n"
+            + "kind: PipelineRun\n"
+            + "metadata:\n"
+            + "  name: release\n"
+            + "  namespace: test\n"
+            + "spec:\n"
+            + "  pipelineSpec:\n"
+            + "    tasks:\n"
+            + "    - name: pipelineTaskName\n";
+    
+    // Use new protected constructor with autoInitClients = false
+    CreateRaw createRaw = new CreateRaw(pipelineRunYaml, "YAML", false);
+    createRaw.setEnableCatalog(false);
+    
+    KubernetesClient mockClient = TektonUtils.getKubernetesClient("default");
+    TektonClient mockTektonClient = TektonUtils.getTektonClient("default");
+    
+    createRaw.setKubernetesClient(mockClient);
+    createRaw.setTektonClient(mockTektonClient);
+    
+    p.getBuildersList().add(createRaw);
 
-    // assertThat(log, containsString("Legacy code started this job"));
-    // assertThat(log, containsString("Whoop! This is the pod log"));
+    FreeStyleBuild b = jenkins.assertBuildStatus(Result.SUCCESS, p.scheduleBuild2(0).get());
 
-    // assertThat(kubernetesServer.getMockServer().getRequestCount(), is(9));
-    // }
+    String log = JenkinsRule.getLog(b);
+
+    assertThat(log, containsString("Legacy code started this job"));
+    assertThat(log, containsString("Whoop! This is the pod log"));
+
+    assertThat(kubernetesServer.getMockServer().getRequestCount(), is(9));
+}
+
+
 
     // @Test
     // public void testFreestyleJobWithExpandedYamlInput() throws Exception {
