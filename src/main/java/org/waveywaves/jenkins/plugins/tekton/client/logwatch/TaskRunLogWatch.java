@@ -195,9 +195,31 @@ public class TaskRunLogWatch implements Runnable{
         String message = "Pod " + ns + "/" + podName + " Status: " + phase;
         logMessage("[Tekton] " + message);
 
-        // TODO we could try diagnose more information from the failed pod to log
+        // Check if all containers completed successfully
+        boolean allContainersSucceeded = true;
+        List<ContainerStatus> containerStatuses = status.getContainerStatuses();
+        
+        if (containerStatuses != null) {
+            for (ContainerStatus containerStatus : containerStatuses) {
+                ContainerState state = containerStatus.getState();
+                if (state != null && state.getTerminated() != null) {
+                    ContainerStateTerminated terminated = state.getTerminated();
+                    if (terminated.getExitCode() == null || terminated.getExitCode() != 0) {
+                        allContainersSucceeded = false;
+                        break;
+                    }
+                } else {
+                    // Container hasn't terminated yet, so not complete
+                    allContainersSucceeded = false;
+                    break;
+                }
+            }
+        } else {
+            allContainersSucceeded = false;
+        }
 
-        if (!phase.equals("Succeeded")) {
+        // Only set exception if pod failed OR containers failed, not if pod is just running
+        if (phase.equals("Failed") || (!allContainersSucceeded && !phase.equals("Running"))) {
             exception = new Exception(message);
         }
     }

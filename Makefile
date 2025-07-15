@@ -21,5 +21,21 @@ build:
 	mvn clean install -DskipTests -q
 
 e2e:
+	./scripts/e2e-test.sh
+
+e2e-fast:
+	./scripts/e2e-test.sh --fast
+
+e2e-setup:
+	./scripts/e2e-test.sh --build-only
+
+e2e-run:
+	./scripts/e2e-test.sh --test-only
+
+e2e-cleanup:
+	kind delete cluster --name tekton-e2e-test || true
+
+# Legacy e2e target (basic deployment)
+e2e-deploy:
 	kubectl create -f $(JENKINS_DEPLOYMENT)
 
