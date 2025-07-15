@@ -36,7 +36,7 @@ public abstract class E2ETestBase {
     
     protected static final String KIND_CLUSTER_NAME = "tekton-e2e-test";
     protected static final String TEST_NAMESPACE = "tekton-test";
-    protected static final String TEKTON_VERSION = "v0.50.0";
+    protected static final String TEKTON_VERSION = "v1.0.0";
     
     protected JenkinsRule jenkinsRule;
     protected KubernetesClient kubernetesClient;

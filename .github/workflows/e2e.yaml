@@ -18,7 +18,7 @@ on:
       - '*.md'
 
 env:
-  TEKTON_VERSION: v0.50.0 
+  TEKTON_VERSION: v1.0.0
   KIND_VERSION: v0.20.0
   KIND_NODE_IMAGE: kindest/node:v1.28.0
   KUBECTL_VERSION: v1.28.0
@@ -50,15 +50,6 @@ jobs:
         with:
           name: unit-test-reports
           path: target/surefire-reports/**
-
-      # Add Codecov test results upload for unit tests
-      - name: Upload unit test results to Codecov
-        if: ${{ !cancelled() }}
-        uses: codecov/test-results-action@v1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          flags: unit-tests
-          files: target/surefire-reports/TEST-*.xml
 
   e2e-tests:
     name: E2E Tests
@@ -144,8 +135,6 @@ jobs:
         run: |
           echo "Using kubeconfig: ${KUBECONFIG}"
           kubectl config current-context
-          
-          # Run E2E tests - they will detect the pre-setup environment
           mvn -B -ntp test -Dtest="*E2ETest*" -Djava.awt.headless=true
 
       - name: Upload E2E Test Reports
@@ -154,15 +143,6 @@ jobs:
         with:
           name: e2e-test-reports
           path: target/surefire-reports/**
-
-      # Add Codecov test results upload for E2E tests
-      - name: Upload E2E test results to Codecov
-        if: ${{ !cancelled() }}
-        uses: codecov/test-results-action@v1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          flags: e2e-tests
-          files: target/surefire-reports/TEST-*.xml
 
       - name: Debug on Failure
         if: failure()

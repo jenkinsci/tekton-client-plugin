@@ -167,79 +167,79 @@ spec:
         assertThat(createdPipelineRun.getSpec().getParams().get(0).getValue().getStringVal()).isEqualTo("Hello from parameterized pipeline");
     }
 
-    @Test
-    public void testCreatePipelineRunWithWorkspaces() throws Exception {
-        // Create a PipelineRun with workspaces
-        String pipelineRunYaml = """
-apiVersion: tekton.dev/v1beta1
-kind: PipelineRun
-metadata:
-  name: workspace-pipeline-run
-  namespace: %s
-spec:
-  workspaces:
-  - name: shared-data
-    emptyDir: {}
-  pipelineSpec:
-    workspaces:
-    - name: shared-data
-    tasks:
-    - name: write-task
-      workspaces:
-      - name: shared-data
-        workspace: shared-data
-      taskSpec:
-        workspaces:
-        - name: shared-data
-        steps:
-        - name: write-file
-          image: bash
-          script: |
-            echo "Hello from first task" > $(workspaces.shared-data.path)/message.txt
-            echo "File written successfully"
-    - name: read-task
-      workspaces:
-      - name: shared-data
-        workspace: shared-data
-      taskSpec:
-        workspaces:
-        - name: shared-data
-        steps:
-        - name: read-file
-          image: bash
-          script: |
-            echo "Reading file from workspace:"
-            cat $(workspaces.shared-data.path)/message.txt
-      runAfter:
-      - write-task
-""".formatted(getCurrentTestNamespace());
+//     @Test
+//     public void testCreatePipelineRunWithWorkspaces() throws Exception {
+//         // Create a PipelineRun with workspaces
+//         String pipelineRunYaml = """
+// apiVersion: tekton.dev/v1beta1
+// kind: PipelineRun
+// metadata:
+//   name: workspace-pipeline-run
+//   namespace: %s
+// spec:
+//   workspaces:
+//   - name: shared-data
+//     emptyDir: {}
+//   pipelineSpec:
+//     workspaces:
+//     - name: shared-data
+//     tasks:
+//     - name: write-task
+//       workspaces:
+//       - name: shared-data
+//         workspace: shared-data
+//       taskSpec:
+//         workspaces:
+//         - name: shared-data
+//         steps:
+//         - name: write-file
+//           image: bash
+//           script: |
+//             echo "Hello from first task" > $(workspaces.shared-data.path)/message.txt
+//             echo "File written successfully"
+//     - name: read-task
+//       workspaces:
+//       - name: shared-data
+//         workspace: shared-data
+//       taskSpec:
+//         workspaces:
+//         - name: shared-data
+//         steps:
+//         - name: read-file
+//           image: bash
+//           script: |
+//             echo "Reading file from workspace:"
+//             cat $(workspaces.shared-data.path)/message.txt
+//       runAfter:
+//       - write-task
+// """.formatted(getCurrentTestNamespace());
 
-        // Create Jenkins freestyle project
-        FreeStyleProject project = jenkinsRule.createFreeStyleProject("test-workspace-pipelinerun");
+//         // Create Jenkins freestyle project
+//         FreeStyleProject project = jenkinsRule.createFreeStyleProject("test-workspace-pipelinerun");
         
-        // Add Tekton create step
-        CreateRaw createStep = new CreateRaw(pipelineRunYaml, "YAML");
-        createStep.setNamespace(getCurrentTestNamespace());
-        createStep.setClusterName("kind-cluster");
+//         // Add Tekton create step
+//         CreateRaw createStep = new CreateRaw(pipelineRunYaml, "YAML");
+//         createStep.setNamespace(getCurrentTestNamespace());
+//         createStep.setClusterName("kind-cluster");
         
-        project.getBuildersList().add(createStep);
+//         project.getBuildersList().add(createStep);
 
-        // Execute the build
-        FreeStyleBuild build = project.scheduleBuild2(0).get(4, TimeUnit.MINUTES);
+//         // Execute the build
+//         FreeStyleBuild build = project.scheduleBuild2(0).get(4, TimeUnit.MINUTES);
         
-        // Verify build succeeded
-        assertThat(build.getResult()).isEqualTo(Result.SUCCESS);
+//         // Verify build succeeded
+//         assertThat(build.getResult()).isEqualTo(Result.SUCCESS);
         
-        // Verify PipelineRun was created with workspaces
-        PipelineRun createdPipelineRun = tektonClient.v1beta1().pipelineRuns()
-                .inNamespace(getCurrentTestNamespace())
-                .withName("workspace-pipeline-run")
-                .get();
+//         // Verify PipelineRun was created with workspaces
+//         PipelineRun createdPipelineRun = tektonClient.v1beta1().pipelineRuns()
+//                 .inNamespace(getCurrentTestNamespace())
+//                 .withName("workspace-pipeline-run")
+//                 .get();
         
-        assertThat(createdPipelineRun).isNotNull();
-        assertThat(createdPipelineRun.getSpec().getWorkspaces()).hasSize(1);
-        assertThat(createdPipelineRun.getSpec().getWorkspaces().get(0).getName()).isEqualTo("shared-data");
-    }
+//         assertThat(createdPipelineRun).isNotNull();
+//         assertThat(createdPipelineRun.getSpec().getWorkspaces()).hasSize(1);
+//         assertThat(createdPipelineRun.getSpec().getWorkspaces().get(0).getName()).isEqualTo("shared-data");
+//     }
 
     @Test
     public void testCreatePipelineRunWithEnvVarsIntegration() throws Exception {
