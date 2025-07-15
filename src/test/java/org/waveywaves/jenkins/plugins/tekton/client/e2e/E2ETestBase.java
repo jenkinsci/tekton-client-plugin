@@ -36,7 +36,7 @@ public abstract class E2ETestBase {
     
     protected static final String KIND_CLUSTER_NAME = "tekton-e2e-test";
     protected static final String TEST_NAMESPACE = "tekton-test";
-    protected static final String TEKTON_VERSION = "v1.0.0"; // Latest stable version
+    protected static final String TEKTON_VERSION = "v0.50.0";
     
     protected JenkinsRule jenkinsRule;
     protected KubernetesClient kubernetesClient;
@@ -44,33 +44,209 @@ public abstract class E2ETestBase {
     
     @BeforeAll
     public void setUpE2EEnvironment(JenkinsRule jenkins) throws Exception {
-        // Jenkins is already started by the WithJenkins extension
         this.jenkinsRule = jenkins;
         
-        // Setup Kind cluster
-        setupKindCluster();
-        
-        // Setup Kubernetes clients
-        setupKubernetesClients();
-        
-        // Install Tekton
-        installTekton();
-        
-        // Configure Jenkins global configuration
-        configureJenkinsGlobal();
+        // Detect if running in GitHub Actions with pre-setup
+        if (isGitHubActionsWithPreSetup()) {
+            LOGGER.info("Detected GitHub Actions environment with pre-setup cluster");
+            setupForGitHubActions();
+        } else {
+            LOGGER.info("Setting up E2E environment from scratch");
+            setupFromScratch();
+        }
         
         LOGGER.info("E2E test environment setup complete");
     }
     
+    private boolean isGitHubActionsWithPreSetup() {
+        boolean isGitHubActions = "true".equals(System.getenv("GITHUB_ACTIONS"));
+        boolean hasKubeconfig = System.getenv("KUBECONFIG") != null;
+        
+        if (isGitHubActions && hasKubeconfig) {
+            // Check if cluster is already accessible
+            try {
+                ProcessBuilder pb = new ProcessBuilder("kubectl", "cluster-info");
+                pb.environment().put("KUBECONFIG", System.getenv("KUBECONFIG"));
+                Process process = pb.start();
+                boolean accessible = process.waitFor(10, TimeUnit.SECONDS) && process.exitValue() == 0;
+                LOGGER.info("Cluster accessibility check: " + accessible);
+                return accessible;
+            } catch (Exception e) {
+                LOGGER.warning("Failed to check cluster accessibility: " + e.getMessage());
+                return false;
+            }
+        }
+        
+        return false;
+    }
+    
+    private void setupForGitHubActions() throws Exception {
+        LOGGER.info("Using pre-configured GitHub Actions environment");
+        
+        // Use existing kubeconfig from environment
+        String kubeconfigPath = System.getenv("KUBECONFIG");
+        LOGGER.info("Using kubeconfig: " + kubeconfigPath);
+        
+        // Setup Kubernetes clients with existing config
+        setupKubernetesClientsFromExistingConfig(kubeconfigPath);
+        
+        // Verify Tekton is already installed and ready
+        verifyTektonInstallation();
+        
+        // Configure Jenkins global configuration
+        configureJenkinsGlobal();
+    }
+    
+    private void setupFromScratch() throws Exception {
+        // Original setup logic
+        setupKindCluster();
+        setupKubernetesClients();
+        installTekton();
+        configureJenkinsGlobal();
+    }
+    
+    private void setupKubernetesClientsFromExistingConfig(String kubeconfigPath) throws Exception {
+        LOGGER.info("Setting up Kubernetes clients from existing config");
+        
+        try {
+            // Read existing kubeconfig
+            Config config;
+            if (kubeconfigPath != null && !kubeconfigPath.isEmpty()) {
+                try (FileInputStream fis = new FileInputStream(kubeconfigPath);
+                     BufferedReader reader = new BufferedReader(new InputStreamReader(fis))) {
+                    
+                    StringBuilder kubeconfigContent = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        kubeconfigContent.append(line).append("\n");
+                    }
+                    
+                    config = Config.fromKubeconfig(kubeconfigContent.toString());
+                }
+            } else {
+                // Fallback to default config
+                config = new ConfigBuilder().build();
+            }
+            
+            // Configure for Kind cluster
+            config.setTrustCerts(true);
+            config.setDisableHostnameVerification(true);
+            
+            kubernetesClient = new DefaultKubernetesClient(config);
+            tektonClient = new DefaultTektonClient(config);
+            
+            // Test connectivity
+            kubernetesClient.namespaces().list();
+            LOGGER.info("Successfully connected to existing Kubernetes cluster");
+            
+            // Initialize TektonUtils
+            TektonUtils.initializeKubeClients(config);
+            
+        } catch (Exception e) {
+            LOGGER.severe("Failed to setup clients from existing config: " + e.getMessage());
+            throw new RuntimeException("Failed to connect to pre-configured cluster", e);
+        }
+    }
+    
+    private void verifyTektonInstallation() throws Exception {
+        LOGGER.info("Verifying Tekton installation");
+        
+        try {
+            // Check if Tekton controller is running
+            ProcessBuilder pb = new ProcessBuilder("kubectl", "get", "deployment", 
+                    "tekton-pipelines-controller", "-n", "tekton-pipelines");
+            pb.environment().put("KUBECONFIG", System.getenv("KUBECONFIG"));
+            Process process = pb.start();
+            
+            if (process.waitFor(30, TimeUnit.SECONDS) && process.exitValue() == 0) {
+                LOGGER.info("Tekton controller deployment found");
+                
+                // Wait for it to be ready (but with shorter timeout since it should be ready)
+                waitForExistingTekton();
+            } else {
+                throw new RuntimeException("Tekton controller deployment not found");
+            }
+            
+        } catch (Exception e) {
+            LOGGER.severe("Tekton verification failed: " + e.getMessage());
+            throw new RuntimeException("Pre-installed Tekton is not ready", e);
+        }
+    }
+    
+    private void waitForExistingTekton() throws Exception {
+        LOGGER.info("Waiting for pre-installed Tekton to be ready");
+        
+        // Shorter timeout since Tekton should already be installed
+        for (int i = 0; i < 30; i++) { // 2.5 minutes max
+            try {
+                ProcessBuilder pb = new ProcessBuilder("kubectl", "get", "pods", "-n", "tekton-pipelines", 
+                        "--no-headers", "--field-selector=status.phase=Running");
+                pb.environment().put("KUBECONFIG", System.getenv("KUBECONFIG"));
+                Process process = pb.start();
+                
+                if (process.waitFor(10, TimeUnit.SECONDS) && process.exitValue() == 0) {
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                        int runningPods = 0;
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            if (line.contains("Running")) {
+                                runningPods++;
+                            }
+                        }
+                        
+                        if (runningPods >= 1) { // At least controller running
+                            LOGGER.info("Pre-installed Tekton is ready with " + runningPods + " running pods");
+                            return;
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                LOGGER.warning("Error checking pre-installed Tekton: " + e.getMessage());
+            }
+            
+            Thread.sleep(5000);
+        }
+        
+        throw new RuntimeException("Pre-installed Tekton did not become ready within timeout");
+    }
+    
+    private void cleanupOldTestNamespaces() {
+        try {
+            if (kubernetesClient != null) {
+                long oneHourAgo = System.currentTimeMillis() - (60 * 60 * 1000);
+                
+                kubernetesClient.namespaces().list().getItems().stream()
+                    .filter(ns -> ns.getMetadata().getName().startsWith(TEST_NAMESPACE + "-"))
+                    .filter(ns -> {
+                        try {
+                            String timestamp = ns.getMetadata().getName().substring(TEST_NAMESPACE.length() + 1);
+                            long nsTime = Long.parseLong(timestamp);
+                            return nsTime < oneHourAgo;
+                        } catch (Exception e) {
+                            return false;
+                        }
+                    })
+                    .forEach(ns -> {
+                        try {
+                            kubernetesClient.namespaces().delete(ns);
+                            LOGGER.info("Cleaned up old namespace: " + ns.getMetadata().getName());
+                        } catch (Exception e) {
+                            LOGGER.warning("Failed to cleanup namespace: " + e.getMessage());
+                        }
+                    });
+            }
+        } catch (Exception e) {
+            LOGGER.warning("Failed to cleanup old namespaces: " + e.getMessage());
+        }
+    }
+    
     @AfterAll
     public void tearDownE2EEnvironment() throws Exception {
-        // Jenkins cleanup is handled by the WithJenkins extension
-        
-        // Clean up Kind cluster only if SKIP_CLEANUP is not set
-        if (!"true".equals(System.getenv("SKIP_CLEANUP"))) {
+        // Only cleanup if we created the cluster ourselves
+        if (!isGitHubActionsWithPreSetup() && !"true".equals(System.getenv("SKIP_CLEANUP"))) {
             cleanupKindCluster();
         } else {
-            LOGGER.info("Skipping Kind cluster cleanup due to SKIP_CLEANUP environment variable");
+            LOGGER.info("Skipping cluster cleanup (using external cluster or SKIP_CLEANUP set)");
         }
         
         LOGGER.info("E2E test environment cleanup complete");
@@ -233,24 +409,31 @@ public abstract class E2ETestBase {
     private void configureJenkinsGlobal() {
         LOGGER.info("Configuring Jenkins global Tekton settings");
         
-        TektonGlobalConfiguration globalConfig = TektonGlobalConfiguration.get();
-        
-        // Create cluster config for the Kind cluster
-        List<ClusterConfig> clusterConfigs = new ArrayList<>();
-        ClusterConfig kindClusterConfig = new ClusterConfig(
-                "kind-cluster",
-                tektonClient.getConfiguration().getMasterUrl(),
-                TEST_NAMESPACE
-        );
-        clusterConfigs.add(kindClusterConfig);
-        
-        globalConfig.setClusterConfigs(clusterConfigs);
-        
-        // DON'T reinitialize TektonUtils clients here - they're already properly configured
-        // with authentication in setupKubernetesClients()
-        // TektonUtils.initializeKubeClients(clusterConfigs); // REMOVED
-        
-        LOGGER.info("Jenkins global configuration complete");
+        try {
+            TektonGlobalConfiguration globalConfig = TektonGlobalConfiguration.get();
+            
+            if (globalConfig == null) {
+                LOGGER.info("TektonGlobalConfiguration not available in test environment");
+                LOGGER.info("E2E tests will use direct cluster specification instead");
+                return; 
+            }
+            
+            List<ClusterConfig> clusterConfigs = new ArrayList<>();
+            ClusterConfig kindClusterConfig = new ClusterConfig(
+                    "kind-cluster",
+                    tektonClient.getConfiguration().getMasterUrl(),
+                    TEST_NAMESPACE
+            );
+            clusterConfigs.add(kindClusterConfig);
+            
+            globalConfig.setClusterConfigs(clusterConfigs);
+            
+            LOGGER.info("Jenkins global configuration complete");
+            
+        } catch (Exception e) {
+            LOGGER.warning("Global configuration failed: " + e.getMessage());
+            LOGGER.info("Continuing with direct cluster specification");
+        }
     }
     
     private void setKubeconfigEnv(ProcessBuilder pb) {
@@ -320,7 +503,7 @@ public abstract class E2ETestBase {
     private void waitForTektonReady() throws Exception {
         LOGGER.info("Waiting for Tekton to be ready...");
         
-        for (int i = 0; i < 60; i++) { // Wait up to 5 minutes
+        for (int i = 0; i < 180; i++) { // Wait up to 5 minutes
             try {
                 ProcessBuilder pb = new ProcessBuilder("kubectl", "get", "pods", "-n", "tekton-pipelines", 
                         "--no-headers", "--field-selector=status.phase=Running");

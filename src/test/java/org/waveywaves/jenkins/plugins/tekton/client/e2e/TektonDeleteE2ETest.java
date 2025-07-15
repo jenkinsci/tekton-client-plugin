@@ -46,7 +46,7 @@ spec:
         
         CreateRaw createStep = new CreateRaw(taskRunYaml, "YAML");
         createStep.setNamespace(getCurrentTestNamespace());
-        createStep.setClusterName("kind-cluster");
+        createStep.setClusterName("default");
         
         createProject.getBuildersList().add(createStep);
 
@@ -106,7 +106,7 @@ spec:
         
         CreateRaw createStep = new CreateRaw(taskYaml, "YAML");
         createStep.setNamespace(getCurrentTestNamespace());
-        createStep.setClusterName("kind-cluster");
+        createStep.setClusterName("default");
         
         createProject.getBuildersList().add(createStep);
 
@@ -170,7 +170,7 @@ spec:
             
             CreateRaw createStep = new CreateRaw(taskRunYaml, "YAML");
             createStep.setNamespace(getCurrentTestNamespace());
-            createStep.setClusterName("kind-cluster");
+            createStep.setClusterName("default");
             
             createProject.getBuildersList().add(createStep);
 
