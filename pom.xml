@@ -40,6 +40,8 @@
         <jenkins-test-harness.version>2462.v7cd38b_7a_361b_</jenkins-test-harness.version>
         <kubernetes-server-mock.version>5.4.1</kubernetes-server-mock.version>
         <tekton-client.version>5.4.1</tekton-client.version>
+        <maven-surefire-plugin.version>3.2.5</maven-surefire-plugin.version>
+        <junit-jupiter-engine.version>5.6.2</junit-jupiter-engine.version>
         <jx-pipeline.version>0.1.5</jx-pipeline.version>
     </properties>
 
@@ -115,27 +117,82 @@
             <artifactId>pipeline-utility-steps</artifactId>
             <scope>test</scope>
         </dependency>
-        
-        <!-- E2E Testing Dependencies -->
         <dependency>
-            <groupId>org.jenkins-ci.main</groupId>
-            <artifactId>jenkins-test-harness</artifactId>
-            <version>${jenkins-test-harness.version}</version>
+            <groupId>org.jenkins-ci.plugins.workflow</groupId>
+            <artifactId>workflow-job</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>1.19.3</version>
+            <groupId>org.jenkins-ci.plugins.workflow</groupId>
+            <artifactId>workflow-cps</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins.workflow</groupId>
+            <artifactId>workflow-basic-steps</artifactId>
+            <version>1079.vce64b_a_929c5a_</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins.workflow</groupId>
+            <artifactId>workflow-durable-task-step</artifactId>
+            <version>1434.v1b_595c29ddd7</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.junit.vintage</groupId>
             <artifactId>junit-vintage-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest</artifactId>
+            <version>2.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.fabric8</groupId>
+            <artifactId>kubernetes-junit-jupiter</artifactId>
+            <version>7.3.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>mockwebserver</artifactId>
+            <version>3.14.9</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.fabric8</groupId>
+            <artifactId>tekton-model-v1beta1</artifactId>
+            <version>5.12.0</version> 
+        </dependency>
+        <dependency>
+        <groupId>org.jvnet.hudson.main</groupId>
+        <artifactId>hudson-test-utils</artifactId>
+        <version>2.2.1</version>
+        <scope>test</scope>
+        <exclusions>
+            <exclusion>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-module-junit4</artifactId>
+            </exclusion>
+            <exclusion>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-api-support</artifactId>
+            </exclusion>
+        </exclusions>
+        </dependency>
     </dependencies>
 
     <dependencyManagement>
@@ -143,14 +200,14 @@
             <dependency>
                 <groupId>io.jenkins.tools.bom</groupId>
                 <artifactId>bom-${jenkins.baseline}.x</artifactId>
-                <version>5043.v855ff4819a_0f</version>
+                <version>4948.vcf1d17350668</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
-                <version>3.18.0</version>
+                <version>3.17.0</version>
             </dependency>
             <dependency>
                 <groupId>org.jenkins-ci.plugins</groupId>
@@ -165,7 +222,7 @@
             <dependency>
                 <groupId>com.squareup.okio</groupId>
                 <artifactId>okio</artifactId>
-                <version>3.15.0</version>
+                <version>3.14.0</version>
             </dependency>
             <dependency>
                 <groupId>com.squareup.okhttp3</groupId>
@@ -175,7 +232,7 @@
             <dependency>
                 <groupId>com.squareup.okhttp3</groupId>
                 <artifactId>logging-interceptor</artifactId>
-                <version>5.1.0</version>
+                <version>3.14.9</version>
             </dependency>
             <dependency>
                 <groupId>jakarta.activation</groupId>
@@ -247,6 +304,20 @@
                     <check />
                 </configuration>
             </plugin>
+
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>3.2.5</version>
+            <configuration>
+                <useSystemClassLoader>false</useSystemClassLoader>
+                <includes>
+                    <include>**/*Test.java</include>
+                    <include>**/*Tests.java</include>
+                </includes>
+            </configuration>
+        </plugin>
+
         </plugins>
     </build>
 
@@ -297,49 +368,6 @@
                     </plugin>
                 </plugins>
             </build>
-        </profile>
-        
-        <!-- E2E Testing Profile -->
-        <profile>
-            <id>e2e-tests</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <version>${maven-surefire-plugin.version}</version>
-                        <executions>
-                            <execution>
-                                <id>e2e-tests</id>
-                                <phase>test</phase>
-                                <goals>
-                                    <goal>test</goal>
-                                </goals>
-                                <configuration>
-                                    <includes>
-                                        <include>**/*E2ETest.java</include>
-                                    </includes>
-                                    <excludes>
-                                        <!-- No exclusions for E2E profile -->
-                                    </excludes>
-                                    <systemPropertyVariables>
-                                        <KIND_CLUSTER_NAME>${KIND_CLUSTER_NAME}</KIND_CLUSTER_NAME>
-                                        <TEKTON_VERSION>${TEKTON_VERSION}</TEKTON_VERSION>
-                                    </systemPropertyVariables>
-                                    <!-- E2E tests typically take longer -->
-                                    <forkedProcessTimeoutInSeconds>1800</forkedProcessTimeoutInSeconds>
-                                    <parallel>classes</parallel>
-                                    <threadCount>1</threadCount>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-            <properties>
-                <KIND_CLUSTER_NAME>tekton-e2e-test</KIND_CLUSTER_NAME>
-                <TEKTON_VERSION>v1.0.0</TEKTON_VERSION>
-            </properties>
         </profile>
     </profiles>
 </project>
