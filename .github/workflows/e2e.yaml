@@ -42,14 +42,15 @@ jobs:
           cache: maven
 
       - name: Run unit tests
-        run: mvn -B -ntp test -Dtest="!*E2ETest*" -Djava.awt.headless=true
+        run: mvn -B -ntp test -Dtest="*E2ETest*" -Djava.awt.headless=true jacoco:report
 
-      - name: Upload Unit Test Reports
-        if: always()
-        uses: actions/upload-artifact@v4
+      - name: Upload unit test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
         with:
-          name: unit-test-reports
-          path: target/surefire-reports/**
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: unit-tests
+          files: target/surefire-reports/TEST-*.xml
 
   e2e-tests:
     name: E2E Tests
@@ -135,7 +136,7 @@ jobs:
         run: |
           echo "Using kubeconfig: ${KUBECONFIG}"
           kubectl config current-context
-          mvn -B -ntp test -Dtest="*E2ETest*" -Djava.awt.headless=true
+          mvn -B -ntp test -Dtest="*E2ETest*" -Djava.awt.headless=true jacoco:report
 
       - name: Upload E2E Test Reports
         if: always()

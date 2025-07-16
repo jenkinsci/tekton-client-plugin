@@ -257,6 +257,7 @@
             </plugin> -->
             
             <!-- Maven Surefire Plugin for running tests -->
+            <!-- JaCoCo for code coverage -->
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
