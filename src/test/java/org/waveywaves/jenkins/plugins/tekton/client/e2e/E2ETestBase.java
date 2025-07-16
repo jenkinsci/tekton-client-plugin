@@ -106,7 +106,7 @@ public abstract class E2ETestBase {
     }
     
     private void setupKubernetesClientsFromExistingConfig(String kubeconfigPath) throws Exception {
-        LOGGER.info("Setting up Kubernetes clients from existing config");
+        LOGGER.info("Setting up Kubernetes clients with existing config");
         
         try {
             // Read existing kubeconfig
