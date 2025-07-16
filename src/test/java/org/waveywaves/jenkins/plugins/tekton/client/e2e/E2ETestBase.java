@@ -428,7 +428,7 @@ public abstract class E2ETestBase {
             
             globalConfig.setClusterConfigs(clusterConfigs);
             
-            LOGGER.info("Jenkins global configuration complete");
+            LOGGER.info("Jenkins global configuration completed");
             
         } catch (Exception e) {
             LOGGER.warning("Global configuration failed: " + e.getMessage());
