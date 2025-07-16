@@ -42,7 +42,17 @@ jobs:
           cache: maven
 
       - name: Run unit tests
-        run: mvn -B -ntp test -Dtest="*E2ETest*" -Djava.awt.headless=true jacoco:report
+        run: |
+          mvn -B -ntp clean test -Dtest="!*E2ETest*" -Djava.awt.headless=true
+          mvn -B -ntp jacoco:report
+
+      - name: Upload unit test coverage to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: unit-tests
+          files: target/site/jacoco/jacoco.xml
 
       - name: Upload unit test results to Codecov
         if: ${{ !cancelled() }}
@@ -134,9 +144,20 @@ jobs:
           CI: true
           GITHUB_ACTIONS: true
         run: |
-          echo "Using kubeconfig: ${KUBECONFIG}"
-          kubectl config current-context
-          mvn -B -ntp test -Dtest="*E2ETest*" -Djava.awt.headless=true jacoco:report
+          mvn -B -ntp clean test -Dtest="*E2ETest*" -Djava.awt.headless=true
+          mvn -B -ntp jacoco:report
+
+      - name: Generate E2E Coverage Report
+        if: always()
+        run: mvn -B -ntp jacoco:report -Pe2e-tests
+
+      - name: Upload E2E Test Coverage to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: e2e-tests
+          files: target/site/jacoco-e2e/jacoco.xml
 
       - name: Upload E2E Test Reports
         if: always()
@@ -173,3 +194,33 @@ jobs:
         if: always()
         run: |
           kind delete cluster --name "${KIND_CLUSTER_NAME}" || true
+
+  combined-coverage:
+    name: Combined Coverage Report
+    runs-on: ubuntu-latest
+    needs: [unit-tests, e2e-tests]
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+
+      - name: Run all tests and generate combined coverage
+        run: |
+          mvn -B -ntp clean test -Dtest="!*E2ETest*" -Djava.awt.headless=true
+          mvn -B -ntp test -Pe2e-tests -Djava.awt.headless=true || true
+          mvn -B -ntp jacoco:merge -Pcoverage-report || true
+          mvn -B -ntp jacoco:report -Pcoverage-report || true
+
+      - name: Upload Combined Coverage to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: combined
+          files: target/site/jacoco-merged/jacoco.xml
