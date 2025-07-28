@@ -1,0 +1,175 @@
+name: E2E Test
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - 'README.md'
+      - 'docs/**'
+      - '*.md'
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'README.md'
+      - 'docs/**'
+      - '*.md'
+
+env:
+  TEKTON_VERSION: v1.0.0
+  KIND_VERSION: v0.20.0
+  KIND_NODE_IMAGE: kindest/node:v1.28.0
+  KUBECTL_VERSION: v1.28.0
+  JAVA_VERSION: 17
+  KIND_CLUSTER_NAME: tekton-e2e-test
+  KUBECONFIG: ${{ github.workspace }}/kind-kubeconfig
+
+jobs:
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+
+      - name: Run unit tests
+        run: mvn -B -ntp test -Dtest="*E2ETest*" -Djava.awt.headless=true jacoco:report
+
+      - name: Upload unit test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: unit-tests
+          files: target/surefire-reports/TEST-*.xml
+
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    timeout-minutes: 45  
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+
+      - name: Install Kind & kubectl
+        run: |
+          curl -Lo kind https://kind.sigs.k8s.io/dl/${KIND_VERSION}/kind-linux-amd64
+          chmod +x kind && sudo mv kind /usr/local/bin/
+          curl -Lo kubectl https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl
+          chmod +x kubectl && sudo mv kubectl /usr/local/bin/
+          kind --version
+          kubectl version --client
+
+      - name: Pre-pull Docker Images
+        run: |
+          # Pre-pull images to speed up tests
+          docker pull busybox:1.35
+          docker pull registry.k8s.io/pause:3.9
+
+      - name: Create Kind Cluster
+        run: |
+          cat <<EOF | kind create cluster \
+              --name "${KIND_CLUSTER_NAME}" \
+              --image "${KIND_NODE_IMAGE}" \
+              --wait 5m \
+              --kubeconfig "${KUBECONFIG}" \
+              --config=-
+          kind: Cluster
+          apiVersion: kind.x-k8s.io/v1alpha4
+          nodes:
+          - role: control-plane
+            extraPortMappings:
+            - containerPort: 30080
+              hostPort: 30080
+              protocol: TCP
+            - containerPort: 30443
+              hostPort: 30443
+              protocol: TCP
+          networking:
+            apiServerAddress: "127.0.0.1"
+            apiServerPort: 6443
+          EOF
+          
+          # Load pre-pulled images into Kind
+          kind load docker-image busybox:1.35 --name "${KIND_CLUSTER_NAME}"
+          kind load docker-image registry.k8s.io/pause:3.9 --name "${KIND_CLUSTER_NAME}"
+
+      - name: Install Tekton Pipelines ${{ env.TEKTON_VERSION }}
+        run: |
+          echo "Installing Tekton ${TEKTON_VERSION}..."
+          kubectl --kubeconfig "${KUBECONFIG}" apply -f https://storage.googleapis.com/tekton-releases/pipeline/previous/${TEKTON_VERSION}/release.yaml
+          
+          echo "Waiting for Tekton controller..."
+          kubectl --kubeconfig "${KUBECONFIG}" rollout status deployment/tekton-pipelines-controller -n tekton-pipelines --timeout=300s
+          
+          echo "Waiting for Tekton webhook..."
+          kubectl --kubeconfig "${KUBECONFIG}" rollout status deployment/tekton-pipelines-webhook -n tekton-pipelines --timeout=300s
+          
+          echo "Tekton installation complete"
+          kubectl --kubeconfig "${KUBECONFIG}" get pods -n tekton-pipelines
+
+      - name: Build Plugin (skip tests)
+        run: mvn -B -ntp clean compile -DskipTests -Djava.awt.headless=true
+
+      - name: Run E2E Tests
+        env:
+          KUBECONFIG: ${{ github.workspace }}/kind-kubeconfig
+          CI: true
+          GITHUB_ACTIONS: true
+        run: |
+          echo "Using kubeconfig: ${KUBECONFIG}"
+          kubectl config current-context
+          mvn -B -ntp test -Dtest="*E2ETest*" -Djava.awt.headless=true jacoco:report
+
+      - name: Upload E2E Test Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-reports
+          path: target/surefire-reports/**
+
+      - name: Debug on Failure
+        if: failure()
+        run: |
+          echo "=== CLUSTER INFO ==="
+          kubectl --kubeconfig "${KUBECONFIG}" cluster-info || true
+          
+          echo "=== ALL PODS ==="
+          kubectl --kubeconfig "${KUBECONFIG}" get pods -A || true
+          
+          echo "=== TEKTON PODS ==="
+          kubectl --kubeconfig "${KUBECONFIG}" get pods -n tekton-pipelines -o wide || true
+          
+          echo "=== TEKTON CONTROLLER LOGS ==="
+          kubectl --kubeconfig "${KUBECONFIG}" logs -n tekton-pipelines deployment/tekton-pipelines-controller --tail=50 || true
+          
+          echo "=== TEKTON WEBHOOK LOGS ==="
+          kubectl --kubeconfig "${KUBECONFIG}" logs -n tekton-pipelines deployment/tekton-pipelines-webhook --tail=50 || true
+          
+          echo "=== TEST NAMESPACES ==="
+          kubectl --kubeconfig "${KUBECONFIG}" get namespaces | grep tekton-test || true
+          
+          echo "=== EVENTS ==="
+          kubectl --kubeconfig "${KUBECONFIG}" get events -A --sort-by=.metadata.creationTimestamp --tail=20 || true
+
+      - name: Cleanup
+        if: always()
+        run: |
+          kind delete cluster --name "${KIND_CLUSTER_NAME}" || true
