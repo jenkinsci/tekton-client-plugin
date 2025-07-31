@@ -115,6 +115,13 @@ jobs:
           GITHUB_ACTIONS: true
         run: |
           echo "Using kubeconfig: ${KUBECONFIG}"
+          echo "Checking environment before tests..."
+          echo "GITHUB_ACTIONS: ${GITHUB_ACTIONS}"
+          echo "CI: ${CI}"
+          echo "KUBECONFIG: ${KUBECONFIG}"
+          echo "Checking if Kind is available..."
+          kind --version || echo "Kind not found in PATH"
+          which kind || echo "Kind not found with which"
           echo "Checking cluster status before tests..."
           kubectl config current-context
           kubectl get nodes

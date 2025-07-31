@@ -48,9 +48,20 @@ public abstract class E2ETestBase {
     public void setUpE2EEnvironment(JenkinsRule jenkins) throws Exception {
         this.jenkinsRule = jenkins;
 
+        // Log environment information for debugging
+        LOGGER.info("Environment check:");
+        LOGGER.info("  GITHUB_ACTIONS: " + System.getenv("GITHUB_ACTIONS"));
+        LOGGER.info("  KUBECONFIG: " + System.getenv("KUBECONFIG"));
+        LOGGER.info("  CI: " + System.getenv("CI"));
+
         // Detect if running in GitHub Actions with pre-setup
         if (isGitHubActionsWithPreSetup()) {
             LOGGER.info("Detected GitHub Actions environment with pre-setup cluster");
+            setupForGitHubActions();
+        } else if ("true".equals(System.getenv("GITHUB_ACTIONS")) && System.getenv("KUBECONFIG") != null) {
+            // Fallback: We're in GitHub Actions but cluster accessibility check failed
+            // Still try to use GitHub Actions setup rather than local setup
+            LOGGER.info("GitHub Actions detected but cluster accessibility check failed. Trying GitHub Actions setup anyway...");
             setupForGitHubActions();
         } else {
             LOGGER.info("Setting up E2E environment from scratch");
@@ -63,8 +74,17 @@ public abstract class E2ETestBase {
     private boolean isGitHubActionsWithPreSetup() {
         boolean isGitHubActions = "true".equals(System.getenv("GITHUB_ACTIONS"));
         boolean hasKubeconfig = System.getenv("KUBECONFIG") != null;
+        boolean isCI = "true".equals(System.getenv("CI"));
 
+        LOGGER.info("GitHub Actions detection:");
+        LOGGER.info("  isGitHubActions: " + isGitHubActions);
+        LOGGER.info("  hasKubeconfig: " + hasKubeconfig);
+        LOGGER.info("  isCI: " + isCI);
+
+        // In GitHub Actions, we should have both GITHUB_ACTIONS=true and KUBECONFIG set
         if (isGitHubActions && hasKubeconfig) {
+            LOGGER.info("GitHub Actions environment detected, checking cluster accessibility...");
+            
             // Check if cluster is already accessible
             try {
                 ProcessBuilder pb = new ProcessBuilder("kubectl", "cluster-info");
@@ -90,6 +110,7 @@ public abstract class E2ETestBase {
             }
         }
 
+        LOGGER.info("Not in GitHub Actions environment or missing KUBECONFIG");
         return false;
     }
 
@@ -315,9 +336,15 @@ public abstract class E2ETestBase {
 
     private void setupKindCluster() throws Exception {
         LOGGER.info("Setting up Kind cluster: " + KIND_CLUSTER_NAME);
+        LOGGER.info("This should not be called in GitHub Actions environment!");
 
         // Check if kind is installed
         if (!isCommandAvailable("kind")) {
+            LOGGER.severe("Kind is not available. This suggests we're in the wrong setup path.");
+            LOGGER.severe("Environment variables:");
+            LOGGER.severe("  GITHUB_ACTIONS: " + System.getenv("GITHUB_ACTIONS"));
+            LOGGER.severe("  KUBECONFIG: " + System.getenv("KUBECONFIG"));
+            LOGGER.severe("  CI: " + System.getenv("CI"));
             throw new RuntimeException(
                     "Kind is not installed. Please install kind first: https://kind.sigs.k8s.io/docs/user/quick-start/");
         }
