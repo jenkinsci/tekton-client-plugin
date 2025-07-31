@@ -85,6 +85,7 @@ jobs:
 
       - name: Create Kind Cluster
         run: |
+          echo "Creating Kind cluster with name: ${KIND_CLUSTER_NAME}"
           cat <<EOF | kind create cluster \
               --name "${KIND_CLUSTER_NAME}" \
               --image "${KIND_NODE_IMAGE}" \
@@ -107,9 +108,11 @@ jobs:
             apiServerPort: 6443
           EOF
           
-          # Load pre-pulled images into Kind
+          echo "Kind cluster created successfully"
+          echo "Loading pre-pulled images into Kind..."
           kind load docker-image busybox:1.35 --name "${KIND_CLUSTER_NAME}"
           kind load docker-image registry.k8s.io/pause:3.9 --name "${KIND_CLUSTER_NAME}"
+          echo "Images loaded successfully"
 
       - name: Install Tekton Pipelines ${{ env.TEKTON_VERSION }}
         run: |
@@ -121,6 +124,9 @@ jobs:
           
           echo "Waiting for Tekton webhook..."
           kubectl --kubeconfig "${KUBECONFIG}" rollout status deployment/tekton-pipelines-webhook -n tekton-pipelines --timeout=300s
+          
+          echo "Waiting for all Tekton pods to be ready..."
+          kubectl --kubeconfig "${KUBECONFIG}" wait --for=condition=Ready pods --all -n tekton-pipelines --timeout=300s
           
           echo "Tekton installation complete"
           kubectl --kubeconfig "${KUBECONFIG}" get pods -n tekton-pipelines
@@ -135,7 +141,11 @@ jobs:
           GITHUB_ACTIONS: true
         run: |
           echo "Using kubeconfig: ${KUBECONFIG}"
+          echo "Checking cluster status before tests..."
           kubectl config current-context
+          kubectl get nodes
+          kubectl get pods -n tekton-pipelines
+          echo "Starting E2E tests..."
           mvn -B -ntp test -Dtest="*E2ETest*" -Djava.awt.headless=true jacoco:report
 
       - name: Upload E2E Test Reports
@@ -172,4 +182,7 @@ jobs:
       - name: Cleanup
         if: always()
         run: |
-          kind delete cluster --name "${KIND_CLUSTER_NAME}" || true
+          echo "Cleaning up Kind cluster..."
+          kind delete cluster --name "${KIND_CLUSTER_NAME}" --kubeconfig "${KUBECONFIG}" || echo "Failed to delete cluster with kubeconfig, trying without..."
+          kind delete cluster --name "${KIND_CLUSTER_NAME}" || echo "Failed to delete cluster completely"
+          echo "Cleanup completed"
