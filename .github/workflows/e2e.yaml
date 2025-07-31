@@ -27,35 +27,9 @@ env:
   KUBECONFIG: ${{ github.workspace }}/kind-kubeconfig
 
 jobs:
-  unit-tests:
-    name: Unit Tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Java ${{ env.JAVA_VERSION }}
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: ${{ env.JAVA_VERSION }}
-          cache: maven
-
-      - name: Run unit tests
-        run: mvn -B -ntp test -Dtest="*E2ETest*" -Djava.awt.headless=true jacoco:report
-
-      - name: Upload unit test results to Codecov
-        if: ${{ !cancelled() }}
-        uses: codecov/test-results-action@v1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          flags: unit-tests
-          files: target/surefire-reports/TEST-*.xml
-
   e2e-tests:
     name: E2E Tests
     runs-on: ubuntu-latest
-    needs: unit-tests
     timeout-minutes: 45  
 
     steps:
@@ -147,6 +121,14 @@ jobs:
           kubectl get pods -n tekton-pipelines
           echo "Starting E2E tests..."
           mvn -B -ntp test -Dtest="*E2ETest*" -Djava.awt.headless=true jacoco:report
+
+      - name: Upload E2E coverage to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: e2e-tests
+          files: target/surefire-reports/TEST-*.xml
 
       - name: Upload E2E Test Reports
         if: always()

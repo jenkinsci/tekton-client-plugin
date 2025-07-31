@@ -87,6 +87,10 @@ jobs:
       run: mvn cobertura:cobertura
       continue-on-error: true
 
+    - name: Generate JaCoCo coverage report
+      run: mvn jacoco:report
+      continue-on-error: true
+
     - name: Upload test results
       uses: actions/upload-artifact@v4
       if: always()
@@ -96,4 +100,13 @@ jobs:
           target/surefire-reports/
           target/failsafe-reports/
           target/site/cobertura/
+          target/site/jacoco/
         retention-days: 7
+
+    - name: Upload coverage to Codecov
+      if: ${{ !cancelled() }}
+      uses: codecov/test-results-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        flags: unit-tests
+        files: target/surefire-reports/TEST-*.xml
