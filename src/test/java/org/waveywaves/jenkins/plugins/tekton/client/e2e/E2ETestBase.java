@@ -53,6 +53,10 @@ public abstract class E2ETestBase {
         LOGGER.info("  GITHUB_ACTIONS: " + System.getenv("GITHUB_ACTIONS"));
         LOGGER.info("  KUBECONFIG: " + System.getenv("KUBECONFIG"));
         LOGGER.info("  CI: " + System.getenv("CI"));
+        LOGGER.info("  JENKINS_URL: " + System.getenv("JENKINS_URL"));
+        LOGGER.info("  BUILD_ID: " + System.getenv("BUILD_ID"));
+        LOGGER.info("  WORKSPACE: " + System.getenv("WORKSPACE"));
+        LOGGER.info("  SKIP_E2E_TESTS: " + System.getenv("SKIP_E2E_TESTS"));
 
         // Detect if running in GitHub Actions with pre-setup
         if (isGitHubActionsWithPreSetup()) {
@@ -63,6 +67,10 @@ public abstract class E2ETestBase {
             // Still try to use GitHub Actions setup rather than local setup
             LOGGER.info("GitHub Actions detected but cluster accessibility check failed. Trying GitHub Actions setup anyway...");
             setupForGitHubActions();
+        } else if (isJenkinsCIEnvironment()) {
+            // Handle Jenkins CI environment
+            LOGGER.info("Detected Jenkins CI environment");
+            setupForJenkinsCI();
         } else {
             LOGGER.info("Setting up E2E environment from scratch");
             setupFromScratch();
@@ -112,6 +120,65 @@ public abstract class E2ETestBase {
 
         LOGGER.info("Not in GitHub Actions environment or missing KUBECONFIG");
         return false;
+    }
+
+    private boolean isJenkinsCIEnvironment() {
+        boolean isCI = "true".equals(System.getenv("CI"));
+        boolean hasBuildId = System.getenv("BUILD_ID") != null;
+        boolean hasWorkspace = System.getenv("WORKSPACE") != null;
+        boolean isGitHubActions = "true".equals(System.getenv("GITHUB_ACTIONS"));
+
+        LOGGER.info("Jenkins CI detection:");
+        LOGGER.info("  isCI: " + isCI);
+        LOGGER.info("  hasBuildId: " + hasBuildId);
+        LOGGER.info("  hasWorkspace: " + hasWorkspace);
+        LOGGER.info("  isGitHubActions: " + isGitHubActions);
+
+        // Jenkins CI environment: CI=true, has BUILD_ID, has WORKSPACE, but not GitHub Actions
+        return isCI && hasBuildId && hasWorkspace && !isGitHubActions;
+    }
+
+    private void setupForJenkinsCI() throws Exception {
+        LOGGER.info("Setting up for Jenkins CI environment");
+        
+        // Check if E2E tests should be skipped
+        String skipE2E = System.getenv("SKIP_E2E_TESTS");
+        if ("true".equals(skipE2E)) {
+            LOGGER.info("E2E tests are disabled via SKIP_E2E_TESTS environment variable");
+            throw new RuntimeException("E2E tests are disabled. Set SKIP_E2E_TESTS=false to enable them.");
+        }
+        
+        // In Jenkins CI, we need to check if we have access to a Kubernetes cluster
+        // This could be a pre-configured cluster or we might need to skip E2E tests
+        
+        // Check if kubectl is available
+        if (!isCommandAvailable("kubectl")) {
+            LOGGER.warning("kubectl not available in Jenkins CI environment");
+            LOGGER.info("To skip E2E tests, set SKIP_E2E_TESTS=true");
+            throw new RuntimeException("E2E tests require kubectl in Jenkins CI environment. Please ensure kubectl is available or set SKIP_E2E_TESTS=true to skip E2E tests.");
+        }
+        
+        // Try to use default kubeconfig
+        try {
+            Config config = new ConfigBuilder().build();
+            kubernetesClient = new DefaultKubernetesClient(config);
+            tektonClient = new DefaultTektonClient(config);
+            
+            // Test connectivity
+            kubernetesClient.namespaces().list();
+            LOGGER.info("Successfully connected to Kubernetes cluster in Jenkins CI");
+            
+            // Initialize TektonUtils
+            TektonUtils.initializeKubeClients(config);
+            
+            // Configure Jenkins global configuration
+            configureJenkinsGlobal();
+            
+        } catch (Exception e) {
+            LOGGER.severe("Failed to connect to Kubernetes cluster in Jenkins CI: " + e.getMessage());
+            LOGGER.info("To skip E2E tests, set SKIP_E2E_TESTS=true");
+            throw new RuntimeException("E2E tests require access to a Kubernetes cluster in Jenkins CI environment. Please ensure cluster access is configured or set SKIP_E2E_TESTS=true to skip E2E tests.", e);
+        }
     }
 
     private void setupForGitHubActions() throws Exception {

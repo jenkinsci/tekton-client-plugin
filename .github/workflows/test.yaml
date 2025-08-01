@@ -78,7 +78,7 @@ jobs:
       run: mvn compile -P download-binaries -DskipTests
 
     - name: Run unit tests
-      run: mvn test
+      run: mvn test -Dtest="!*E2ETest*"
 
     - name: Run integration tests
       run: mvn verify -DskipUnitTests

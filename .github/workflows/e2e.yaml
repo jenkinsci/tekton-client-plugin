@@ -27,9 +27,35 @@ env:
   KUBECONFIG: ${{ github.workspace }}/kind-kubeconfig
 
 jobs:
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+
+      - name: Run unit tests
+        run: mvn -B -ntp test -Dtest="!*E2ETest*" -Djava.awt.headless=true jacoco:report
+
+      - name: Upload unit test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: unit-tests
+          files: target/surefire-reports/TEST-*.xml
+
   e2e-tests:
     name: E2E Tests
     runs-on: ubuntu-latest
+    needs: unit-tests
     timeout-minutes: 45  
 
     steps:
@@ -108,25 +134,41 @@ jobs:
       - name: Build Plugin (skip tests)
         run: mvn -B -ntp clean compile -DskipTests -Djava.awt.headless=true
 
+      - name: Verify Environment Setup
+        run: |
+          echo "=== ENVIRONMENT VERIFICATION ==="
+          echo "GITHUB_ACTIONS: ${GITHUB_ACTIONS}"
+          echo "CI: ${CI}"
+          echo "KUBECONFIG: ${KUBECONFIG}"
+          echo "KIND_CLUSTER_NAME: ${KIND_CLUSTER_NAME}"
+          echo ""
+          echo "=== TOOL VERIFICATION ==="
+          echo "Kind version:"
+          kind --version
+          echo "kubectl version:"
+          kubectl version --client
+          echo "Java version:"
+          java -version
+          echo ""
+          echo "=== CLUSTER VERIFICATION ==="
+          echo "Current context:"
+          kubectl config current-context
+          echo "Cluster nodes:"
+          kubectl get nodes
+          echo "Tekton pods:"
+          kubectl get pods -n tekton-pipelines
+          echo "=== VERIFICATION COMPLETE ==="
+
       - name: Run E2E Tests
         env:
           KUBECONFIG: ${{ github.workspace }}/kind-kubeconfig
           CI: true
           GITHUB_ACTIONS: true
         run: |
-          echo "Using kubeconfig: ${KUBECONFIG}"
-          echo "Checking environment before tests..."
-          echo "GITHUB_ACTIONS: ${GITHUB_ACTIONS}"
-          echo "CI: ${CI}"
-          echo "KUBECONFIG: ${KUBECONFIG}"
-          echo "Checking if Kind is available..."
-          kind --version || echo "Kind not found in PATH"
-          which kind || echo "Kind not found with which"
-          echo "Checking cluster status before tests..."
-          kubectl config current-context
-          kubectl get nodes
-          kubectl get pods -n tekton-pipelines
-          echo "Starting E2E tests..."
+          echo "Starting E2E tests with environment:"
+          echo "  KUBECONFIG: ${KUBECONFIG}"
+          echo "  GITHUB_ACTIONS: ${GITHUB_ACTIONS}"
+          echo "  CI: ${CI}"
           mvn -B -ntp test -Dtest="*E2ETest*" -Djava.awt.headless=true jacoco:report
 
       - name: Upload E2E coverage to Codecov
