@@ -15,6 +15,7 @@ import com.sun.codemodel.JDefinedClass;
 import com.sun.codemodel.JPackage;
 import com.sun.codemodel.JClass;
 import com.sun.codemodel.JMod;
+import com.sun.codemodel.JMethod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,16 +30,9 @@ import java.util.HashMap;
 import java.util.stream.Stream;
 
 /**
- * Enhanced CRD Processor for Jenkins Plugin Integration.
- * 
- * This processor extends basic CRD → POJO generation with:
- * 1. Base class inheritance (extend BaseStep for Jenkins pipeline steps)
- * 2. Custom class naming for Jenkins steps  
- * 3. Type-safe API generation
- * 4. Jenkins-specific annotations
- * 
- * Flow:
- * CRD YAML → OpenAPI Schema → Enhanced POJOs + Jenkins Steps
+ * Enhanced CRD Processor that can generate POJOs extending from base classes.
+ * This is specifically designed for integration with Jenkins plugins like tekton-client-plugin.
+ * Generates classes like CreateRaw, ApplyTask, etc. that extend BaseStep.
  */
 public class EnhancedCrdProcessor {
     
@@ -46,75 +40,75 @@ public class EnhancedCrdProcessor {
     private final ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
     private final ObjectMapper jsonMapper = new ObjectMapper();
     
-    // Configuration Maps for Jenkins Integration
-    private final Map<String, String> baseClassMapping = new HashMap<>();      // CRD type → Base class
-    private final Map<String, String> baseClassImports = new HashMap<>();     // CRD type → Import statement  
-    private final Map<String, String> classNameMapping = new HashMap<>();     // CRD type → Jenkins step name
+    // Configuration for base class inheritance
+    private final Map<String, String> baseClassMapping = new HashMap<>();
+    private final Map<String, String> baseClassImports = new HashMap<>();
+    private final Map<String, String> classNameMapping = new HashMap<>();
     
     public EnhancedCrdProcessor() {
-        // Initialize default configurations
-        setupDefaultConfigurations();
+        // Default base class mappings for Jenkins plugin integration
+        setupDefaultBaseClassMappings();
+        setupDefaultClassNameMappings();
     }
     
     /**
-     * Setup default configurations for Jenkins plugin integration.
+     * Setup default base class mappings for Jenkins plugin integration.
      */
-    private void setupDefaultConfigurations() {
-        logger.debug("Setting up default Jenkins integration configurations");
+    private void setupDefaultBaseClassMappings() {
+        // Map CRD types to Jenkins base classes - using BaseStep instead of BaseTektonStep
+        baseClassMapping.put("tasks", "org.jenkinsci.plugins.workflow.steps.BaseStep");
+        baseClassMapping.put("pipelines", "org.jenkinsci.plugins.workflow.steps.BaseStep");
+        baseClassMapping.put("taskruns", "org.jenkinsci.plugins.workflow.steps.BaseStep");
+        baseClassMapping.put("pipelineruns", "org.jenkinsci.plugins.workflow.steps.BaseStep");
+        baseClassMapping.put("stepactions", "org.jenkinsci.plugins.workflow.steps.BaseStep");
         
-        // Default base class mappings - all extend BaseStep
-        String defaultBaseStep = "org.waveywaves.jenkins.plugins.tekton.client.build.BaseStep";
-        
-        baseClassMapping.put("tasks", defaultBaseStep);
-        baseClassMapping.put("pipelines", defaultBaseStep);
-        baseClassMapping.put("taskruns", defaultBaseStep);
-        baseClassMapping.put("pipelineruns", defaultBaseStep);
-        baseClassMapping.put("stepactions", defaultBaseStep);
-        baseClassMapping.put("customruns", defaultBaseStep);
-        
-        // Default import mappings
-        baseClassImports.put("tasks", defaultBaseStep);
-        baseClassImports.put("pipelines", defaultBaseStep);
-        baseClassImports.put("taskruns", defaultBaseStep);
-        baseClassImports.put("pipelineruns", defaultBaseStep);
-        baseClassImports.put("stepactions", defaultBaseStep);
-        baseClassImports.put("customruns", defaultBaseStep);
-        
-        // Default Jenkins step class names
-        classNameMapping.put("tasks", "CreateTaskTyped");
-        classNameMapping.put("pipelines", "CreatePipelineTyped");
-        classNameMapping.put("taskruns", "CreateTaskRunTyped");
-        classNameMapping.put("pipelineruns", "CreatePipelineRunTyped");
-        classNameMapping.put("stepactions", "CreateStepActionTyped");
-        classNameMapping.put("customruns", "CreateCustomRunTyped");
+        // Import statements for base classes
+        baseClassImports.put("tasks", "org.jenkinsci.plugins.workflow.steps.BaseStep");
+        baseClassImports.put("pipelines", "org.jenkinsci.plugins.workflow.steps.BaseStep");
+        baseClassImports.put("taskruns", "org.jenkinsci.plugins.workflow.steps.BaseStep");
+        baseClassImports.put("pipelineruns", "org.jenkinsci.plugins.workflow.steps.BaseStep");
+        baseClassImports.put("stepactions", "org.jenkinsci.plugins.workflow.steps.BaseStep");
     }
     
     /**
-     * Add custom base class mapping for specific CRD types.
+     * Setup default class name mappings for more specific step names.
+     */
+    private void setupDefaultClassNameMappings() {
+        // Map CRD types to specific step class names
+        classNameMapping.put("tasks", "CreateTask");
+        classNameMapping.put("pipelines", "CreatePipeline");
+        classNameMapping.put("taskruns", "CreateTaskRun");
+        classNameMapping.put("pipelineruns", "CreatePipelineRun");
+        classNameMapping.put("stepactions", "CreateStepAction");
+        classNameMapping.put("customtasks", "CreateCustomTask");
+        // classNameMapping.put("jenkinstasks", "CreateRaw");
+        // classNameMapping.put("simpletasks", "CreateSimpleTask");
+    }
+    
+    /**
+     * Add custom base class mapping.
      * 
      * @param crdType The CRD type (e.g., "tasks", "pipelines")
      * @param baseClass The fully qualified base class name
      * @param importStatement The import statement for the base class
      */
     public void addBaseClassMapping(String crdType, String baseClass, String importStatement) {
-        logger.debug("Adding base class mapping: {} → {}", crdType, baseClass);
         baseClassMapping.put(crdType, baseClass);
         baseClassImports.put(crdType, importStatement);
     }
     
     /**
-     * Add custom class name mapping for specific CRD types.
+     * Add custom class name mapping.
      * 
      * @param crdType The CRD type (e.g., "tasks", "pipelines")
-     * @param className The Jenkins step class name (e.g., "CreateTaskTyped")
+     * @param className The specific class name to use (e.g., "CreateRaw", "ApplyTask")
      */
     public void addClassNameMapping(String crdType, String className) {
-        logger.debug("Adding class name mapping: {} → {}", crdType, className);
         classNameMapping.put(crdType, className);
     }
     
     /**
-     * Main processing method - Process CRD directory with enhanced generation.
+     * Process CRD directory with enhanced generation capabilities.
      * 
      * @param crdDirectory Directory containing CRD YAML files
      * @param outputDirectory Output directory for generated Java classes
@@ -122,213 +116,303 @@ public class EnhancedCrdProcessor {
      * @param enableBaseClassInheritance Whether to enable base class inheritance
      * @throws IOException If processing fails
      */
-    public void processDirectory(Path crdDirectory, Path outputDirectory, String basePackage, 
-                                boolean enableBaseClassInheritance) throws IOException {
-        
-        logger.info("🚀 Starting Enhanced CRD Processing...");
-        logger.info("📁 CRD Directory: {}", crdDirectory);
-        logger.info("📁 Output Directory: {}", outputDirectory);
-        logger.info("📦 Base Package: {}", basePackage);
-        logger.info("🔧 Base Class Inheritance: {}", enableBaseClassInheritance);
+    public void processDirectory(Path crdDirectory, Path outputDirectory, String basePackage, boolean enableBaseClassInheritance) throws IOException {
+        logger.info("Processing CRD directory: {} with base class inheritance: {}", crdDirectory, enableBaseClassInheritance);
 
-        // Find all YAML files in CRD directory
         try (Stream<Path> files = Files.walk(crdDirectory)) {
             List<Path> yamlFiles = files
                 .filter(Files::isRegularFile)
-                .filter(path -> {
-                    String fileName = path.toString().toLowerCase();
-                    return fileName.endsWith(".yaml") || fileName.endsWith(".yml");
-                })
+                .filter(path -> path.toString().toLowerCase().endsWith(".yaml") || 
+                               path.toString().toLowerCase().endsWith(".yml"))
                 .toList();
 
-            logger.info("📄 Found {} CRD YAML files", yamlFiles.size());
+            logger.info("Found {} YAML files", yamlFiles.size());
 
-            // Process each CRD file
-            int processedCount = 0;
-            int errorCount = 0;
-            
             for (Path yamlFile : yamlFiles) {
                 try {
-                    logger.info("Processing: {}", yamlFile.getFileName());
-                    
                     processCrdFile(yamlFile, outputDirectory, basePackage, enableBaseClassInheritance);
-                    processedCount++;
-                    
-                    logger.info("Successfully processed: {}", yamlFile.getFileName());
-                    
                 } catch (Exception e) {
-                    errorCount++;
                     logger.error("Error processing file: {}", yamlFile, e);
                     // Continue processing other files
                 }
             }
-            
-            // Summary
-            logger.info("📊 Processing Summary:");
-            logger.info("   ✅ Successfully processed: {} files", processedCount);
-            logger.info("   ❌ Errors: {} files", errorCount);
-            logger.info("   📁 Generated code location: {}", outputDirectory);
-            
-            if (errorCount == 0) {
-                logger.info("🎉 All CRD files processed successfully!");
-            } else {
-                logger.warn("⚠️  {} files had errors, but {} files processed successfully", errorCount, processedCount);
-            }
         }
     }
     
     /**
-     * Process a single CRD file and generate Java classes.
+     * Process a single CRD file.
      */
-    private void processCrdFile(Path yamlFile, Path outputDirectory, String basePackage, 
-                               boolean enableBaseClassInheritance) throws IOException {
+    private void processCrdFile(Path crdFile, Path outputDirectory, String basePackage, boolean enableBaseClassInheritance) throws IOException {
+        logger.info("Processing CRD file: {}", crdFile.getFileName());
+
+        // Parse the YAML file
+        JsonNode crdRoot = yamlMapper.readTree(crdFile.toFile());
         
-        // 1. Parse YAML file
-        JsonNode crdNode = yamlMapper.readTree(yamlFile.toFile());
-        
-        // 2. Extract CRD metadata
-        String kind = extractKind(crdNode);
-        String version = extractVersion(crdNode);
-        String crdType = kind.toLowerCase();
-        
-        logger.debug("📋 CRD Details - Kind: {}, Version: {}, Type: {}", kind, version, crdType);
-        
-        // 3. Extract OpenAPI schema
-        JsonNode schema = extractOpenApiSchema(crdNode);
-        if (schema == null) {
-            logger.warn("⚠️  No OpenAPI schema found in: {}", yamlFile.getFileName());
+        // Validate this is a CRD
+        if (!isCrd(crdRoot)) {
+            logger.warn("File {} is not a valid CRD, skipping", crdFile.getFileName());
             return;
         }
-        
-        // 4. Generate package structure
-        String targetPackage = basePackage + "." + crdType + "." + version;
-        logger.debug("📦 Target package: {}", targetPackage);
-        
-        // 5. Generate POJOs using jsonschema2pojo
-        generateJavaClasses(schema, outputDirectory, targetPackage, kind);
-        
-        // 6. Generate Jenkins Steps (if enabled)
-        if (enableBaseClassInheritance && classNameMapping.containsKey(crdType)) {
-            generateJenkinsStep(outputDirectory, basePackage, crdType, kind, version);
+
+        String crdName = extractCrdName(crdRoot);
+        logger.info("Processing CRD: {}", crdName);
+
+        // Extract all versions and their schemas
+        JsonNode versions = crdRoot.at("/spec/versions");
+        if (!versions.isArray()) {
+            logger.warn("No versions found in CRD {}, skipping", crdName);
+            return;
+        }
+
+        for (JsonNode version : versions) {
+            processVersion(crdName, version, outputDirectory, basePackage, enableBaseClassInheritance);
         }
     }
     
     /**
-     * Extract CRD kind from YAML.
+     * Process a specific version of a CRD.
      */
-    private String extractKind(JsonNode crdNode) {
-        JsonNode spec = crdNode.path("spec");
-        JsonNode names = spec.path("names");
-        return names.path("kind").asText("Unknown");
-    }
-    
-    /**
-     * Extract API version from CRD.
-     */
-    private String extractVersion(JsonNode crdNode) {
-        JsonNode spec = crdNode.path("spec");
-        JsonNode versions = spec.path("versions");
+    private void processVersion(String crdName, JsonNode version, Path outputDirectory, String basePackage, boolean enableBaseClassInheritance) {
+        String versionName = version.at("/name").asText();
+        JsonNode schema = version.at("/schema/openAPIV3Schema");
         
-        if (versions.isArray() && versions.size() > 0) {
-            // Get the first version (usually the latest)
-            return versions.get(0).path("name").asText("v1");
+        if (schema.isMissingNode()) {
+            logger.warn("No schema found for version {} of CRD {}", versionName, crdName);
+            return;
         }
-        
-        return "v1";
-    }
-    
-    /**
-     * Extract OpenAPI schema from CRD.
-     */
-    private JsonNode extractOpenApiSchema(JsonNode crdNode) {
-        JsonNode spec = crdNode.path("spec");
-        JsonNode versions = spec.path("versions");
-        
-        if (versions.isArray() && versions.size() > 0) {
-            JsonNode version = versions.get(0);
-            JsonNode schema = version.path("schema").path("openAPIV3Schema");
+
+        try {
+            logger.info("Generating classes for CRD {} version {} with base class inheritance: {}", 
+                       crdName, versionName, enableBaseClassInheritance);
             
-            if (!schema.isMissingNode()) {
-                return schema;
+            // Create package directory for this CRD and version
+            String packageName = String.format("%s.%s.%s", basePackage, sanitizePackageName(crdName), versionName);
+            
+            // Get the specific class name for this CRD type
+            String className = getClassNameForCrd(crdName);
+            
+            // Generate Java classes from the schema
+            if (enableBaseClassInheritance) {
+                generateJavaClassesWithInheritance(schema, outputDirectory, packageName, className, crdName);
+            } else {
+                generateJavaClasses(schema, outputDirectory, packageName, className);
             }
+            
+        } catch (Exception e) {
+            logger.error("Error generating classes for CRD {} version {}", crdName, versionName, e);
         }
-        
-        return null;
     }
     
     /**
-     * Generate Java POJOs using jsonschema2pojo library.
+     * Get the specific class name for a CRD type.
      */
-    private void generateJavaClasses(JsonNode schema, Path outputDirectory, String targetPackage, String rootClassName) throws IOException {
+    private String getClassNameForCrd(String crdName) {
+        String className = classNameMapping.get(crdName);
+        if (className != null) {
+            return className;
+        }
+        // Fallback to default naming if no specific mapping exists
+        return toPascalCase(crdName);
+    }
+    
+    /**
+     * Generate Java classes with base class inheritance.
+     */
+    private void generateJavaClassesWithInheritance(JsonNode schema, Path outputDirectory, String packageName, String className, String crdName) throws IOException {
+        // Convert JsonNode to JSON string for jsonschema2pojo
+        String schemaJson = jsonMapper.writeValueAsString(schema);
         
-        logger.debug("🏗️  Generating POJOs for package: {}", targetPackage);
-        
-        // Create code model
-        JCodeModel codeModel = new JCodeModel();
-        
-        // Configure generation
+        // Configure the code generator
         GenerationConfig config = new DefaultGenerationConfig() {
             @Override
             public boolean isGenerateBuilders() {
-                return true; // Enable builder pattern
+                return true;
             }
             
             @Override
             public boolean isUsePrimitives() {
-                return false; // Use wrapper classes
+                return false;
             }
             
             @Override
             public boolean isIncludeJsr303Annotations() {
-                return true; // Include validation annotations
+                return true;
             }
             
             @Override
-            public boolean isIncludeJsr305Annotations() {
-                return true; // Include nullability annotations
+            public String getTargetPackage() {
+                return packageName;
             }
         };
-        
-        // Create schema mapper
+
         SchemaMapper mapper = new SchemaMapper(
-            new RuleFactory(config, new Jackson2Annotator(config), new SchemaStore()), 
+            new RuleFactory(config, new Jackson2Annotator(config), new SchemaStore()),
             new SchemaGenerator()
         );
-        
-        // Generate classes
-        mapper.generate(codeModel, rootClassName, targetPackage, schema);
-        
-        // Write generated code to output directory
-        codeModel.build(outputDirectory.toFile());
-        
-        logger.debug("✅ POJOs generated successfully for: {}", rootClassName);
+
+        // Generate the Java classes
+        File outputDir = outputDirectory.toFile();
+        try {
+            JCodeModel codeModel = new JCodeModel();
+            mapper.generate(
+                codeModel,
+                className,
+                packageName,
+                schemaJson
+            );
+            
+            // Post-process to add base class inheritance
+            postProcessForInheritance(codeModel, packageName, className, crdName);
+            
+            codeModel.build(outputDir);
+        } catch (Exception e) {
+            logger.error("Failed to generate classes for {}: {}", className, e.getMessage());
+            throw new IOException("Code generation failed", e);
+        }
+
+        logger.info("Generated Java classes with inheritance in package: {}", packageName);
     }
     
     /**
-     * Generate Jenkins pipeline step that extends BaseStep.
+     * Post-process generated classes to add base class inheritance.
      */
-    private void generateJenkinsStep(Path outputDirectory, String basePackage, String crdType, 
-                                   String kind, String version) throws IOException {
+    private void postProcessForInheritance(JCodeModel codeModel, String packageName, String className, String crdName) {
+        // Get the base class for this CRD type
+        String baseClass = baseClassMapping.get(crdName);
+        String baseClassImport = baseClassImports.get(crdName);
         
-        String stepClassName = classNameMapping.get(crdType);
-        String baseClass = baseClassMapping.get(crdType);
-        
-        if (stepClassName == null || baseClass == null) {
-            logger.debug("⏭️  Skipping Jenkins step generation for: {} (no mapping configured)", crdType);
+        if (baseClass == null) {
+            logger.warn("No base class mapping found for CRD type: {}", crdName);
             return;
         }
         
-        logger.debug("🔧 Generating Jenkins step: {} extends {}", stepClassName, baseClass);
+        // Find the generated class
+        JPackage pkg = codeModel._package(packageName);
+        JDefinedClass generatedClass = pkg._getClass(className);
         
-        // For now, we'll log the intent - full Jenkins step generation would require
-        // more complex code generation with Jenkins annotations, UI forms, etc.
-        logger.info("📝 Jenkins Step Planned: {} for {} (extends {})", stepClassName, kind, baseClass);
+        if (generatedClass == null) {
+            logger.warn("Generated class not found: {}", className);
+            return;
+        }
         
-        // TODO: Implement full Jenkins step generation with:
-        // - @DataBoundConstructor
-        // - @Symbol annotation
-        // - Jenkins UI form (config.jelly)
-        // - Descriptor class
-        // - Integration with generated POJOs
+        // Add base class import
+        JClass baseClassRef = codeModel.directClass(baseClass);
+        generatedClass._extends(baseClassRef);
+        
+        // Add import statement
+        generatedClass.owner().directClass(baseClassImport);
+        
+        // Add Jenkins-specific annotations and methods
+        addJenkinsSpecificFeatures(generatedClass, crdName);
+        
+        logger.info("Added inheritance from {} to class {}", baseClass, className);
     }
-}
+    
+    /**
+     * Add Jenkins-specific features to the generated class.
+     */
+    private void addJenkinsSpecificFeatures(JDefinedClass generatedClass, String crdName) {
+        try {
+            JMethod constructor = generatedClass.constructor(JMod.PUBLIC);
+            constructor.annotate(generatedClass.owner().ref("org.kohsuke.stapler.DataBoundConstructor"));
+            constructor.body().invoke("super");
+                
+        } catch (Exception e) {
+            logger.warn("Could not add Jenkins-specific features: {}", e.getMessage());
+        }
+    }
+    
+    /**
+     * Generate Java classes without inheritance (original method).
+     */
+    private void generateJavaClasses(JsonNode schema, Path outputDirectory, String packageName, String className) throws IOException {
+        // Convert JsonNode to JSON string for jsonschema2pojo
+        String schemaJson = jsonMapper.writeValueAsString(schema);
+        
+        // Configure the code generator
+        GenerationConfig config = new DefaultGenerationConfig() {
+            @Override
+            public boolean isGenerateBuilders() {
+                return true;
+            }
+            
+            @Override
+            public boolean isUsePrimitives() {
+                return false;
+            }
+            
+            @Override
+            public boolean isIncludeJsr303Annotations() {
+                return true;
+            }
+            
+            @Override
+            public String getTargetPackage() {
+                return packageName;
+            }
+        };
+
+        SchemaMapper mapper = new SchemaMapper(
+            new RuleFactory(config, new Jackson2Annotator(config), new SchemaStore()),
+            new SchemaGenerator()
+        );
+
+        // Generate the Java classes
+        File outputDir = outputDirectory.toFile();
+        try {
+            JCodeModel codeModel = new JCodeModel();
+            mapper.generate(
+                codeModel,
+                className,
+                packageName,
+                schemaJson
+            );
+            codeModel.build(outputDir);
+        } catch (Exception e) {
+            logger.error("Failed to generate classes for {}: {}", className, e.getMessage());
+            throw new IOException("Code generation failed", e);
+        }
+
+        logger.info("Generated Java classes in package: {}", packageName);
+    }
+
+    private boolean isCrd(JsonNode root) {
+        return "CustomResourceDefinition".equals(root.at("/kind").asText()) &&
+               root.at("/apiVersion").asText().startsWith("apiextensions.k8s.io/");
+    }
+
+    private String extractCrdName(JsonNode crd) {
+        String fullName = crd.at("/metadata/name").asText();
+        // Extract the resource name (e.g., "pipelines" from "pipelines.tekton.dev")
+        return fullName.split("\\.")[0];
+    }
+
+    private String sanitizePackageName(String name) {
+        // Convert to lowercase and replace non-alphanumeric characters with underscores
+        return name.toLowerCase().replaceAll("[^a-z0-9]", "_");
+    }
+
+    private String toPascalCase(String input) {
+        if (input == null || input.isEmpty()) {
+            return input;
+        }
+        
+        StringBuilder result = new StringBuilder();
+        boolean capitalizeNext = true;
+        
+        for (char c : input.toCharArray()) {
+            if (Character.isLetterOrDigit(c)) {
+                if (capitalizeNext) {
+                    result.append(Character.toUpperCase(c));
+                    capitalizeNext = false;
+                } else {
+                    result.append(Character.toLowerCase(c));
+                }
+            } else {
+                capitalizeNext = true;
+            }
+        }
+        
+        return result.toString();
+    }
+} 
