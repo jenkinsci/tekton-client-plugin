@@ -21,3 +21,7 @@ jenkins.war
 
 pom.xml.releaseBackup
 release.properties
+
+# Generated Tekton POJOs
+target/generated-sources/tekton/
+src/main/java/org/waveywaves/jenkins/plugins/tekton/generated/
