@@ -37,7 +37,7 @@
         <jenkins.version>${jenkins.baseline}.3</jenkins.version>
         <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
         <pipeline-model-definition.version>2.2255.v56a_15e805f12</pipeline-model-definition.version>
-        <jenkins-test-harness.version>2462.v7cd38b_7a_361b_</jenkins-test-harness.version>
+        <jenkins-test-harness.version>2478.v665cca_da_f20c</jenkins-test-harness.version>
         <kubernetes-server-mock.version>5.4.1</kubernetes-server-mock.version>
         <tekton-client.version>5.4.1</tekton-client.version>
         <maven-surefire-plugin.version>3.5.3</maven-surefire-plugin.version>
