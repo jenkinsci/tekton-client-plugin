@@ -1,0 +1,18 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+    <f:entry title="Pipeline Name" field="name">
+        <f:textbox />
+    </f:entry>
+    <f:entry title="Namespace" field="namespace">
+        <f:textbox />
+    </f:entry>
+    <f:entry title="Parameters" field="params">
+        <f:repeatableProperty field="params" />
+    </f:entry>
+    <f:entry title="Pipeline Reference" field="pipelineRef">
+        <f:textbox />
+    </f:entry>
+    <f:entry title="Cluster Name" field="clusterName">
+        <f:select name="clusterName"></f:select>
+    </f:entry>
+</j:jelly>

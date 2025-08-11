@@ -21,9 +21,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -61,6 +61,7 @@ public class EnhancedCrdProcessor {
         baseClassMapping.put("taskruns", "org.jenkinsci.plugins.workflow.steps.BaseStep");
         baseClassMapping.put("pipelineruns", "org.jenkinsci.plugins.workflow.steps.BaseStep");
         baseClassMapping.put("stepactions", "org.jenkinsci.plugins.workflow.steps.BaseStep");
+        baseClassMapping.put("customruns", "org.jenkinsci.plugins.workflow.steps.BaseStep");
         
         // Import statements for base classes
         baseClassImports.put("tasks", "org.jenkinsci.plugins.workflow.steps.BaseStep");
@@ -68,6 +69,8 @@ public class EnhancedCrdProcessor {
         baseClassImports.put("taskruns", "org.jenkinsci.plugins.workflow.steps.BaseStep");
         baseClassImports.put("pipelineruns", "org.jenkinsci.plugins.workflow.steps.BaseStep");
         baseClassImports.put("stepactions", "org.jenkinsci.plugins.workflow.steps.BaseStep");
+        baseClassImports.put("customruns", "org.jenkinsci.plugins.workflow.steps.BaseStep");
+
     }
     
     /**
@@ -81,8 +84,7 @@ public class EnhancedCrdProcessor {
         classNameMapping.put("pipelineruns", "CreatePipelineRun");
         classNameMapping.put("stepactions", "CreateStepAction");
         classNameMapping.put("customtasks", "CreateCustomTask");
-        // classNameMapping.put("jenkinstasks", "CreateRaw");
-        // classNameMapping.put("simpletasks", "CreateSimpleTask");
+        classNameMapping.put("customruns", "CreateCustomRun");
     }
     
     /**
@@ -133,7 +135,6 @@ public class EnhancedCrdProcessor {
                     processCrdFile(yamlFile, outputDirectory, basePackage, enableBaseClassInheritance);
                 } catch (Exception e) {
                     logger.error("Error processing file: {}", yamlFile, e);
-                    // Continue processing other files
                 }
             }
         }
@@ -265,6 +266,10 @@ public class EnhancedCrdProcessor {
             postProcessForInheritance(codeModel, packageName, className, crdName);
             
             codeModel.build(outputDir);
+            
+            // Generate Jelly config file for Jenkins UI
+            generateJellyConfigFile(outputDirectory, packageName, className, crdName);
+            
         } catch (Exception e) {
             logger.error("Failed to generate classes for {}: {}", className, e.getMessage());
             throw new IOException("Code generation failed", e);
@@ -414,5 +419,120 @@ public class EnhancedCrdProcessor {
         }
         
         return result.toString();
+    }
+    
+    /**
+     * Generate Jelly config file for Jenkins UI form.
+     * Creates a basic Jelly form with common Tekton fields.
+     */
+    private void generateJellyConfigFile(Path outputDirectory, String packageName, String className, String crdName) {
+        try {
+            logger.info("Generating Jelly config file for class: {} in package: {}", className, packageName);
+            
+            // Convert package to resource path
+            String resourcePath = packageName.replace('.', '/');
+            
+            // Calculate the Jenkins resources directory
+            // From: target/generated-sources/tekton/org/waveywaves/jenkins/plugins/tekton/generated/tasks/v1
+            // To:   src/main/resources/org/waveywaves/jenkins/plugins/tekton/generated/tasks/v1/CreateTaskTyped
+            Path projectRoot = outputDirectory.getParent().getParent().getParent(); // go up from target/generated-sources/tekton to project root
+            Path resourcesDir = projectRoot.resolve("src/main/resources").resolve(resourcePath).resolve(className);
+
+            
+            // Create the directory structure
+            Files.createDirectories(resourcesDir);
+            
+            // Create config.jelly file
+            Path jellyFile = resourcesDir.resolve("config.jelly");
+            
+            // Generate Jelly content based on CRD type
+            String jellyContent = generateJellyContent(crdName, className);
+            
+            // Write the Jelly file
+            try (PrintWriter writer = new PrintWriter(Files.newBufferedWriter(jellyFile))) {
+                writer.write(jellyContent);
+            }
+            
+            logger.info("Generated Jelly config file: {}", jellyFile);
+            
+        } catch (IOException e) {
+            logger.warn("Failed to generate Jelly config file for {}: {}", className, e.getMessage());
+        }
+    }
+    
+    /**
+     * Generate Jelly content based on CRD type and common Tekton patterns.
+     */
+    private String generateJellyContent(String crdName, String className) {
+        StringBuilder jelly = new StringBuilder();
+        
+        jelly.append("<?jelly escape-by-default='true'?>\n");
+        jelly.append("<j:jelly xmlns:j=\"jelly:core\" xmlns:st=\"jelly:stapler\" xmlns:d=\"jelly:define\" ");
+        jelly.append("xmlns:l=\"/lib/layout\" xmlns:t=\"/lib/hudson\" xmlns:f=\"/lib/form\">\n");
+        
+        // Add common Tekton fields based on CRD type
+        if (crdName != null) {
+            if (crdName.contains("task")) {
+                addTaskFields(jelly);
+            } else if (crdName.contains("pipeline")) {
+                addPipelineFields(jelly);
+            } else {
+                addCommonFields(jelly);
+            }
+        } else {
+            addCommonFields(jelly);
+        }
+        
+        jelly.append("</j:jelly>\n");
+        
+        return jelly.toString();
+    }
+    
+    private void addTaskFields(StringBuilder jelly) {
+        jelly.append("    <f:entry title=\"Task Name\" field=\"name\">\n");
+        jelly.append("        <f:textbox />\n");
+        jelly.append("    </f:entry>\n");
+        jelly.append("    <f:entry title=\"Namespace\" field=\"namespace\">\n");
+        jelly.append("        <f:textbox />\n");
+        jelly.append("    </f:entry>\n");
+        jelly.append("    <f:entry title=\"Parameters\" field=\"params\">\n");
+        jelly.append("        <f:repeatableProperty field=\"params\" />\n");
+        jelly.append("    </f:entry>\n");
+        jelly.append("    <f:entry title=\"Workspaces\" field=\"workspaces\">\n");
+        jelly.append("        <f:repeatableProperty field=\"workspaces\" />\n");
+        jelly.append("    </f:entry>\n");
+        addClusterField(jelly);
+    }
+    
+    private void addPipelineFields(StringBuilder jelly) {
+        jelly.append("    <f:entry title=\"Pipeline Name\" field=\"name\">\n");
+        jelly.append("        <f:textbox />\n");
+        jelly.append("    </f:entry>\n");
+        jelly.append("    <f:entry title=\"Namespace\" field=\"namespace\">\n");
+        jelly.append("        <f:textbox />\n");
+        jelly.append("    </f:entry>\n");
+        jelly.append("    <f:entry title=\"Parameters\" field=\"params\">\n");
+        jelly.append("        <f:repeatableProperty field=\"params\" />\n");
+        jelly.append("    </f:entry>\n");
+        jelly.append("    <f:entry title=\"Pipeline Reference\" field=\"pipelineRef\">\n");
+        jelly.append("        <f:textbox />\n");
+        jelly.append("    </f:entry>\n");
+        addClusterField(jelly);
+    }
+    
+    private void addCommonFields(StringBuilder jelly) {
+        jelly.append("    <f:entry title=\"Name\" field=\"name\">\n");
+        jelly.append("        <f:textbox />\n");
+        jelly.append("    </f:entry>\n");
+        jelly.append("    <f:entry title=\"Namespace\" field=\"namespace\">\n");
+        jelly.append("        <f:textbox />\n");
+        jelly.append("    </f:entry>\n");
+        addClusterField(jelly);
+    }
+    
+    private void addClusterField(StringBuilder jelly) {
+        jelly.append("    <f:entry title=\"Cluster Name\" field=\"clusterName\">\n");
+        jelly.append("        <f:select name=\"clusterName\"></f:select>\n");
+        jelly.append("    </f:entry>\n");
     }
 } 
