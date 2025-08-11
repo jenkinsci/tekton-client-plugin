@@ -402,7 +402,7 @@
                         <executions>
                             <execution>
                                 <id>generate-tekton-pojos</id>
-                                <phase>generate-sources</phase>
+                                <phase>process-classes</phase>
                                 <goals>
                                     <goal>java</goal>
                                 </goals>
