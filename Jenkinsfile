@@ -5,6 +5,7 @@
 buildPlugin(
   forkCount: '1C', // run this number of tests in parallel for faster feedback.  If the number terminates with a 'C', the value will be multiplied by the number of available CPU cores
   useContainerAgent: true, // Set to `false` if you need to use Docker for containerized tests
+  testsExclude: '*E2ETest*', // Exclude E2E tests - they only run in GitHub Actions with Kind cluster
   configurations: [
     [platform: 'linux', jdk: 21],
 ])
