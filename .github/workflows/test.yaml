@@ -78,13 +78,17 @@ jobs:
       run: mvn compile -P download-binaries -DskipTests
 
     - name: Run unit tests
-      run: mvn test
+      run: mvn test -Dtest="!*E2ETest*"
 
     - name: Run integration tests
       run: mvn verify -DskipUnitTests
 
     - name: Generate test coverage report
       run: mvn cobertura:cobertura
+      continue-on-error: true
+
+    - name: Generate JaCoCo coverage report
+      run: mvn jacoco:report
       continue-on-error: true
 
     - name: Upload test results
@@ -96,4 +100,13 @@ jobs:
           target/surefire-reports/
           target/failsafe-reports/
           target/site/cobertura/
+          target/site/jacoco/
         retention-days: 7
+
+    - name: Upload coverage to Codecov
+      if: ${{ !cancelled() }}
+      uses: codecov/test-results-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        flags: unit-tests
+        files: target/surefire-reports/TEST-*.xml
