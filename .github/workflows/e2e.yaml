@@ -42,7 +42,7 @@ jobs:
           cache: maven
 
       - name: Run unit tests
-        run: mvn -B -ntp test -Dtest="*E2ETest*" -Djava.awt.headless=true jacoco:report
+        run: mvn -B -ntp test -Djava.awt.headless=true jacoco:report
 
       - name: Upload unit test results to Codecov
         if: ${{ !cancelled() }}
