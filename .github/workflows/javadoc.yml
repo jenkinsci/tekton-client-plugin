@@ -8,7 +8,7 @@ jobs:
   javadoc:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4.1.1
+      - uses: actions/checkout@v5
 
       - name: Setup Java
         uses: actions/setup-java@v4.7.1
