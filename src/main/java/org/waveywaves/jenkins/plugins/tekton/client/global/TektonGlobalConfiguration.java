@@ -38,7 +38,7 @@ public class TektonGlobalConfiguration extends GlobalConfiguration {
 
     @Override
     public boolean configure(final StaplerRequest2 req, final JSONObject formData) {
-        Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
+        Jenkins.get().checkPermission(Jenkins.ADMINISTER);
         setClusterConfigs(req.bindJSONToList(ClusterConfig.class, formData.get("clusterConfigs")));
         configChange();
         save();

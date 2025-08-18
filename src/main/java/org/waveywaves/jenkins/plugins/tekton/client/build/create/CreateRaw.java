@@ -43,7 +43,7 @@ import java.net.MalformedURLException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
-import java.util.Arrays;
+// Removed unused import
 import java.util.Optional;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
@@ -514,7 +514,7 @@ public class CreateRaw extends BaseStep {
                 // if the workspace is remote then lets make a local copy
                 if (workspace.isRemote()) {
                     // lets switch to a temp dir for the local copy
-                    dir = Files.createTempDir();
+                    dir = java.nio.file.Files.createTempDirectory("tekton-").toFile();
                     inputFile = new File(dir, path);
 
                     LOGGER.info("Workspace is remote so lets copy the file " + path);
@@ -577,7 +577,7 @@ public class CreateRaw extends BaseStep {
      * @throws Exception
      */
     private byte[] processTektonCatalog(EnvVars envVars, File dir, File file, byte[] data) throws Exception {
-        boolean deleteInputFile = false;
+        // boolean deleteInputFile = false; // Unused variable
         if (file == null) {
             // the following fails when not running in the controller so lets not use a temp file for now
             //file = File.createTempFile("tekton-input-", ".yaml", dir);
