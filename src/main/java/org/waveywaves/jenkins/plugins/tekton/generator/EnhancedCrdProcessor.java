@@ -28,41 +28,44 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.stream.Stream;
+import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
  * Enhanced CRD Processor that can generate POJOs extending from base classes.
- * This is specifically designed for integration with Jenkins plugins like tekton-client-plugin.
+ * This is specifically designed for integration with Jenkins plugins like
+ * tekton-client-plugin.
  * Generates classes like CreateRaw, ApplyTask, etc. that extend BaseStep.
  */
 public class EnhancedCrdProcessor {
-    
+
     private static final Logger logger = LoggerFactory.getLogger(EnhancedCrdProcessor.class);
     private final ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
     private final ObjectMapper jsonMapper = new ObjectMapper();
-    
+
     // Configuration for base class inheritance
     private final Map<String, String> baseClassMapping = new HashMap<>();
     private final Map<String, String> baseClassImports = new HashMap<>();
     private final Map<String, String> classNameMapping = new HashMap<>();
-    
+
     public EnhancedCrdProcessor() {
         // Default base class mappings for Jenkins plugin integration
         setupDefaultBaseClassMappings();
         setupDefaultClassNameMappings();
     }
-    
+
     /**
      * Setup default base class mappings for Jenkins plugin integration.
      */
     private void setupDefaultBaseClassMappings() {
-        // Map CRD types to Jenkins base classes - using BaseStep instead of BaseTektonStep
+        // Map CRD types to Jenkins base classes - using BaseStep instead of
+        // BaseTektonStep
         baseClassMapping.put("tasks", "org.jenkinsci.plugins.workflow.steps.BaseStep");
         baseClassMapping.put("pipelines", "org.jenkinsci.plugins.workflow.steps.BaseStep");
         baseClassMapping.put("taskruns", "org.jenkinsci.plugins.workflow.steps.BaseStep");
         baseClassMapping.put("pipelineruns", "org.jenkinsci.plugins.workflow.steps.BaseStep");
         baseClassMapping.put("stepactions", "org.jenkinsci.plugins.workflow.steps.BaseStep");
         baseClassMapping.put("customruns", "org.jenkinsci.plugins.workflow.steps.BaseStep");
-        
+
         // Import statements for base classes
         baseClassImports.put("tasks", "org.jenkinsci.plugins.workflow.steps.BaseStep");
         baseClassImports.put("pipelines", "org.jenkinsci.plugins.workflow.steps.BaseStep");
@@ -72,7 +75,7 @@ public class EnhancedCrdProcessor {
         baseClassImports.put("customruns", "org.jenkinsci.plugins.workflow.steps.BaseStep");
 
     }
-    
+
     /**
      * Setup default class name mappings for more specific step names.
      */
@@ -86,47 +89,55 @@ public class EnhancedCrdProcessor {
         classNameMapping.put("customtasks", "CreateCustomTask");
         classNameMapping.put("customruns", "CreateCustomRun");
     }
-    
+
     /**
      * Add custom base class mapping.
      * 
-     * @param crdType The CRD type (e.g., "tasks", "pipelines")
-     * @param baseClass The fully qualified base class name
+     * @param crdType         The CRD type (e.g., "tasks", "pipelines")
+     * @param baseClass       The fully qualified base class name
      * @param importStatement The import statement for the base class
      */
     public void addBaseClassMapping(String crdType, String baseClass, String importStatement) {
+        if (baseClassMapping.containsKey(crdType)) {
+            logger.info(
+                    "Overwriting existing base class mapping for CRD type '{}'. Previous value: '{}', new value: '{}'",
+                    crdType, baseClassMapping.get(crdType), baseClass);
+        }
         baseClassMapping.put(crdType, baseClass);
         baseClassImports.put(crdType, importStatement);
     }
-    
+
     /**
      * Add custom class name mapping.
      * 
-     * @param crdType The CRD type (e.g., "tasks", "pipelines")
-     * @param className The specific class name to use (e.g., "CreateRaw", "ApplyTask")
+     * @param crdType   The CRD type (e.g., "tasks", "pipelines")
+     * @param className The specific class name to use (e.g., "CreateRaw",
+     *                  "ApplyTask")
      */
     public void addClassNameMapping(String crdType, String className) {
         classNameMapping.put(crdType, className);
     }
-    
+
     /**
      * Process CRD directory with enhanced generation capabilities.
      * 
-     * @param crdDirectory Directory containing CRD YAML files
-     * @param outputDirectory Output directory for generated Java classes
-     * @param basePackage Base package name for generated classes
+     * @param crdDirectory               Directory containing CRD YAML files
+     * @param outputDirectory            Output directory for generated Java classes
+     * @param basePackage                Base package name for generated classes
      * @param enableBaseClassInheritance Whether to enable base class inheritance
      * @throws IOException If processing fails
      */
-    public void processDirectory(Path crdDirectory, Path outputDirectory, String basePackage, boolean enableBaseClassInheritance) throws IOException {
-        logger.info("Processing CRD directory: {} with base class inheritance: {}", crdDirectory, enableBaseClassInheritance);
+    public void processDirectory(Path crdDirectory, Path outputDirectory, String basePackage,
+            boolean enableBaseClassInheritance) throws IOException {
+        logger.info("Processing CRD directory: {} with base class inheritance: {}", crdDirectory,
+                enableBaseClassInheritance);
 
         try (Stream<Path> files = Files.walk(crdDirectory)) {
             List<Path> yamlFiles = files
-                .filter(Files::isRegularFile)
-                .filter(path -> path.toString().toLowerCase().endsWith(".yaml") || 
-                               path.toString().toLowerCase().endsWith(".yml"))
-                .toList();
+                    .filter(Files::isRegularFile)
+                    .filter(path -> path.toString().toLowerCase().endsWith(".yaml") ||
+                            path.toString().toLowerCase().endsWith(".yml"))
+                    .toList();
 
             logger.info("Found {} YAML files", yamlFiles.size());
 
@@ -135,20 +146,23 @@ public class EnhancedCrdProcessor {
                     processCrdFile(yamlFile, outputDirectory, basePackage, enableBaseClassInheritance);
                 } catch (Exception e) {
                     logger.error("Error processing file: {}", yamlFile, e);
+                    // Fail fast as suggested by @waveywaves
+                    throw new IOException("Failed to process CRD file: " + yamlFile, e);
                 }
             }
         }
     }
-    
+
     /**
      * Process a single CRD file.
      */
-    private void processCrdFile(Path crdFile, Path outputDirectory, String basePackage, boolean enableBaseClassInheritance) throws IOException {
+    private void processCrdFile(Path crdFile, Path outputDirectory, String basePackage,
+            boolean enableBaseClassInheritance) throws IOException {
         logger.info("Processing CRD file: {}", crdFile.getFileName());
 
         // Parse the YAML file
         JsonNode crdRoot = yamlMapper.readTree(crdFile.toFile());
-        
+
         // Validate this is a CRD
         if (!isCrd(crdRoot)) {
             logger.warn("File {} is not a valid CRD, skipping", crdFile.getFileName());
@@ -169,41 +183,42 @@ public class EnhancedCrdProcessor {
             processVersion(crdName, version, outputDirectory, basePackage, enableBaseClassInheritance);
         }
     }
-    
+
     /**
      * Process a specific version of a CRD.
      */
-    private void processVersion(String crdName, JsonNode version, Path outputDirectory, String basePackage, boolean enableBaseClassInheritance) {
+    private void processVersion(String crdName, JsonNode version, Path outputDirectory, String basePackage,
+            boolean enableBaseClassInheritance) {
         String versionName = version.at("/name").asText();
         JsonNode schema = version.at("/schema/openAPIV3Schema");
-        
+
         if (schema.isMissingNode()) {
             logger.warn("No schema found for version {} of CRD {}", versionName, crdName);
             return;
         }
 
         try {
-            logger.info("Generating classes for CRD {} version {} with base class inheritance: {}", 
-                       crdName, versionName, enableBaseClassInheritance);
-            
+            logger.info("Generating classes for CRD {} version {} with base class inheritance: {}",
+                    crdName, versionName, enableBaseClassInheritance);
+
             // Create package directory for this CRD and version
             String packageName = String.format("%s.%s.%s", basePackage, sanitizePackageName(crdName), versionName);
-            
+
             // Get the specific class name for this CRD type
             String className = getClassNameForCrd(crdName);
-            
+
             // Generate Java classes from the schema
             if (enableBaseClassInheritance) {
                 generateJavaClassesWithInheritance(schema, outputDirectory, packageName, className, crdName);
             } else {
                 generateJavaClasses(schema, outputDirectory, packageName, className);
             }
-            
+
         } catch (Exception e) {
             logger.error("Error generating classes for CRD {} version {}", crdName, versionName, e);
         }
     }
-    
+
     /**
      * Get the specific class name for a CRD type.
      */
@@ -215,31 +230,32 @@ public class EnhancedCrdProcessor {
         // Fallback to default naming if no specific mapping exists
         return toPascalCase(crdName);
     }
-    
+
     /**
      * Generate Java classes with base class inheritance.
      */
-    private void generateJavaClassesWithInheritance(JsonNode schema, Path outputDirectory, String packageName, String className, String crdName) throws IOException {
+    private void generateJavaClassesWithInheritance(JsonNode schema, Path outputDirectory, String packageName,
+            String className, String crdName) throws IOException {
         // Convert JsonNode to JSON string for jsonschema2pojo
         String schemaJson = jsonMapper.writeValueAsString(schema);
-        
+
         // Configure the code generator
         GenerationConfig config = new DefaultGenerationConfig() {
             @Override
             public boolean isGenerateBuilders() {
                 return true;
             }
-            
+
             @Override
             public boolean isUsePrimitives() {
                 return false;
             }
-            
+
             @Override
             public boolean isIncludeJsr303Annotations() {
                 return true;
             }
-            
+
             @Override
             public String getTargetPackage() {
                 return packageName;
@@ -247,29 +263,27 @@ public class EnhancedCrdProcessor {
         };
 
         SchemaMapper mapper = new SchemaMapper(
-            new RuleFactory(config, new Jackson2Annotator(config), new SchemaStore()),
-            new SchemaGenerator()
-        );
+                new RuleFactory(config, new Jackson2Annotator(config), new SchemaStore()),
+                new SchemaGenerator());
 
         // Generate the Java classes
         File outputDir = outputDirectory.toFile();
         try {
             JCodeModel codeModel = new JCodeModel();
             mapper.generate(
-                codeModel,
-                className,
-                packageName,
-                schemaJson
-            );
-            
+                    codeModel,
+                    className,
+                    packageName,
+                    schemaJson);
+
             // Post-process to add base class inheritance
             postProcessForInheritance(codeModel, packageName, className, crdName);
-            
+
             codeModel.build(outputDir);
-            
+
             // Generate Jelly config file for Jenkins UI
             generateJellyConfigFile(outputDirectory, packageName, className, crdName);
-            
+
         } catch (Exception e) {
             logger.error("Failed to generate classes for {}: {}", className, e.getMessage());
             throw new IOException("Code generation failed", e);
@@ -277,7 +291,7 @@ public class EnhancedCrdProcessor {
 
         logger.info("Generated Java classes with inheritance in package: {}", packageName);
     }
-    
+
     /**
      * Post-process generated classes to add base class inheritance.
      */
@@ -285,72 +299,74 @@ public class EnhancedCrdProcessor {
         // Get the base class for this CRD type
         String baseClass = baseClassMapping.get(crdName);
         String baseClassImport = baseClassImports.get(crdName);
-        
+
         if (baseClass == null) {
             logger.warn("No base class mapping found for CRD type: {}", crdName);
             return;
         }
-        
+
         // Find the generated class
         JPackage pkg = codeModel._package(packageName);
         JDefinedClass generatedClass = pkg._getClass(className);
-        
+
         if (generatedClass == null) {
             logger.warn("Generated class not found: {}", className);
             return;
         }
-        
+
         // Add base class import
         JClass baseClassRef = codeModel.directClass(baseClass);
         generatedClass._extends(baseClassRef);
-        
+
         // Add import statement
         generatedClass.owner().directClass(baseClassImport);
-        
+
         // Add Jenkins-specific annotations and methods
         addJenkinsSpecificFeatures(generatedClass, crdName);
-        
+
         logger.info("Added inheritance from {} to class {}", baseClass, className);
     }
-    
+
     /**
      * Add Jenkins-specific features to the generated class.
      */
-    private void addJenkinsSpecificFeatures(JDefinedClass generatedClass, String crdName) {
+
+     private void addJenkinsSpecificFeatures(JDefinedClass generatedClass, String crdName) {
         try {
             JMethod constructor = generatedClass.constructor(JMod.PUBLIC);
-            constructor.annotate(generatedClass.owner().ref("org.kohsuke.stapler.DataBoundConstructor"));
+            // Using string to avoid classpath issues during generation
+            constructor.annotate(generatedClass.owner().directClass("org.kohsuke.stapler.DataBoundConstructor"));
             constructor.body().invoke("super");
-                
         } catch (Exception e) {
             logger.warn("Could not add Jenkins-specific features: {}", e.getMessage());
         }
     }
-    
+
     /**
      * Generate Java classes without inheritance (original method).
      */
-    private void generateJavaClasses(JsonNode schema, Path outputDirectory, String packageName, String className) throws IOException {
+    private void generateJavaClasses(JsonNode schema, Path outputDirectory, String packageName, String className)
+            throws IOException {
         // Convert JsonNode to JSON string for jsonschema2pojo
         String schemaJson = jsonMapper.writeValueAsString(schema);
-        
+
         // Configure the code generator
         GenerationConfig config = new DefaultGenerationConfig() {
             @Override
             public boolean isGenerateBuilders() {
                 return true;
             }
-            
+
             @Override
             public boolean isUsePrimitives() {
                 return false;
             }
-            
+
             @Override
             public boolean isIncludeJsr303Annotations() {
                 return true;
             }
-            
+
             @Override
             public String getTargetPackage() {
                 return packageName;
@@ -358,20 +374,18 @@ public class EnhancedCrdProcessor {
         };
 
         SchemaMapper mapper = new SchemaMapper(
-            new RuleFactory(config, new Jackson2Annotator(config), new SchemaStore()),
-            new SchemaGenerator()
-        );
+                new RuleFactory(config, new Jackson2Annotator(config), new SchemaStore()),
+                new SchemaGenerator());
 
         // Generate the Java classes
         File outputDir = outputDirectory.toFile();
         try {
             JCodeModel codeModel = new JCodeModel();
             mapper.generate(
-                codeModel,
-                className,
-                packageName,
-                schemaJson
-            );
+                    codeModel,
+                    className,
+                    packageName,
+                    schemaJson);
             codeModel.build(outputDir);
         } catch (Exception e) {
             logger.error("Failed to generate classes for {}: {}", className, e.getMessage());
@@ -383,7 +397,7 @@ public class EnhancedCrdProcessor {
 
     private boolean isCrd(JsonNode root) {
         return "CustomResourceDefinition".equals(root.at("/kind").asText()) &&
-               root.at("/apiVersion").asText().startsWith("apiextensions.k8s.io/");
+                root.at("/apiVersion").asText().startsWith("apiextensions.k8s.io/");
     }
 
     private String extractCrdName(JsonNode crd) {
@@ -401,10 +415,10 @@ public class EnhancedCrdProcessor {
         if (input == null || input.isEmpty()) {
             return input;
         }
-        
+
         StringBuilder result = new StringBuilder();
         boolean capitalizeNext = true;
-        
+
         for (char c : input.toCharArray()) {
             if (Character.isLetterOrDigit(c)) {
                 if (capitalizeNext) {
@@ -417,10 +431,10 @@ public class EnhancedCrdProcessor {
                 capitalizeNext = true;
             }
         }
-        
+
         return result.toString();
     }
-    
+
     /**
      * Generate Jelly config file for Jenkins UI form.
      * Creates a basic Jelly form with common Tekton fields.
@@ -428,48 +442,50 @@ public class EnhancedCrdProcessor {
     private void generateJellyConfigFile(Path outputDirectory, String packageName, String className, String crdName) {
         try {
             logger.info("Generating Jelly config file for class: {} in package: {}", className, packageName);
-            
+
             // Convert package to resource path
             String resourcePath = packageName.replace('.', '/');
-            
-            // Calculate the Jenkins resources directory
-            // From: target/generated-sources/tekton/org/waveywaves/jenkins/plugins/tekton/generated/tasks/v1
-            // To:   src/main/resources/org/waveywaves/jenkins/plugins/tekton/generated/tasks/v1/CreateTaskTyped
-            Path projectRoot = outputDirectory.getParent().getParent().getParent(); // go up from target/generated-sources/tekton to project root
-            Path resourcesDir = projectRoot.resolve("src/main/resources").resolve(resourcePath).resolve(className);
 
-            
+            // Calculate the Jenkins resources directory in target (build-time generation)
+            Path projectRoot = outputDirectory.getParent().getParent().getParent(); // go up from
+                                                                                    // target/generated-sources/tekton
+                                                                                    // to project root
+            Path resourcesDir = projectRoot.resolve("target/generated-resources").resolve(resourcePath)
+                    .resolve(className);
+
             // Create the directory structure
             Files.createDirectories(resourcesDir);
-            
+
             // Create config.jelly file
             Path jellyFile = resourcesDir.resolve("config.jelly");
-            
+
             // Generate Jelly content based on CRD type
             String jellyContent = generateJellyContent(crdName, className);
-            
+
             // Write the Jelly file
             try (PrintWriter writer = new PrintWriter(Files.newBufferedWriter(jellyFile))) {
                 writer.write(jellyContent);
             }
-            
+
             logger.info("Generated Jelly config file: {}", jellyFile);
-            
+
         } catch (IOException e) {
-            logger.warn("Failed to generate Jelly config file for {}: {}", className, e.getMessage());
+            logger.error("Failed to generate Jelly config file for {}: {}", className, e.getMessage(), e);
+            // Fail fast instead of just warning
+            throw new RuntimeException("Jelly generation failed for " + className, e);
         }
     }
-    
+
     /**
      * Generate Jelly content based on CRD type and common Tekton patterns.
      */
     private String generateJellyContent(String crdName, String className) {
         StringBuilder jelly = new StringBuilder();
-        
+
         jelly.append("<?jelly escape-by-default='true'?>\n");
         jelly.append("<j:jelly xmlns:j=\"jelly:core\" xmlns:st=\"jelly:stapler\" xmlns:d=\"jelly:define\" ");
         jelly.append("xmlns:l=\"/lib/layout\" xmlns:t=\"/lib/hudson\" xmlns:f=\"/lib/form\">\n");
-        
+
         // Add common Tekton fields based on CRD type
         if (crdName != null) {
             if (crdName.contains("task")) {
@@ -482,12 +498,12 @@ public class EnhancedCrdProcessor {
         } else {
             addCommonFields(jelly);
         }
-        
+
         jelly.append("</j:jelly>\n");
-        
+
         return jelly.toString();
     }
-    
+
     private void addTaskFields(StringBuilder jelly) {
         jelly.append("    <f:entry title=\"Task Name\" field=\"name\">\n");
         jelly.append("        <f:textbox />\n");
@@ -503,7 +519,7 @@ public class EnhancedCrdProcessor {
         jelly.append("    </f:entry>\n");
         addClusterField(jelly);
     }
-    
+
     private void addPipelineFields(StringBuilder jelly) {
         jelly.append("    <f:entry title=\"Pipeline Name\" field=\"name\">\n");
         jelly.append("        <f:textbox />\n");
@@ -519,7 +535,7 @@ public class EnhancedCrdProcessor {
         jelly.append("    </f:entry>\n");
         addClusterField(jelly);
     }
-    
+
     private void addCommonFields(StringBuilder jelly) {
         jelly.append("    <f:entry title=\"Name\" field=\"name\">\n");
         jelly.append("        <f:textbox />\n");
@@ -529,10 +545,10 @@ public class EnhancedCrdProcessor {
         jelly.append("    </f:entry>\n");
         addClusterField(jelly);
     }
-    
+
     private void addClusterField(StringBuilder jelly) {
         jelly.append("    <f:entry title=\"Cluster Name\" field=\"clusterName\">\n");
         jelly.append("        <f:select name=\"clusterName\"></f:select>\n");
         jelly.append("    </f:entry>\n");
     }
-} 
+}

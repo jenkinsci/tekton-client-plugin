@@ -1,0 +1,166 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: complexpipelines.test.tekton.dev
+  labels:
+    app.kubernetes.io/instance: default
+spec:
+  group: test.tekton.dev
+  preserveUnknownFields: false
+  versions:
+  - name: v1beta1
+    served: true
+    storage: false
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              description:
+                type: string
+              tasks:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    taskRef:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        kind:
+                          type: string
+                          enum: ["Task", "ClusterTask"]
+                    params:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          value:
+                            type: string
+                    workspaces:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          workspace:
+                            type: string
+              workspaces:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    description:
+                      type: string
+                    optional:
+                      type: boolean
+                      default: false
+              params:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    type:
+                      type: string
+                      enum: ["string", "array", "object"]
+                    default:
+                      oneOf:
+                        - type: string
+                        - type: array
+                          items:
+                            type: string
+                        - type: object
+                    description:
+                      type: string
+              finally:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    taskRef:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+          status:
+            type: object
+            properties:
+              conditions:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                    status:
+                      type: string
+                    reason:
+                      type: string
+  - name: v1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              description:
+                type: string
+              tasks:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    taskRef:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        kind:
+                          type: string
+                          enum: ["Task", "ClusterTask"]
+                        apiVersion:
+                          type: string
+                    params:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          value:
+                            type: string
+              workspaces:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    description:
+                      type: string
+          status:
+            type: object
+  scope: Namespaced
+  names:
+    plural: complexpipelines
+    singular: complexpipeline
+    kind: ComplexPipeline

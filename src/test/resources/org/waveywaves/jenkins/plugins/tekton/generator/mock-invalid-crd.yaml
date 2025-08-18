@@ -1,0 +1,13 @@
+# This is an intentionally malformed CRD for testing error handling
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: invalidcrds.test.tekton.dev
+spec:
+  group: test.tekton.dev
+  # Missing required 'versions' field
+  scope: Namespaced
+  names:
+    plural: invalidcrds
+    singular: invalidcrd
+    kind: InvalidCrd

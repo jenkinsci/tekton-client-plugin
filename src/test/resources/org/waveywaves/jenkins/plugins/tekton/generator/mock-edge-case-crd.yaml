@@ -1,0 +1,79 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: edgecases.test.tekton.dev
+  labels:
+    test: "edge-cases"
+spec:
+  group: test.tekton.dev
+  preserveUnknownFields: false
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        # Test with minimal required properties only
+        properties:
+          spec:
+            type: object
+            properties:
+              # Edge case: empty object
+              emptyObject:
+                type: object
+              # Edge case: nested arrays
+              nestedArrays:
+                type: array
+                items:
+                  type: array
+                  items:
+                    type: string
+              # Edge case: special characters in property names
+              "special-property":
+                type: string
+              # Edge case: very deep nesting
+              deepNesting:
+                type: object
+                properties:
+                  level1:
+                    type: object
+                    properties:
+                      level2:
+                        type: object
+                        properties:
+                          level3:
+                            type: object
+                            properties:
+                              level4:
+                                type: string
+              # Edge case: all primitive types
+              stringField:
+                type: string
+              integerField:
+                type: integer
+              numberField:
+                type: number
+              booleanField:
+                type: boolean
+              # Edge case: oneOf/anyOf
+              conditionalField:
+                oneOf:
+                  - type: string
+                  - type: integer
+              # Edge case: additionalProperties
+              dynamicFields:
+                type: object
+                additionalProperties:
+                  type: string
+              # Edge case: enum with special values
+              statusEnum:
+                type: string
+                enum: ["", "unknown", "running", "completed", "failed"]
+          status:
+            type: object
+  scope: Namespaced
+  names:
+    plural: edgecases
+    singular: edgecase
+    kind: EdgeCase
