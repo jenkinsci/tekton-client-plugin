@@ -11,6 +11,7 @@ import io.fabric8.tekton.client.DefaultTektonClient;
 import io.fabric8.tekton.client.TektonClient;
 import java.io.FileInputStream;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
@@ -31,72 +32,172 @@ import java.util.logging.Logger;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @WithJenkins
 public abstract class E2ETestBase {
-    
+
     private static final Logger LOGGER = Logger.getLogger(E2ETestBase.class.getName());
-    
+
     protected static final String KIND_CLUSTER_NAME = "tekton-e2e-test";
     protected static final String TEST_NAMESPACE = "tekton-test";
     protected static final String TEKTON_VERSION = "v1.0.0";
-    
+
     protected JenkinsRule jenkinsRule;
     protected KubernetesClient kubernetesClient;
     protected TektonClient tektonClient;
-    
+    protected String currentTestNamespace;
+
     @BeforeAll
     public void setUpE2EEnvironment(JenkinsRule jenkins) throws Exception {
         this.jenkinsRule = jenkins;
-        
+
+        // Log environment information for debugging
+        LOGGER.info("Environment check:");
+        LOGGER.info("  GITHUB_ACTIONS: " + System.getenv("GITHUB_ACTIONS"));
+        LOGGER.info("  KUBECONFIG: " + System.getenv("KUBECONFIG"));
+        LOGGER.info("  CI: " + System.getenv("CI"));
+        LOGGER.info("  JENKINS_URL: " + System.getenv("JENKINS_URL"));
+        LOGGER.info("  BUILD_ID: " + System.getenv("BUILD_ID"));
+        LOGGER.info("  WORKSPACE: " + System.getenv("WORKSPACE"));
+        LOGGER.info("  SKIP_E2E_TESTS: " + System.getenv("SKIP_E2E_TESTS"));
+
         // Detect if running in GitHub Actions with pre-setup
         if (isGitHubActionsWithPreSetup()) {
             LOGGER.info("Detected GitHub Actions environment with pre-setup cluster");
             setupForGitHubActions();
+        } else if ("true".equals(System.getenv("GITHUB_ACTIONS")) && System.getenv("KUBECONFIG") != null) {
+            // Fallback: We're in GitHub Actions but cluster accessibility check failed
+            // Still try to use GitHub Actions setup rather than local setup
+            LOGGER.info("GitHub Actions detected but cluster accessibility check failed. Trying GitHub Actions setup anyway...");
+            setupForGitHubActions();
+        } else if (isJenkinsCIEnvironment()) {
+            // Handle Jenkins CI environment
+            LOGGER.info("Detected Jenkins CI environment");
+            setupForJenkinsCI();
         } else {
             LOGGER.info("Setting up E2E environment from scratch");
             setupFromScratch();
         }
-        
+
         LOGGER.info("E2E test environment setup complete");
     }
-    
+
     private boolean isGitHubActionsWithPreSetup() {
         boolean isGitHubActions = "true".equals(System.getenv("GITHUB_ACTIONS"));
         boolean hasKubeconfig = System.getenv("KUBECONFIG") != null;
-        
+        boolean isCI = "true".equals(System.getenv("CI"));
+
+        LOGGER.info("GitHub Actions detection:");
+        LOGGER.info("  isGitHubActions: " + isGitHubActions);
+        LOGGER.info("  hasKubeconfig: " + hasKubeconfig);
+        LOGGER.info("  isCI: " + isCI);
+
+        // In GitHub Actions, we should have both GITHUB_ACTIONS=true and KUBECONFIG set
         if (isGitHubActions && hasKubeconfig) {
+            LOGGER.info("GitHub Actions environment detected, checking cluster accessibility...");
+            
             // Check if cluster is already accessible
             try {
                 ProcessBuilder pb = new ProcessBuilder("kubectl", "cluster-info");
                 pb.environment().put("KUBECONFIG", System.getenv("KUBECONFIG"));
                 Process process = pb.start();
-                boolean accessible = process.waitFor(10, TimeUnit.SECONDS) && process.exitValue() == 0;
+                boolean accessible = process.waitFor(15, TimeUnit.SECONDS) && process.exitValue() == 0;
                 LOGGER.info("Cluster accessibility check: " + accessible);
                 return accessible;
             } catch (Exception e) {
                 LOGGER.warning("Failed to check cluster accessibility: " + e.getMessage());
-                return false;
+                // Don't fail immediately, try a simpler check
+                try {
+                    ProcessBuilder pb = new ProcessBuilder("kubectl", "get", "nodes");
+                    pb.environment().put("KUBECONFIG", System.getenv("KUBECONFIG"));
+                    Process process = pb.start();
+                    boolean accessible = process.waitFor(10, TimeUnit.SECONDS) && process.exitValue() == 0;
+                    LOGGER.info("Fallback cluster accessibility check: " + accessible);
+                    return accessible;
+                } catch (Exception e2) {
+                    LOGGER.warning("Fallback cluster check also failed: " + e2.getMessage());
+                    return false;
+                }
             }
         }
-        
+
+        LOGGER.info("Not in GitHub Actions environment or missing KUBECONFIG");
         return false;
     }
-    
+
+    private boolean isJenkinsCIEnvironment() {
+        boolean isCI = "true".equals(System.getenv("CI"));
+        boolean hasBuildId = System.getenv("BUILD_ID") != null;
+        boolean hasWorkspace = System.getenv("WORKSPACE") != null;
+        boolean isGitHubActions = "true".equals(System.getenv("GITHUB_ACTIONS"));
+
+        LOGGER.info("Jenkins CI detection:");
+        LOGGER.info("  isCI: " + isCI);
+        LOGGER.info("  hasBuildId: " + hasBuildId);
+        LOGGER.info("  hasWorkspace: " + hasWorkspace);
+        LOGGER.info("  isGitHubActions: " + isGitHubActions);
+
+        // Jenkins CI environment: CI=true, has BUILD_ID, has WORKSPACE, but not GitHub Actions
+        return isCI && hasBuildId && hasWorkspace && !isGitHubActions;
+    }
+
+    private void setupForJenkinsCI() throws Exception {
+        LOGGER.info("Setting up for Jenkins CI environment");
+        
+        // Check if E2E tests should be skipped
+        String skipE2E = System.getenv("SKIP_E2E_TESTS");
+        if ("true".equals(skipE2E)) {
+            LOGGER.info("E2E tests are disabled via SKIP_E2E_TESTS environment variable");
+            throw new RuntimeException("E2E tests are disabled. Set SKIP_E2E_TESTS=false to enable them.");
+        }
+        
+        // In Jenkins CI, we need to check if we have access to a Kubernetes cluster
+        // This could be a pre-configured cluster or we might need to skip E2E tests
+        
+        // Check if kubectl is available
+        if (!isCommandAvailable("kubectl")) {
+            LOGGER.warning("kubectl not available in Jenkins CI environment");
+            LOGGER.info("To skip E2E tests, set SKIP_E2E_TESTS=true");
+            throw new RuntimeException("E2E tests require kubectl in Jenkins CI environment. Please ensure kubectl is available or set SKIP_E2E_TESTS=true to skip E2E tests.");
+        }
+        
+        // Try to use default kubeconfig
+        try {
+            Config config = new ConfigBuilder().build();
+            kubernetesClient = new DefaultKubernetesClient(config);
+            tektonClient = new DefaultTektonClient(config);
+            
+            // Test connectivity
+            kubernetesClient.namespaces().list();
+            LOGGER.info("Successfully connected to Kubernetes cluster in Jenkins CI");
+            
+            // Initialize TektonUtils
+            TektonUtils.initializeKubeClients(config);
+            
+            // Configure Jenkins global configuration
+            configureJenkinsGlobal();
+            
+        } catch (Exception e) {
+            LOGGER.severe("Failed to connect to Kubernetes cluster in Jenkins CI: " + e.getMessage());
+            LOGGER.info("To skip E2E tests, set SKIP_E2E_TESTS=true");
+            throw new RuntimeException("E2E tests require access to a Kubernetes cluster in Jenkins CI environment. Please ensure cluster access is configured or set SKIP_E2E_TESTS=true to skip E2E tests.", e);
+        }
+    }
+
     private void setupForGitHubActions() throws Exception {
         LOGGER.info("Using pre-configured GitHub Actions environment");
-        
+
         // Use existing kubeconfig from environment
         String kubeconfigPath = System.getenv("KUBECONFIG");
         LOGGER.info("Using kubeconfig: " + kubeconfigPath);
-        
+
         // Setup Kubernetes clients with existing config
         setupKubernetesClientsFromExistingConfig(kubeconfigPath);
-        
+
         // Verify Tekton is already installed and ready
         verifyTektonInstallation();
-        
+
         // Configure Jenkins global configuration
         configureJenkinsGlobal();
     }
-    
+
     private void setupFromScratch() throws Exception {
         // Original setup logic
         setupKindCluster();
@@ -104,86 +205,86 @@ public abstract class E2ETestBase {
         installTekton();
         configureJenkinsGlobal();
     }
-    
+
     private void setupKubernetesClientsFromExistingConfig(String kubeconfigPath) throws Exception {
         LOGGER.info("Setting up Kubernetes clients with existing config");
-        
+
         try {
             // Read existing kubeconfig
             Config config;
             if (kubeconfigPath != null && !kubeconfigPath.isEmpty()) {
                 try (FileInputStream fis = new FileInputStream(kubeconfigPath);
-                     BufferedReader reader = new BufferedReader(new InputStreamReader(fis))) {
-                    
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(fis))) {
+
                     StringBuilder kubeconfigContent = new StringBuilder();
                     String line;
                     while ((line = reader.readLine()) != null) {
                         kubeconfigContent.append(line).append("\n");
                     }
-                    
+
                     config = Config.fromKubeconfig(kubeconfigContent.toString());
                 }
             } else {
                 // Fallback to default config
                 config = new ConfigBuilder().build();
             }
-            
+
             // Configure for Kind cluster
             config.setTrustCerts(true);
             config.setDisableHostnameVerification(true);
-            
+
             kubernetesClient = new DefaultKubernetesClient(config);
             tektonClient = new DefaultTektonClient(config);
-            
+
             // Test connectivity
             kubernetesClient.namespaces().list();
             LOGGER.info("Successfully connected to existing Kubernetes cluster");
-            
+
             // Initialize TektonUtils
             TektonUtils.initializeKubeClients(config);
-            
+
         } catch (Exception e) {
             LOGGER.severe("Failed to setup clients from existing config: " + e.getMessage());
             throw new RuntimeException("Failed to connect to pre-configured cluster", e);
         }
     }
-    
+
     private void verifyTektonInstallation() throws Exception {
         LOGGER.info("Verifying Tekton installation");
-        
+
         try {
             // Check if Tekton controller is running
-            ProcessBuilder pb = new ProcessBuilder("kubectl", "get", "deployment", 
+            ProcessBuilder pb = new ProcessBuilder("kubectl", "get", "deployment",
                     "tekton-pipelines-controller", "-n", "tekton-pipelines");
             pb.environment().put("KUBECONFIG", System.getenv("KUBECONFIG"));
             Process process = pb.start();
-            
+
             if (process.waitFor(30, TimeUnit.SECONDS) && process.exitValue() == 0) {
                 LOGGER.info("Tekton controller deployment found");
-                
+
                 // Wait for it to be ready (but with shorter timeout since it should be ready)
                 waitForExistingTekton();
             } else {
                 throw new RuntimeException("Tekton controller deployment not found");
             }
-            
+
         } catch (Exception e) {
             LOGGER.severe("Tekton verification failed: " + e.getMessage());
             throw new RuntimeException("Pre-installed Tekton is not ready", e);
         }
     }
-    
+
     private void waitForExistingTekton() throws Exception {
         LOGGER.info("Waiting for pre-installed Tekton to be ready");
-        
+
         // Shorter timeout since Tekton should already be installed
         for (int i = 0; i < 30; i++) { // 2.5 minutes max
             try {
-                ProcessBuilder pb = new ProcessBuilder("kubectl", "get", "pods", "-n", "tekton-pipelines", 
+                ProcessBuilder pb = new ProcessBuilder("kubectl", "get", "pods", "-n", "tekton-pipelines",
                         "--no-headers", "--field-selector=status.phase=Running");
                 pb.environment().put("KUBECONFIG", System.getenv("KUBECONFIG"));
                 Process process = pb.start();
-                
+
                 if (process.waitFor(10, TimeUnit.SECONDS) && process.exitValue() == 0) {
                     try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
                         int runningPods = 0;
@@ -193,8 +294,8 @@ public abstract class E2ETestBase {
                                 runningPods++;
                             }
                         }
-                        
-                        if (runningPods >= 1) { // At least controller running
+
+                        if (runningPods >= 2) {
                             LOGGER.info("Pre-installed Tekton is ready with " + runningPods + " running pods");
                             return;
                         }
@@ -203,94 +304,136 @@ public abstract class E2ETestBase {
             } catch (Exception e) {
                 LOGGER.warning("Error checking pre-installed Tekton: " + e.getMessage());
             }
-            
+
             Thread.sleep(5000);
         }
-        
+
         throw new RuntimeException("Pre-installed Tekton did not become ready within timeout");
     }
-    
+
     private void cleanupOldTestNamespaces() {
         try {
             if (kubernetesClient != null) {
                 long oneHourAgo = System.currentTimeMillis() - (60 * 60 * 1000);
-                
+
                 kubernetesClient.namespaces().list().getItems().stream()
-                    .filter(ns -> ns.getMetadata().getName().startsWith(TEST_NAMESPACE + "-"))
-                    .filter(ns -> {
-                        try {
-                            String timestamp = ns.getMetadata().getName().substring(TEST_NAMESPACE.length() + 1);
-                            long nsTime = Long.parseLong(timestamp);
-                            return nsTime < oneHourAgo;
-                        } catch (Exception e) {
-                            return false;
-                        }
-                    })
-                    .forEach(ns -> {
-                        try {
-                            kubernetesClient.namespaces().delete(ns);
-                            LOGGER.info("Cleaned up old namespace: " + ns.getMetadata().getName());
-                        } catch (Exception e) {
-                            LOGGER.warning("Failed to cleanup namespace: " + e.getMessage());
-                        }
-                    });
+                        .filter(ns -> ns.getMetadata().getName().startsWith(TEST_NAMESPACE + "-"))
+                        .filter(ns -> {
+                            try {
+                                String timestamp = ns.getMetadata().getName().substring(TEST_NAMESPACE.length() + 1);
+                                long nsTime = Long.parseLong(timestamp);
+                                return nsTime < oneHourAgo;
+                            } catch (Exception e) {
+                                return false;
+                            }
+                        })
+                        .forEach(ns -> {
+                            try {
+                                kubernetesClient.namespaces().delete(ns);
+                                LOGGER.info("Cleaned up old namespace: " + ns.getMetadata().getName());
+                            } catch (Exception e) {
+                                LOGGER.warning("Failed to cleanup namespace: " + e.getMessage());
+                            }
+                        });
             }
         } catch (Exception e) {
             LOGGER.warning("Failed to cleanup old namespaces: " + e.getMessage());
         }
     }
-    
+
     @AfterAll
     public void tearDownE2EEnvironment() throws Exception {
+        // Clean up test namespaces
+        cleanupOldTestNamespaces();
+
         // Only cleanup if we created the cluster ourselves
         if (!isGitHubActionsWithPreSetup() && !"true".equals(System.getenv("SKIP_CLEANUP"))) {
             cleanupKindCluster();
         } else {
             LOGGER.info("Skipping cluster cleanup (using external cluster or SKIP_CLEANUP set)");
         }
-        
+
         LOGGER.info("E2E test environment cleanup complete");
     }
-    
+
+    @AfterEach
+    public void tearDownTestNamespace() throws Exception {
+        // Clean up the current test namespace
+        if (currentTestNamespace != null && kubernetesClient != null) {
+            try {
+                kubernetesClient.namespaces().withName(currentTestNamespace).delete();
+                LOGGER.info("Cleaned up test namespace: " + currentTestNamespace);
+            } catch (Exception e) {
+                LOGGER.warning("Failed to cleanup test namespace: " + currentTestNamespace + " - " + e.getMessage());
+            }
+            currentTestNamespace = null;
+        }
+    }
+
     @BeforeEach
     public void setUpTestNamespace() throws Exception {
         // Create test namespace for each test
+        String namespaceName = TEST_NAMESPACE + "-" + System.currentTimeMillis();
         Namespace testNamespace = new NamespaceBuilder()
                 .withNewMetadata()
-                .withName(TEST_NAMESPACE + "-" + System.currentTimeMillis())
+                .withName(namespaceName)
                 .endMetadata()
                 .build();
-        
-        kubernetesClient.namespaces().create(testNamespace);
-        LOGGER.info("Created test namespace: " + testNamespace.getMetadata().getName());
+
+        try {
+            kubernetesClient.namespaces().create(testNamespace);
+            LOGGER.info("Created test namespace: " + namespaceName);
+
+            // Store the current test namespace
+            currentTestNamespace = namespaceName;
+
+            // Wait for namespace to be ready
+            Thread.sleep(1000);
+
+            // Verify namespace was created
+            Namespace createdNamespace = kubernetesClient.namespaces().withName(namespaceName).get();
+            if (createdNamespace == null) {
+                throw new RuntimeException("Failed to create test namespace: " + namespaceName);
+            }
+        } catch (Exception e) {
+            LOGGER.severe("Failed to create test namespace: " + e.getMessage());
+            throw new RuntimeException("Failed to create test namespace: " + namespaceName, e);
+        }
     }
-    
+
     private void setupKindCluster() throws Exception {
         LOGGER.info("Setting up Kind cluster: " + KIND_CLUSTER_NAME);
-        
+        LOGGER.info("This should not be called in GitHub Actions environment!");
+
         // Check if kind is installed
         if (!isCommandAvailable("kind")) {
-            throw new RuntimeException("Kind is not installed. Please install kind first: https://kind.sigs.k8s.io/docs/user/quick-start/");
+            LOGGER.severe("Kind is not available. This suggests we're in the wrong setup path.");
+            LOGGER.severe("Environment variables:");
+            LOGGER.severe("  GITHUB_ACTIONS: " + System.getenv("GITHUB_ACTIONS"));
+            LOGGER.severe("  KUBECONFIG: " + System.getenv("KUBECONFIG"));
+            LOGGER.severe("  CI: " + System.getenv("CI"));
+            throw new RuntimeException(
+                    "Kind is not installed. Please install kind first: https://kind.sigs.k8s.io/docs/user/quick-start/");
         }
-        
+
         // Check if cluster already exists
         if (isKindClusterRunning()) {
             LOGGER.info("Kind cluster already exists, using existing cluster");
             return;
         }
-        
+
         // Create kind cluster with custom config
-        ProcessBuilder pb = new ProcessBuilder("kind", "create", "cluster", 
+        ProcessBuilder pb = new ProcessBuilder("kind", "create", "cluster",
                 "--name", KIND_CLUSTER_NAME,
                 "--config", "-");
-        
+
         Process process = pb.start();
-        
+
         // Write kind config to stdin
         String kindConfig = getKindConfig();
         process.getOutputStream().write(kindConfig.getBytes());
         process.getOutputStream().close();
-        
+
         int exitCode = process.waitFor();
         if (exitCode != 0) {
             // Get error output
@@ -301,82 +444,82 @@ public abstract class E2ETestBase {
                     errorOutput.append(line).append("\n");
                 }
             }
-            
+
             String errorMsg = errorOutput.toString();
             if (errorMsg.contains("node(s) already exist") || errorMsg.contains("already exists")) {
                 LOGGER.info("Kind cluster already exists (detected from error), using existing cluster");
                 return;
             }
-            
-            throw new RuntimeException("Failed to create Kind cluster. Exit code: " + exitCode + 
+
+            throw new RuntimeException("Failed to create Kind cluster. Exit code: " + exitCode +
                     "\nError output: " + errorMsg);
         }
-        
+
         // Wait for cluster to be ready
         waitForKindClusterReady();
-        
+
         LOGGER.info("Kind cluster created successfully");
     }
-    
+
     private void setupKubernetesClients() throws Exception {
         LOGGER.info("Setting up Kubernetes clients");
-        
+
         // Write kubeconfig to a temporary file to avoid config parsing issues
         String tempDir = System.getProperty("java.io.tmpdir");
         String kubeconfigFile = tempDir + "/kind-kubeconfig-" + KIND_CLUSTER_NAME;
-        
+
         // Export kubeconfig to a file
-        ProcessBuilder pb = new ProcessBuilder("kind", "export", "kubeconfig", 
+        ProcessBuilder pb = new ProcessBuilder("kind", "export", "kubeconfig",
                 "--name", KIND_CLUSTER_NAME, "--kubeconfig", kubeconfigFile);
         Process process = pb.start();
-        
+
         int exitCode = process.waitFor();
         if (exitCode != 0) {
             throw new RuntimeException("Failed to export kubeconfig. Exit code: " + exitCode);
         }
-        
+
         LOGGER.info("Exported kubeconfig to: " + kubeconfigFile);
-        
+
         // Set KUBECONFIG environment variable for kubectl commands
         System.setProperty("KUBECONFIG", kubeconfigFile);
-        
+
         // Create Kubernetes clients using the exported config file
         Config config;
         try (FileInputStream fis = new FileInputStream(kubeconfigFile);
-             BufferedReader reader = new BufferedReader(new InputStreamReader(fis))) {
-            
+                BufferedReader reader = new BufferedReader(new InputStreamReader(fis))) {
+
             StringBuilder kubeconfigContent = new StringBuilder();
             String line;
             while ((line = reader.readLine()) != null) {
                 kubeconfigContent.append(line).append("\n");
             }
-            
+
             config = Config.fromKubeconfig(kubeconfigContent.toString());
-            
+
             // Configure for Kind cluster - trust self-signed certificates
             config.setTrustCerts(true);
             config.setDisableHostnameVerification(true);
-            
+
             kubernetesClient = new DefaultKubernetesClient(config);
             tektonClient = new DefaultTektonClient(config);
         }
-        
+
         // Initialize TektonUtils with the config
         TektonUtils.initializeKubeClients(config);
-        
+
         LOGGER.info("Kubernetes clients configured successfully");
     }
-    
+
     private void installTekton() throws Exception {
         LOGGER.info("Installing Tekton Pipelines version: " + TEKTON_VERSION);
-        
+
         // Install Tekton Pipelines
-        ProcessBuilder pb = new ProcessBuilder("kubectl", "apply", "-f", 
+        ProcessBuilder pb = new ProcessBuilder("kubectl", "apply", "-f",
                 "https://storage.googleapis.com/tekton-releases/pipeline/previous/" + TEKTON_VERSION + "/release.yaml");
         setKubeconfigEnv(pb);
-        
+
         Process process = pb.start();
-        
+
         int exitCode = process.waitFor();
         if (exitCode != 0) {
             // Get error output
@@ -387,62 +530,61 @@ public abstract class E2ETestBase {
                     errorOutput.append(line).append("\n");
                 }
             }
-            
+
             String errorMsg = errorOutput.toString();
             if (errorMsg.contains("AlreadyExists") || errorMsg.contains("already exists")) {
                 LOGGER.info("Tekton components already exist, continuing...");
             } else {
-                throw new RuntimeException("Failed to install Tekton. Exit code: " + exitCode + 
+                throw new RuntimeException("Failed to install Tekton. Exit code: " + exitCode +
                         "\nError output: " + errorMsg);
             }
         }
-        
+
         // Wait for Tekton controller to be ready
         waitForTektonReady();
-        
+
         // Configure webhook for Kind cluster compatibility
         configureWebhookForKind();
-        
+
         LOGGER.info("Tekton Pipelines installed successfully");
     }
-    
+
     private void configureJenkinsGlobal() {
         LOGGER.info("Configuring Jenkins global Tekton settings");
-        
+
         try {
             TektonGlobalConfiguration globalConfig = TektonGlobalConfiguration.get();
-            
+
             if (globalConfig == null) {
                 LOGGER.info("TektonGlobalConfiguration not available in test environment");
                 LOGGER.info("E2E tests will use direct cluster specification instead");
-                return; 
+                return;
             }
-            
+
             List<ClusterConfig> clusterConfigs = new ArrayList<>();
             ClusterConfig kindClusterConfig = new ClusterConfig(
                     "kind-cluster",
                     tektonClient.getConfiguration().getMasterUrl(),
-                    TEST_NAMESPACE
-            );
+                    TEST_NAMESPACE);
             clusterConfigs.add(kindClusterConfig);
-            
+
             globalConfig.setClusterConfigs(clusterConfigs);
-            
+
             LOGGER.info("Jenkins global configuration completed");
-            
+
         } catch (Exception e) {
             LOGGER.warning("Global configuration failed: " + e.getMessage());
             LOGGER.info("Continuing with direct cluster specification");
         }
     }
-    
+
     private void setKubeconfigEnv(ProcessBuilder pb) {
         String kubeconfigFile = System.getProperty("KUBECONFIG");
         if (kubeconfigFile != null) {
             pb.environment().put("KUBECONFIG", kubeconfigFile);
         }
     }
-    
+
     private boolean isCommandAvailable(String command) {
         try {
             ProcessBuilder pb = new ProcessBuilder("which", command);
@@ -452,12 +594,12 @@ public abstract class E2ETestBase {
             return false;
         }
     }
-    
+
     private boolean isKindClusterRunning() {
         try {
             ProcessBuilder pb = new ProcessBuilder("kind", "get", "clusters");
             Process process = pb.start();
-            
+
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
@@ -471,16 +613,16 @@ public abstract class E2ETestBase {
             return false;
         }
     }
-    
+
     private void waitForKindClusterReady() throws Exception {
         LOGGER.info("Waiting for Kind cluster to be ready...");
-        
+
         for (int i = 0; i < 60; i++) { // Wait up to 5 minutes
             try {
                 ProcessBuilder pb = new ProcessBuilder("kubectl", "get", "nodes", "--no-headers");
                 setKubeconfigEnv(pb);
                 Process process = pb.start();
-                
+
                 if (process.waitFor() == 0) {
                     try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
                         String line = reader.readLine();
@@ -493,23 +635,23 @@ public abstract class E2ETestBase {
             } catch (Exception e) {
                 // Ignore and retry
             }
-            
+
             Thread.sleep(5000); // Wait 5 seconds
         }
-        
+
         throw new RuntimeException("Kind cluster did not become ready within timeout");
     }
-    
+
     private void waitForTektonReady() throws Exception {
         LOGGER.info("Waiting for Tekton to be ready...");
-        
+
         for (int i = 0; i < 180; i++) { // Wait up to 5 minutes
             try {
-                ProcessBuilder pb = new ProcessBuilder("kubectl", "get", "pods", "-n", "tekton-pipelines", 
+                ProcessBuilder pb = new ProcessBuilder("kubectl", "get", "pods", "-n", "tekton-pipelines",
                         "--no-headers", "--field-selector=status.phase=Running");
                 setKubeconfigEnv(pb);
                 Process process = pb.start();
-                
+
                 if (process.waitFor() == 0) {
                     try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
                         int runningPods = 0;
@@ -519,7 +661,7 @@ public abstract class E2ETestBase {
                                 runningPods++;
                             }
                         }
-                        
+
                         if (runningPods >= 2) { // Controller and webhook
                             // Additional check: ensure webhook is responding
                             if (isWebhookReady()) {
@@ -532,21 +674,21 @@ public abstract class E2ETestBase {
             } catch (Exception e) {
                 // Ignore and retry
             }
-            
+
             Thread.sleep(5000); // Wait 5 seconds
         }
-        
+
         throw new RuntimeException("Tekton did not become ready within timeout");
     }
-    
+
     private boolean isWebhookReady() {
         try {
             // Check if webhook service is available
-            ProcessBuilder pb = new ProcessBuilder("kubectl", "get", "service", "-n", "tekton-pipelines", 
+            ProcessBuilder pb = new ProcessBuilder("kubectl", "get", "service", "-n", "tekton-pipelines",
                     "tekton-pipelines-webhook", "-o", "jsonpath={.spec.clusterIP}");
             setKubeconfigEnv(pb);
             Process process = pb.start();
-            
+
             if (process.waitFor() == 0) {
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
                     String clusterIP = reader.readLine();
@@ -561,29 +703,29 @@ public abstract class E2ETestBase {
         }
         return false;
     }
-    
+
     private void configureWebhookForKind() {
         try {
             LOGGER.info("Configuring Tekton webhook for Kind cluster compatibility...");
-            
+
             // Wait a bit more for webhook to be fully ready
             Thread.sleep(10000);
-            
+
             // Restart webhook deployment to ensure proper networking
-            ProcessBuilder pb = new ProcessBuilder("kubectl", "rollout", "restart", "deployment", 
+            ProcessBuilder pb = new ProcessBuilder("kubectl", "rollout", "restart", "deployment",
                     "tekton-pipelines-webhook", "-n", "tekton-pipelines");
             setKubeconfigEnv(pb);
             Process process = pb.start();
-            
+
             if (process.waitFor() == 0) {
                 LOGGER.info("Restarted webhook deployment");
-                
+
                 // Wait for rollout to complete
-                pb = new ProcessBuilder("kubectl", "rollout", "status", "deployment", 
+                pb = new ProcessBuilder("kubectl", "rollout", "status", "deployment",
                         "tekton-pipelines-webhook", "-n", "tekton-pipelines", "--timeout=120s");
                 setKubeconfigEnv(pb);
                 process = pb.start();
-                
+
                 if (process.waitFor() == 0) {
                     LOGGER.info("Webhook deployment rollout completed");
                 } else {
@@ -592,15 +734,15 @@ public abstract class E2ETestBase {
             } else {
                 LOGGER.warning("Failed to restart webhook deployment");
             }
-            
+
         } catch (Exception e) {
             LOGGER.warning("Failed to configure webhook for Kind: " + e.getMessage());
         }
     }
-    
+
     private void cleanupKindCluster() throws Exception {
         LOGGER.info("Cleaning up Kind cluster");
-        
+
         try {
             ProcessBuilder pb = new ProcessBuilder("kind", "delete", "cluster", "--name", KIND_CLUSTER_NAME);
             Process process = pb.start();
@@ -609,32 +751,37 @@ public abstract class E2ETestBase {
             LOGGER.warning("Failed to cleanup Kind cluster: " + e.getMessage());
         }
     }
-    
+
     private String getKindConfig() {
         return """
-kind: Cluster
-apiVersion: kind.x-k8s.io/v1alpha4
-nodes:
-- role: control-plane
-  extraPortMappings:
-  - containerPort: 30080
-    hostPort: 30080
-    protocol: TCP
-  - containerPort: 30443
-    hostPort: 30443
-    protocol: TCP
-networking:
-  apiServerAddress: "127.0.0.1"
-  apiServerPort: 6443
-""";
+                kind: Cluster
+                apiVersion: kind.x-k8s.io/v1alpha4
+                nodes:
+                - role: control-plane
+                  extraPortMappings:
+                  - containerPort: 30080
+                    hostPort: 30080
+                    protocol: TCP
+                  - containerPort: 30443
+                    hostPort: 30443
+                    protocol: TCP
+                networking:
+                  apiServerAddress: "127.0.0.1"
+                  apiServerPort: 6443
+                """;
     }
-    
+
     protected String getCurrentTestNamespace() {
-        // Get the current test namespace (created in @BeforeEach)
+        // Return the stored current test namespace
+        if (currentTestNamespace != null) {
+            return currentTestNamespace;
+        }
+
+        // Fallback to finding the namespace (for backward compatibility)
         return kubernetesClient.namespaces().list().getItems().stream()
                 .filter(ns -> ns.getMetadata().getName().startsWith(TEST_NAMESPACE + "-"))
                 .findFirst()
                 .map(ns -> ns.getMetadata().getName())
                 .orElse(TEST_NAMESPACE);
     }
-} 
+}
