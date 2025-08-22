@@ -290,6 +290,21 @@
                     <source>17</source>
                     <target>17</target>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>compile-generator</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <includes>
+                                <include>**/generator/**/*.java</include>
+                            </includes>
+                            <outputDirectory>${project.build.directory}/generator-classes</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
 
             <plugin>
@@ -341,6 +356,56 @@
                             <excludes>
                                 <exclude>**/*E2ETest.java</exclude>
                             </excludes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            
+            <!-- Generate Tekton POJOs at build time -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>generate-tekton-pojos</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <mainClass>org.waveywaves.jenkins.plugins.tekton.generator.CrdJavaGenerator</mainClass>
+                            <arguments>
+                                <argument>${project.basedir}/src/main/resources/crds</argument>
+                                <argument>${project.build.directory}/generated-sources/tekton</argument>
+                                <argument>org.waveywaves.jenkins.plugins.tekton.generated</argument>
+                            </arguments>
+                            <includeProjectDependencies>true</includeProjectDependencies>
+                            <includePluginDependencies>true</includePluginDependencies>
+                            <additionalClasspathElements>
+                                <additionalClasspathElement>${project.build.directory}/generator-classes</additionalClasspathElement>
+                            </additionalClasspathElements>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            
+            <!-- Add generated sources to compilation path -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.4.0</version>
+                <executions>
+                    <execution>
+                        <id>add-generated-sources</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.build.directory}/generated-sources/tekton</source>
+                            </sources>
                         </configuration>
                     </execution>
                 </executions>
