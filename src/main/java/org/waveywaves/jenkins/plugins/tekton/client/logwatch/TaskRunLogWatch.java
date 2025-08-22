@@ -78,7 +78,8 @@ public class TaskRunLogWatch implements Runnable{
 
         Pod taskRunPod = null;
         String podName = "";
-        for (Pod pod : pods) {
+        if (pods != null) {
+            for (Pod pod : pods) {
             List<OwnerReference> ownerReferences = pod.getMetadata().getOwnerReferences();
             if (ownerReferences != null && ownerReferences.size() > 0) {
                 for (OwnerReference or : ownerReferences) {
@@ -91,6 +92,7 @@ public class TaskRunLogWatch implements Runnable{
                     }
                 }
             }
+        }
         }
 
         final String selectedPodName = podName;

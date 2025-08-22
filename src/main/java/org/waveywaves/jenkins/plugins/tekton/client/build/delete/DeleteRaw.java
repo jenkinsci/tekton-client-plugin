@@ -27,11 +27,10 @@ import org.waveywaves.jenkins.plugins.tekton.client.build.BaseStep;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.List;
-import java.util.logging.Logger;
 
 @Symbol("tektonDeleteStep")
 public class DeleteRaw extends BaseStep {
-    private static final Logger logger = Logger.getLogger(DeleteRaw.class.getName());
+    // Removed unused logger
     private String resourceType;
     private String resourceName;
     private String clusterName;

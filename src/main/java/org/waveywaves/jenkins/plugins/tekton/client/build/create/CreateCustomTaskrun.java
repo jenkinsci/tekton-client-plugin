@@ -25,11 +25,11 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
+// Removed unused import
 
 @Symbol("customCreateTaskrun")
 public class CreateCustomTaskrun extends BaseStep {
-    private static final Logger logger = Logger.getLogger(CreateCustomTaskrun.class.getName());
+    // Removed unused logger
     private String clusterName;
     private PrintStream consoleLogger;
     private String kind;
@@ -70,8 +70,8 @@ public class CreateCustomTaskrun extends BaseStep {
     public List<TektonParam> getParams() { return this.params; }
 
     @Override
-    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath filePath, @Nonnull Launcher launcher, @Nonnull TaskListener taskListener) throws InterruptedException, IOException {
-        consoleLogger = taskListener.getLogger();
+    public void perform(@Nonnull Run<?, ?> build, @Nonnull FilePath workspace, @Nonnull Launcher buildLauncher, @Nonnull TaskListener listener) throws InterruptedException, IOException {
+        consoleLogger = listener.getLogger();
         logTektonTaskrun();
         runCreate();
     }
