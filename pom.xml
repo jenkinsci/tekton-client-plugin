@@ -329,32 +329,6 @@
                 </executions>
             </plugin>
 
-            <!-- Generate Tekton POJOs from CRDs at generate-sources phase -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>3.1.0</version>
-                <executions>
-                    <execution>
-                        <id>generate-tekton-pojos</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>java</goal>
-                        </goals>
-                        <configuration>
-                            <mainClass>org.waveywaves.jenkins.plugins.tekton.generator.CrdJavaGenerator</mainClass>
-                            <arguments>
-                                <argument>${project.basedir}/src/main/resources/crds</argument>
-                                <argument>${project.build.directory}/generated-sources/tekton</argument>
-                                <argument>org.waveywaves.jenkins.plugins.tekton.generated</argument>
-                            </arguments>
-                            <includeProjectDependencies>true</includeProjectDependencies>
-                            <includePluginDependencies>true</includePluginDependencies>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
             <!-- Add generated sources to compilation -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
@@ -371,6 +345,32 @@
                             <sources>
                                 <source>${project.build.directory}/generated-sources/tekton</source>
                             </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Generate Tekton POJOs from CRDs after compilation -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>generate-tekton-pojos</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <mainClass>org.waveywaves.jenkins.plugins.tekton.generator.CrdJavaGenerator</mainClass>
+                            <arguments>
+                                <argument>${project.basedir}/src/main/resources/crds</argument>
+                                <argument>${project.build.directory}/generated-sources/tekton</argument>
+                                <argument>org.waveywaves.jenkins.plugins.tekton.generated</argument>
+                            </arguments>
+                            <includeProjectDependencies>true</includeProjectDependencies>
+                            <includePluginDependencies>true</includePluginDependencies>
                         </configuration>
                     </execution>
                 </executions>
@@ -451,6 +451,39 @@
                         </executions>
                     </plugin>
 
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- Simple profile to generate POJOs with 'mvn generate-sources -P generate-pojos' -->
+        <profile>
+            <id>generate-pojos</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                            <execution>
+                                <id>generate-tekton-pojos-alias</id>
+                                <phase>generate-sources</phase>
+                                <goals>
+                                    <goal>java</goal>
+                                </goals>
+                                <configuration>
+                                    <mainClass>org.waveywaves.jenkins.plugins.tekton.generator.CrdJavaGenerator</mainClass>
+                                    <arguments>
+                                        <argument>${project.basedir}/src/main/resources/crds</argument>
+                                        <argument>${project.build.directory}/generated-sources/tekton</argument>
+                                        <argument>org.waveywaves.jenkins.plugins.tekton.generated</argument>
+                                    </arguments>
+                                    <includeProjectDependencies>true</includeProjectDependencies>
+                                    <includePluginDependencies>true</includePluginDependencies>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
                 </plugins>
             </build>
         </profile>
