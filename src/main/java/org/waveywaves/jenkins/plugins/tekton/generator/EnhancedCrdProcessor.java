@@ -81,8 +81,6 @@ public class EnhancedCrdProcessor {
         classNameMapping.put("pipelineruns", "CreatePipelineRun");
         classNameMapping.put("stepactions", "CreateStepAction");
         classNameMapping.put("customtasks", "CreateCustomTask");
-        // classNameMapping.put("jenkinstasks", "CreateRaw");
-        // classNameMapping.put("simpletasks", "CreateSimpleTask");
     }
     
     /**
