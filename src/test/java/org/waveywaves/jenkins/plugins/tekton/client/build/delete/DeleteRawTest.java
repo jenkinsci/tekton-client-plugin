@@ -3,7 +3,7 @@ package org.waveywaves.jenkins.plugins.tekton.client.build.delete;
 import org.junit.jupiter.api.Test;
 
 import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
-import org.waveywaves.jenkins.plugins.tekton.client.build.delete.DeleteRaw;
+import org.waveywaves.jenkins.plugins.tekton.client.build.delete.DeleteRaw.DeleteAllBlock;
 import org.waveywaves.jenkins.plugins.tekton.client.build.delete.mock.DeleteRawMock;
 
 import static org.hamcrest.CoreMatchers.is;
