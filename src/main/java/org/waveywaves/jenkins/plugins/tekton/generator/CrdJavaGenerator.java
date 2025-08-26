@@ -14,6 +14,9 @@ import java.nio.file.Paths;
 public class CrdJavaGenerator {
     
     private static final Logger logger = LoggerFactory.getLogger(CrdJavaGenerator.class);
+    
+    // Base class for all generated Jenkins pipeline steps
+    private static final String BASE_STEP_CLASS = "org.waveywaves.jenkins.plugins.tekton.client.build.BaseStep";
 
     /**
      * Main method for Maven exec plugin integration.
