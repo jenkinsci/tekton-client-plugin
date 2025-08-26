@@ -243,6 +243,11 @@ public class EnhancedCrdProcessor {
             public String getTargetPackage() {
                 return packageName;
             }
+            
+            @Override
+            public boolean isIncludeHashcodeAndEquals() {
+                return false; // Disable problematic equals/hashCode generation
+            }
         };
 
         SchemaMapper mapper = new SchemaMapper(
@@ -349,6 +354,11 @@ public class EnhancedCrdProcessor {
             @Override
             public String getTargetPackage() {
                 return packageName;
+            }
+            
+            @Override
+            public boolean isIncludeHashcodeAndEquals() {
+                return false; // Disable problematic equals/hashCode generation
             }
         };
 
