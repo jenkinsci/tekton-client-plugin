@@ -234,7 +234,9 @@ public class EnhancedCrdProcessor {
                 return packageName;
             }
             
-                return false; // Disable equals/hashCode generation because the generated methods can produce incorrect equality semantics, especially when POJOs extend base classes or contain mutable fields. This can lead to subtle bugs in collections or when comparing instances. See https://github.com/joelittlejohn/jsonschema2pojo/issues/1146 for more details.
+            @Override
+            public boolean isIncludeHashcodeAndEquals() {
+                return false; // Disable problematic equals/hashCode generation
             }
         };
 
