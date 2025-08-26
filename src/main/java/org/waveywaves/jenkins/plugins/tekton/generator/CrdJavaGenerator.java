@@ -95,7 +95,7 @@ public class CrdJavaGenerator {
         logger.info("Configuring Jenkins plugin integration...");
         
         // Configure base class inheritance - all generated steps extend BaseStep
-        String baseStepClass = "org.waveywaves.jenkins.plugins.tekton.client.build.BaseStep";
+        String baseStepClass = BASE_STEP_CLASS;
         
         processor.addBaseClassMapping("tasks", baseStepClass, baseStepClass);
         processor.addBaseClassMapping("pipelines", baseStepClass, baseStepClass);
