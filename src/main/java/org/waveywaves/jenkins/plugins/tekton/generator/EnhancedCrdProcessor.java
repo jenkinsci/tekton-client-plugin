@@ -56,18 +56,10 @@ public class EnhancedCrdProcessor {
      */
     private void setupDefaultBaseClassMappings() {
         // Map CRD types to Jenkins base classes - using BaseStep instead of BaseTektonStep
-        baseClassMapping.put("tasks", "org.jenkinsci.plugins.workflow.steps.BaseStep");
-        baseClassMapping.put("pipelines", "org.jenkinsci.plugins.workflow.steps.BaseStep");
-        baseClassMapping.put("taskruns", "org.jenkinsci.plugins.workflow.steps.BaseStep");
-        baseClassMapping.put("pipelineruns", "org.jenkinsci.plugins.workflow.steps.BaseStep");
-        baseClassMapping.put("stepactions", "org.jenkinsci.plugins.workflow.steps.BaseStep");
-        
-        // Import statements for base classes
-        baseClassImports.put("tasks", "org.jenkinsci.plugins.workflow.steps.BaseStep");
-        baseClassImports.put("pipelines", "org.jenkinsci.plugins.workflow.steps.BaseStep");
-        baseClassImports.put("taskruns", "org.jenkinsci.plugins.workflow.steps.BaseStep");
-        baseClassImports.put("pipelineruns", "org.jenkinsci.plugins.workflow.steps.BaseStep");
-        baseClassImports.put("stepactions", "org.jenkinsci.plugins.workflow.steps.BaseStep");
+        for (String crdType : BASE_STEP_CRD_TYPES) {
+            baseClassMapping.put(crdType, BASE_STEP_CLASS);
+            baseClassImports.put(crdType, BASE_STEP_CLASS);
+        }
     }
     
     /**
