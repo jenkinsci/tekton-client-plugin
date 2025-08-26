@@ -38,8 +38,8 @@ public class EnhancedCrdProcessor {
     
     private static final Logger logger = LoggerFactory.getLogger(EnhancedCrdProcessor.class);
     
-    // Constants for base class configuration
-    private static final String BASE_STEP_CLASS = "org.jenkinsci.plugins.workflow.steps.BaseStep";
+    // Constants for base class configuration  
+    private static final String BASE_STEP_CLASS = "org.waveywaves.jenkins.plugins.tekton.client.build.BaseStep";
     private static final String[] BASE_STEP_CRD_TYPES = {
         "tasks", "pipelines", "taskruns", "pipelineruns", "stepactions", "customruns"
     };
