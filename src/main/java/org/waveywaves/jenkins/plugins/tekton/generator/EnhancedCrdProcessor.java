@@ -37,6 +37,13 @@ import java.util.stream.Stream;
 public class EnhancedCrdProcessor {
     
     private static final Logger logger = LoggerFactory.getLogger(EnhancedCrdProcessor.class);
+    
+    // Constants for base class configuration
+    private static final String BASE_STEP_CLASS = "org.jenkinsci.plugins.workflow.steps.BaseStep";
+    private static final String[] BASE_STEP_CRD_TYPES = {
+        "tasks", "pipelines", "taskruns", "pipelineruns", "stepactions", "customruns"
+    };
+    
     private final ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
     private final ObjectMapper jsonMapper = new ObjectMapper();
     
