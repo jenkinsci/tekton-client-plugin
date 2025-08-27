@@ -9,11 +9,11 @@ import java.nio.file.Paths;
 
 /**
  * Simplified CRD Java Generator for Maven integration.
- * Removes CLI dependencies and uses EnhancedCrdProcessor for Jenkins plugin integration.
+ * Removes CLI dependencies and uses TektonCrdToJavaProcessor for Jenkins plugin integration.
  */
-public class CrdJavaGenerator {
+public class TektonPojoGenerator {
     
-    private static final Logger logger = LoggerFactory.getLogger(CrdJavaGenerator.class);
+    private static final Logger logger = LoggerFactory.getLogger(TektonPojoGenerator.class);
     
     // Base class for all generated Jenkins pipeline steps
     private static final String BASE_STEP_CLASS = "org.waveywaves.jenkins.plugins.tekton.client.build.BaseStep";
@@ -28,8 +28,8 @@ public class CrdJavaGenerator {
      */
     public static void main(String[] args) {
         if (args.length < 3) {
-            System.err.println("Usage: CrdJavaGenerator <crd-directory> <output-directory> <base-package>");
-            System.err.println("Example: CrdJavaGenerator src/main/resources/crds target/generated-sources/tekton org.example.generated");
+            System.err.println("Usage: TektonPojoGenerator <crd-directory> <output-directory> <base-package>");
+            System.err.println("Example: TektonPojoGenerator src/main/resources/crds target/generated-sources/tekton org.example.generated");
             System.exit(1);
         }
 
@@ -67,7 +67,7 @@ public class CrdJavaGenerator {
             }
 
             // Create and configure Enhanced CRD Processor
-            EnhancedCrdProcessor processor = new EnhancedCrdProcessor();
+            TektonCrdToJavaProcessor processor = new TektonCrdToJavaProcessor();
             
             // Configure for Jenkins plugin integration
             configureJenkinsIntegration(processor, basePackage);
@@ -81,7 +81,7 @@ public class CrdJavaGenerator {
             );
             
             logger.info("Enhanced Java code generation completed successfully!");
-            System.out.println("✅ Generated Tekton POJOs and Jenkins Steps successfully!");
+            System.out.println("Generated Tekton POJOs and Jenkins Steps successfully!");
             
         } catch (Exception e) {
             logger.error("Error during enhanced code generation", e);
@@ -91,10 +91,10 @@ public class CrdJavaGenerator {
     }
     
     /**
-     * Configure EnhancedCrdProcessor for Jenkins plugin integration.
+     * Configure TektonCrdToJavaProcessor for Jenkins plugin integration.
      * Sets up base class mappings and class name mappings for Jenkins steps.
      */
-    private static void configureJenkinsIntegration(EnhancedCrdProcessor processor, String basePackage) {
+    private static void configureJenkinsIntegration(TektonCrdToJavaProcessor processor, String basePackage) {
         logger.info("Configuring Jenkins plugin integration...");
         
         // Configure base class inheritance - all generated steps extend BaseStep

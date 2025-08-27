@@ -30,13 +30,13 @@ import java.util.HashMap;
 import java.util.stream.Stream;
 
 /**
- * Enhanced CRD Processor that can generate POJOs extending from base classes.
+ * Tekton CRD to Java Processor that can generate POJOs extending from base classes.
  * This is specifically designed for integration with Jenkins plugins like tekton-client-plugin.
  * Generates classes like CreateRaw, ApplyTask, etc. that extend BaseStep.
  */
-public class EnhancedCrdProcessor {
+public class TektonCrdToJavaProcessor {
     
-    private static final Logger logger = LoggerFactory.getLogger(EnhancedCrdProcessor.class);
+    private static final Logger logger = LoggerFactory.getLogger(TektonCrdToJavaProcessor.class);
     
     // Constants for base class configuration  
     private static final String BASE_STEP_CLASS = "org.waveywaves.jenkins.plugins.tekton.client.build.BaseStep";
@@ -52,7 +52,7 @@ public class EnhancedCrdProcessor {
     private final Map<String, String> baseClassImports = new HashMap<>();
     private final Map<String, String> classNameMapping = new HashMap<>();
     
-    public EnhancedCrdProcessor() {
+    public TektonCrdToJavaProcessor() {
         // Default base class mappings for Jenkins plugin integration
         setupDefaultBaseClassMappings();
         setupDefaultClassNameMappings();

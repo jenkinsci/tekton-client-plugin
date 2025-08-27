@@ -363,7 +363,7 @@
                             <goal>java</goal>
                         </goals>
                         <configuration>
-                            <mainClass>org.waveywaves.jenkins.plugins.tekton.generator.CrdJavaGenerator</mainClass>
+                            <mainClass>org.waveywaves.jenkins.plugins.tekton.generator.TektonPojoGenerator</mainClass>
                             <arguments>
                                 <argument>${project.basedir}/src/main/resources/crds</argument>
                                 <argument>${project.build.directory}/generated-sources/tekton</argument>
@@ -472,7 +472,7 @@
                                     <goal>java</goal>
                                 </goals>
                                 <configuration>
-                                    <mainClass>org.waveywaves.jenkins.plugins.tekton.generator.CrdJavaGenerator</mainClass>
+                                    <mainClass>org.waveywaves.jenkins.plugins.tekton.generator.TektonPojoGenerator</mainClass>
                                     <arguments>
                                         <argument>${project.basedir}/src/main/resources/crds</argument>
                                         <argument>${project.build.directory}/generated-sources/tekton</argument>
