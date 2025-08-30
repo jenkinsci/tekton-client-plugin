@@ -30,7 +30,7 @@ public class TektonPojoGenerator {
         if (args.length < 3) {
             System.err.println("Usage: TektonPojoGenerator <crd-directory> <output-directory> <base-package>");
             System.err.println("Example: TektonPojoGenerator src/main/resources/crds target/generated-sources/tekton org.example.generated");
-            throw new IllegalArgumentException("Insufficient arguments provided");
+            System.exit(1);
         }
 
         try {
@@ -52,7 +52,7 @@ public class TektonPojoGenerator {
             File crdDir = crdDirectory.toFile();
             if (!crdDir.exists() || !crdDir.isDirectory()) {
                 logger.error("CRD directory does not exist or is not a directory: {}", crdDirectory);
-                throw new IllegalArgumentException("CRD directory does not exist or is not a directory: " + crdDirectory);
+                System.exit(1);
             }
 
             // Create output directory if needed
@@ -61,7 +61,7 @@ public class TektonPojoGenerator {
                 boolean created = outputDir.mkdirs();
                 if (!created) {
                     logger.error("Failed to create output directory: {}", outputDirectory);
-                    throw new RuntimeException("Failed to create output directory: " + outputDirectory);
+                    System.exit(1);
                 }
                 logger.info("Created output directory: {}", outputDirectory);
             }
@@ -80,16 +80,13 @@ public class TektonPojoGenerator {
                 true  // Enable base class inheritance for Jenkins steps
             );
             
-            // Generate Jelly UI files for Jenkins form rendering
-            generateJellyFiles(outputDirectory.toString(), basePackage);
-            
             logger.info("Enhanced Java code generation completed successfully!");
             System.out.println("Generated Tekton POJOs and Jenkins Steps successfully!");
             
         } catch (Exception e) {
             logger.error("Error during enhanced code generation", e);
             e.printStackTrace();
-            throw new RuntimeException("Error during enhanced code generation", e);
+            System.exit(1);
         }
     }
     
@@ -119,24 +116,5 @@ public class TektonPojoGenerator {
         processor.addClassNameMapping("customruns", "CreateCustomRunTyped");
         
         logger.info("Jenkins integration configuration completed");
-    }
-    
-    /**
-     * Generate Jelly UI files for all generated Jenkins steps
-     */
-    private static void generateJellyFiles(String generatedSourceDir, String basePackage) {
-        try {
-            logger.info("Starting Jelly UI file generation...");
-            
-            JellyFileGenerator jellyGenerator = new JellyFileGenerator();
-            String resourcesDir = "src/main/resources/" + basePackage.replace('.', '/');
-            
-            jellyGenerator.generateJellyFiles(generatedSourceDir, resourcesDir);
-            
-            logger.info("Jelly UI file generation completed!");
-        } catch (Exception e) {
-            logger.error("Error generating Jelly files", e);
-            // Don't fail the whole process, just log the error
-        }
     }
 }
