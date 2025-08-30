@@ -51,8 +51,7 @@ public class TektonPojoGenerator {
             // Validate input directory exists
             File crdDir = crdDirectory.toFile();
             if (!crdDir.exists() || !crdDir.isDirectory()) {
-                logger.error("CRD directory does not exist or is not a directory: {}", crdDirectory);
-                System.exit(1);
+                throw new IllegalArgumentException("CRD directory does not exist or is not a directory: " + crdDirectory);
             }
 
             // Create output directory if needed
@@ -60,8 +59,7 @@ public class TektonPojoGenerator {
             if (!outputDir.exists()) {
                 boolean created = outputDir.mkdirs();
                 if (!created) {
-                    logger.error("Failed to create output directory: {}", outputDirectory);
-                    System.exit(1);
+                    throw new RuntimeException("Failed to create output directory: " + outputDirectory);
                 }
                 logger.info("Created output directory: {}", outputDirectory);
             }
