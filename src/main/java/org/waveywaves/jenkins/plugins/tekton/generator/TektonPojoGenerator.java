@@ -28,9 +28,9 @@ public class TektonPojoGenerator {
      */
     public static void main(String[] args) {
         if (args.length < 3) {
-            System.err.println("Usage: TektonPojoGenerator <crd-directory> <output-directory> <base-package>");
-            System.err.println("Example: TektonPojoGenerator src/main/resources/crds target/generated-sources/tekton org.example.generated");
-            System.exit(1);
+            String usage = "Usage: TektonPojoGenerator <crd-directory> <output-directory> <base-package>\n" +
+                          "Example: TektonPojoGenerator src/main/resources/crds target/generated-sources/tekton org.example.generated";
+            throw new IllegalArgumentException(usage);
         }
 
         try {
@@ -85,8 +85,7 @@ public class TektonPojoGenerator {
             
         } catch (Exception e) {
             logger.error("Error during enhanced code generation", e);
-            e.printStackTrace();
-            System.exit(1);
+            throw new RuntimeException("Failed to generate Tekton POJOs", e);
         }
     }
     
