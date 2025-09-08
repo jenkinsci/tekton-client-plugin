@@ -15,7 +15,7 @@ install-tekton:
 	kubectl apply --filename https://storage.googleapis.com/tekton-releases/pipeline/latest/release.yaml
 
 coverage:
-	mvn cobertura:cobertura -q
+	mvn jacoco:report -q
 
 build:
 	mvn clean install -DskipTests -q
