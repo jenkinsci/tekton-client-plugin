@@ -84,10 +84,6 @@ jobs:
       run: mvn verify -DskipUnitTests
 
     - name: Generate test coverage report
-      run: mvn cobertura:cobertura
-      continue-on-error: true
-
-    - name: Generate JaCoCo coverage report
       run: mvn jacoco:report
       continue-on-error: true
 
@@ -99,7 +95,6 @@ jobs:
         path: |
           target/surefire-reports/
           target/failsafe-reports/
-          target/site/cobertura/
           target/site/jacoco/
         retention-days: 7
 
