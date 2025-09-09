@@ -1,53 +1,53 @@
-package org.waveywaves.jenkins.plugins.tekton.client.build.delete;
-
-import hudson.EnvVars;
-import io.fabric8.knative.internal.pkg.apis.Condition;
-import io.fabric8.kubernetes.api.model.apiextensions.v1beta1.CustomResourceDefinition;
-import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.dsl.MixedOperation;
-import io.fabric8.kubernetes.client.dsl.Resource;
-import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
-import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
-import io.fabric8.tekton.pipeline.v1beta1.Pipeline;
-import io.fabric8.tekton.pipeline.v1beta1.PipelineBuilder;
-import io.fabric8.tekton.pipeline.v1beta1.PipelineList;
-import io.fabric8.tekton.pipeline.v1beta1.PipelineListBuilder;
-import io.fabric8.tekton.pipeline.v1beta1.PipelineRun;
-import io.fabric8.tekton.pipeline.v1beta1.PipelineRunBuilder;
-import io.fabric8.tekton.pipeline.v1beta1.PipelineRunList;
-import io.fabric8.tekton.pipeline.v1beta1.PipelineRunListBuilder;
-import io.fabric8.tekton.pipeline.v1beta1.Task;
-import io.fabric8.tekton.pipeline.v1beta1.TaskBuilder;
-import io.fabric8.tekton.pipeline.v1beta1.TaskList;
-import io.fabric8.tekton.pipeline.v1beta1.TaskListBuilder;
-import io.fabric8.tekton.pipeline.v1beta1.TaskRun;
-import io.fabric8.tekton.pipeline.v1beta1.TaskRunBuilder;
-import io.fabric8.tekton.pipeline.v1beta1.TaskRunList;
-import io.fabric8.tekton.pipeline.v1beta1.TaskRunListBuilder;
-import org.junit.Rule;
-import org.junit.jupiter.api.Test;
-
-import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
-import org.waveywaves.jenkins.plugins.tekton.client.build.FakeChecksPublisher;
-import org.waveywaves.jenkins.plugins.tekton.client.build.create.CreateRaw;
-
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.nio.charset.StandardCharsets;
-
-import static org.assertj.core.api.Assertions.fail;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-
-public class DeleteRawMockServerTest {
-
-    private boolean enableCatalog = false;
-    private String namespace;
-
-    @Rule
-    public KubernetesServer server = new KubernetesServer();
-
+//package org.waveywaves.jenkins.plugins.tekton.client.build.delete;
+//
+//import hudson.EnvVars;
+//import io.fabric8.knative.internal.pkg.apis.Condition;
+//import io.fabric8.kubernetes.api.model.apiextensions.v1beta1.CustomResourceDefinition;
+//import io.fabric8.kubernetes.client.KubernetesClient;
+//import io.fabric8.kubernetes.client.dsl.MixedOperation;
+//import io.fabric8.kubernetes.client.dsl.Resource;
+//import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
+//import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
+//import io.fabric8.tekton.pipeline.v1beta1.Pipeline;
+//import io.fabric8.tekton.pipeline.v1beta1.PipelineBuilder;
+//import io.fabric8.tekton.pipeline.v1beta1.PipelineList;
+//import io.fabric8.tekton.pipeline.v1beta1.PipelineListBuilder;
+//import io.fabric8.tekton.pipeline.v1beta1.PipelineRun;
+//import io.fabric8.tekton.pipeline.v1beta1.PipelineRunBuilder;
+//import io.fabric8.tekton.pipeline.v1beta1.PipelineRunList;
+//import io.fabric8.tekton.pipeline.v1beta1.PipelineRunListBuilder;
+//import io.fabric8.tekton.pipeline.v1beta1.Task;
+//import io.fabric8.tekton.pipeline.v1beta1.TaskBuilder;
+//import io.fabric8.tekton.pipeline.v1beta1.TaskList;
+//import io.fabric8.tekton.pipeline.v1beta1.TaskListBuilder;
+//import io.fabric8.tekton.pipeline.v1beta1.TaskRun;
+//import io.fabric8.tekton.pipeline.v1beta1.TaskRunBuilder;
+//import io.fabric8.tekton.pipeline.v1beta1.TaskRunList;
+//import io.fabric8.tekton.pipeline.v1beta1.TaskRunListBuilder;
+//import org.junit.Rule;
+//import org.junit.jupiter.api.Test;
+//
+//import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
+//import org.waveywaves.jenkins.plugins.tekton.client.build.FakeChecksPublisher;
+//import org.waveywaves.jenkins.plugins.tekton.client.build.create.CreateRaw;
+//
+//import java.io.ByteArrayInputStream;
+//import java.io.InputStream;
+//import java.net.HttpURLConnection;
+//import java.nio.charset.StandardCharsets;
+//
+//import static org.assertj.core.api.Assertions.fail;
+//import static org.hamcrest.CoreMatchers.is;
+//import static org.hamcrest.MatcherAssert.assertThat;
+//
+//public class DeleteRawMockServerTest {
+//
+//    private boolean enableCatalog = false;
+//    private String namespace;
+//
+//    @Rule
+//    public KubernetesServer server = new KubernetesServer();
+//
 //    @Test void testTaskDelete() {
 //        // Given
 //        String testTaskYaml = "apiVersion: tekton.dev/v1beta1\n" +
@@ -101,7 +101,7 @@ public class DeleteRawMockServerTest {
 //        assertThat(isTaskDeleted, is(true));
 //        assertThat(testTaskList.getItems().size(), is(0));
 //    }
-
+//
 //    @Test void testTaskDeleteAll() {
 //        // Given
 //        String testTask1Yaml = "apiVersion: tekton.dev/v1beta1\n" +
@@ -187,7 +187,7 @@ public class DeleteRawMockServerTest {
 //        assertThat(isTaskDeleted, is(true));
 //        assertThat(testTaskList.getItems().size(), is(0));
 //    }
-
+//
 //    @Test void testTaskRunDelete() {
 //        // Given
 //        String testTaskRunYaml = "apiVersion: tekton.dev/v1beta1\n" +
@@ -251,7 +251,7 @@ public class DeleteRawMockServerTest {
 //        assertThat(isTaskRunDeleted, is(true));
 //        assertThat(testTaskRunList.getItems().size(), is(0));
 //    }
-
+//
 //    @Test void testTaskRunDeleteAll() {
 //        // Given
 //        String testTaskRun1Yaml = "apiVersion: tekton.dev/v1beta1\n" +
@@ -355,7 +355,7 @@ public class DeleteRawMockServerTest {
 //        assertThat(isTaskRunDeleted, is(true));
 //        assertThat(testTaskRunList.getItems().size(),is(0));
 //    }
-
+//
 //    @Test void testPipelineDelete() {
 //        // Given
 //        String testPipelineYaml = "apiVersion: tekton.dev/v1beta1\n" +
@@ -410,7 +410,7 @@ public class DeleteRawMockServerTest {
 //        assertThat(isPipelineDeleted, is(true));
 //        assertThat(testPipelineList.getItems().size(), is(0));
 //    }
-
+//
 //    @Test void testPipelineDeleteAll() {
 //        // Given
 //        String testPipelineYaml1 = "apiVersion: tekton.dev/v1beta1\n" +
@@ -497,7 +497,7 @@ public class DeleteRawMockServerTest {
 //        assertThat(isPipelineDeleted, is(true));
 //        assertThat(testPipelineList.getItems().size(), is(0));
 //    }
-
+//
 //    @Test void testPipelineRunDelete() {
 //        // Given
 //        String testPipelineRunYaml = "apiVersion: tekton.dev/v1beta1\n" +
@@ -571,7 +571,7 @@ public class DeleteRawMockServerTest {
 //        assertThat(isPipelineRunDeleted, is(true));
 //        assertThat(testPipelineRunList.getItems().size(), is(0));
 //    }
-
+//
 //    @Test void testPipelineRunDeleteAll() {
 //        // Given
 //        String testPipelineRun1Yaml = "apiVersion: tekton.dev/v1beta1\n" +
@@ -692,4 +692,4 @@ public class DeleteRawMockServerTest {
 //        assertThat(isPipelineRunDeleted, is(true));
 //        assertThat(testPipelineRunList.getItems().size(), is(0));
 //    }
-}
+//}
