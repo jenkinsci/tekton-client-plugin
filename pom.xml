@@ -40,7 +40,7 @@
         <jenkins-test-harness.version>2478.v665cca_da_f20c</jenkins-test-harness.version>
         <kubernetes-server-mock.version>5.4.1</kubernetes-server-mock.version>
         <tekton-client.version>5.4.1</tekton-client.version>
-        <maven-surefire-plugin.version>	3.2.5</maven-surefire-plugin.version>
+        <maven-surefire-plugin.version>3.5.3</maven-surefire-plugin.version>
         <mockwebserver.version>0.1.8</mockwebserver.version>
         <junit-jupiter-engine.version>5.12.2</junit-jupiter-engine.version>
         <jx-pipeline.version>0.1.5</jx-pipeline.version>
