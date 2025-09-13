@@ -1,56 +1,56 @@
-package org.waveywaves.jenkins.plugins.tekton.client.build.create;
-
-import hudson.model.Result;
-import io.fabric8.knative.internal.pkg.apis.Condition;
-import io.fabric8.kubernetes.api.model.ContainerBuilder;
-import io.fabric8.kubernetes.api.model.ContainerStateBuilder;
-import io.fabric8.kubernetes.api.model.ContainerStateTerminatedBuilder;
-import io.fabric8.kubernetes.api.model.ContainerStatusBuilder;
-import io.fabric8.kubernetes.api.model.OwnerReference;
-import io.fabric8.kubernetes.api.model.Pod;
-import io.fabric8.kubernetes.api.model.PodBuilder;
-import io.fabric8.kubernetes.api.model.PodList;
-import io.fabric8.kubernetes.api.model.PodListBuilder;
-import io.fabric8.kubernetes.client.Config;
-import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
-import io.fabric8.tekton.pipeline.v1beta1.PipelineRunBuilder;
-import io.fabric8.tekton.pipeline.v1beta1.TaskBuilder;
-import io.fabric8.tekton.pipeline.v1beta1.TaskRunBuilder;
-import io.fabric8.tekton.pipeline.v1beta1.TaskRunList;
-import io.fabric8.tekton.pipeline.v1beta1.TaskRunListBuilder;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import org.junit.Rule;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.rules.RuleChain;
-import org.junit.rules.TestRule;
-import org.jvnet.hudson.test.JenkinsRule;
-import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
-import org.waveywaves.jenkins.plugins.tekton.client.ToolUtils;
-
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
-
-public class JenkinsPipelineTest {
-
-    public JenkinsRule jenkinsRule = new JenkinsRule();
-    public KubernetesServer kubernetesRule = new KubernetesServer();
-
-    @Rule
-    public TestRule chain =
-            RuleChain.outerRule(kubernetesRule)
-                    .around(jenkinsRule);
-
-    @BeforeEach void before() {
-        KubernetesClient client = kubernetesRule.getClient();
-        Config config = client.getConfiguration();
-        TektonUtils.initializeKubeClients(config);
-    }
-
+//package org.waveywaves.jenkins.plugins.tekton.client.build.create;
+//
+//import hudson.model.Result;
+//import io.fabric8.knative.internal.pkg.apis.Condition;
+//import io.fabric8.kubernetes.api.model.ContainerBuilder;
+//import io.fabric8.kubernetes.api.model.ContainerStateBuilder;
+//import io.fabric8.kubernetes.api.model.ContainerStateTerminatedBuilder;
+//import io.fabric8.kubernetes.api.model.ContainerStatusBuilder;
+//import io.fabric8.kubernetes.api.model.OwnerReference;
+//import io.fabric8.kubernetes.api.model.Pod;
+//import io.fabric8.kubernetes.api.model.PodBuilder;
+//import io.fabric8.kubernetes.api.model.PodList;
+//import io.fabric8.kubernetes.api.model.PodListBuilder;
+//import io.fabric8.kubernetes.client.Config;
+//import io.fabric8.kubernetes.client.KubernetesClient;
+//import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
+//import io.fabric8.tekton.pipeline.v1beta1.PipelineRunBuilder;
+//import io.fabric8.tekton.pipeline.v1beta1.TaskBuilder;
+//import io.fabric8.tekton.pipeline.v1beta1.TaskRunBuilder;
+//import io.fabric8.tekton.pipeline.v1beta1.TaskRunList;
+//import io.fabric8.tekton.pipeline.v1beta1.TaskRunListBuilder;
+//import java.net.HttpURLConnection;
+//import java.net.URL;
+//import org.junit.Rule;
+//import org.junit.jupiter.api.BeforeEach;
+//import org.junit.rules.RuleChain;
+//import org.junit.rules.TestRule;
+//import org.jvnet.hudson.test.JenkinsRule;
+//import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
+//import org.waveywaves.jenkins.plugins.tekton.client.ToolUtils;
+//
+//import static org.hamcrest.CoreMatchers.containsString;
+//import static org.hamcrest.CoreMatchers.is;
+//import static org.hamcrest.CoreMatchers.not;
+//import static org.hamcrest.CoreMatchers.notNullValue;
+//import static org.hamcrest.MatcherAssert.assertThat;
+//
+//public class JenkinsPipelineTest {
+//
+//    public JenkinsRule jenkinsRule = new JenkinsRule();
+//    public KubernetesServer kubernetesRule = new KubernetesServer();
+//
+//    @Rule
+//    public TestRule chain =
+//            RuleChain.outerRule(kubernetesRule)
+//                    .around(jenkinsRule);
+//
+//    @BeforeEach void before() {
+//        KubernetesClient client = kubernetesRule.getClient();
+//        Config config = client.getConfiguration();
+//        TektonUtils.initializeKubeClients(config);
+//    }
+//
 //    @Test
 //    public void testScriptedPipelineWithFileInput_Task() throws Exception {
 //        TaskBuilder taskBuilder = new TaskBuilder()
@@ -83,7 +83,7 @@ public class JenkinsPipelineTest {
 //        assertThat(log, containsString("[Pipeline] tektonCreateRaw"));
 //        assertThat(log, not(containsString(".tekton/task.yaml (No such file or directory)")));
 //    }
-
+//
 //    @Test
 //    public void testDeclarativePipelineWithFileInput_Task() throws Exception {
 //        TaskBuilder taskBuilder = new TaskBuilder()
@@ -123,7 +123,7 @@ public class JenkinsPipelineTest {
 //        assertThat(log, containsString("[Pipeline] tektonCreateRaw"));
 //        assertThat(log, not(containsString(".tekton/task.yaml (No such file or directory)")));
 //    }
-
+//
 //    @Test
 //    public void testDeclarativePipelineWithYamlInput_Task() throws Exception {
 //        TaskBuilder taskBuilder = new TaskBuilder()
@@ -167,8 +167,8 @@ public class JenkinsPipelineTest {
 //        assertThat(log, containsString("[Pipeline] tektonCreateRaw"));
 //        assertThat(log, not(containsString(".tekton/task.yaml (No such file or directory)")));
 //    }
-
-
+//
+ //
 //    @Test
 //    public void testDeclarativePipelineWithYamlInput_PipelineRun() throws Exception {
 //        ToolUtils.getJXPipelineBinary(ToolUtils.class.getClassLoader());
@@ -294,7 +294,7 @@ public class JenkinsPipelineTest {
 //
 //        assertThat(kubernetesRule.getMockServer().getRequestCount(), is(9));
 //    }
-
+//
 //    @Test
 //    public void testDeclarativePipelineWithYamlInput_PipelineRun_DifferentNamespace() throws Exception {
 //        ToolUtils.getJXPipelineBinary(ToolUtils.class.getClassLoader());
@@ -420,7 +420,7 @@ public class JenkinsPipelineTest {
 //
 //        assertThat(kubernetesRule.getMockServer().getRequestCount(), is(9));
 //    }
-
+//
 //    @Test
 //    public void testDeclarativePipelineWithYamlInput_PipelineRun_FailingContainer() throws Exception {
 //        ToolUtils.getJXPipelineBinary(ToolUtils.class.getClassLoader());
@@ -553,7 +553,7 @@ public class JenkinsPipelineTest {
 //
 //        assertThat(kubernetesRule.getMockServer().getRequestCount(), is(8));
 //    }
-
+//
 //    @Test
 //    public void testDeclarativePipelineWithYamlInput_PipelineRun_FailingPipelineRun() throws Exception {
 //        ToolUtils.getJXPipelineBinary(ToolUtils.class.getClassLoader());
@@ -679,7 +679,7 @@ public class JenkinsPipelineTest {
 //
 //        assertThat(kubernetesRule.getMockServer().getRequestCount(), is(9));
 //    }
-
+//
 //    @Test
 //    public void testDeclarativePipelineWithYamlInput_MultipleDocuments() throws Exception {
 //        ToolUtils.getJXPipelineBinary(ToolUtils.class.getClassLoader());
@@ -721,12 +721,14 @@ public class JenkinsPipelineTest {
 //
 //        assertThat(kubernetesRule.getMockServer().getRequestCount(), is(0));
 //    }
-
-    private OwnerReference ownerReference(String uid) {
-        return new OwnerReference("", false, false, "", "", uid);
-    }
-
-    private OwnerReference ownerReference(String kind, String name) {
-        return new OwnerReference("", false, false, kind, name, "");
-    }
-}
+//
+//import io.fabric8.kubernetes.api.model.OwnerReference;
+//
+//private OwnerReference ownerReference(String uid) {
+//        return new OwnerReference("", false, false, "", "", uid);
+//    }
+//
+//    private OwnerReference ownerReference(String kind, String name) {
+//        return new OwnerReference("", false, false, kind, name, "");
+//    }
+//}
