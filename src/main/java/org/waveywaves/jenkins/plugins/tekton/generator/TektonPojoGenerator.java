@@ -47,6 +47,12 @@ public class TektonPojoGenerator {
             logger.info("CRD Directory: {}", crdDirectory.toAbsolutePath());
             logger.info("Output Directory: {}", outputDirectory.toAbsolutePath());
             logger.info("Base Package: {}", basePackage);
+            
+            // Also print to System.out to ensure visibility in Maven output
+            System.out.println("=== Starting Enhanced CRD Java code generation ===");
+            System.out.println("CRD Directory: " + crdDirectory.toAbsolutePath());
+            System.out.println("Output Directory: " + outputDirectory.toAbsolutePath());
+            System.out.println("Base Package: " + basePackage);
 
             // Validate input directory exists
             File crdDir = crdDirectory.toFile();
@@ -62,6 +68,7 @@ public class TektonPojoGenerator {
                     throw new RuntimeException("Failed to create output directory: " + outputDirectory);
                 }
                 logger.info("Created output directory: {}", outputDirectory);
+                System.out.println("Created output directory: " + outputDirectory);
             }
 
             // Create and configure Enhanced CRD Processor
@@ -79,6 +86,7 @@ public class TektonPojoGenerator {
             );
             
             logger.info("Enhanced Java code generation completed successfully!");
+            System.out.println("=== Enhanced Java code generation completed successfully! ===");
             System.out.println("Generated Tekton POJOs and Jenkins Steps successfully!");
             
         } catch (Exception e) {
@@ -93,6 +101,7 @@ public class TektonPojoGenerator {
      */
     private static void configureJenkinsIntegration(TektonCrdToJavaProcessor processor, String basePackage) {
         logger.info("Configuring Jenkins plugin integration...");
+        System.out.println("Configuring Jenkins plugin integration...");
         
         // Configure base class inheritance - all generated steps extend BaseStep
         String baseStepClass = BASE_STEP_CLASS;
@@ -113,5 +122,6 @@ public class TektonPojoGenerator {
         processor.addClassNameMapping("customruns", "CreateCustomRunTyped");
         
         logger.info("Jenkins integration configuration completed");
+        System.out.println("Jenkins integration configuration completed");
     }
 }
