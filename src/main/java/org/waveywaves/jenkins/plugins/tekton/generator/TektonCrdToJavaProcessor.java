@@ -181,6 +181,8 @@ public class TektonCrdToJavaProcessor {
         try {
             logger.info("Generating classes for CRD {} version {} with base class inheritance: {}", 
                        crdName, versionName, enableBaseClassInheritance);
+            System.out.println("  -> Generating classes for CRD: " + crdName + " version: " + versionName + 
+                              " (base class inheritance: " + enableBaseClassInheritance + ")");
             
             // Create package directory for this CRD and version
             String packageName = String.format("%s.%s.%s", basePackage, sanitizePackageName(crdName), versionName);
@@ -273,6 +275,7 @@ public class TektonCrdToJavaProcessor {
         }
 
         logger.info("Generated Java classes with inheritance in package: {}", packageName);
+        System.out.println("     Generated Java classes with inheritance in package: " + packageName);
     }
     
     /**
@@ -381,6 +384,7 @@ public class TektonCrdToJavaProcessor {
         }
 
         logger.info("Generated Java classes in package: {}", packageName);
+        System.out.println("     Generated Java classes in package: " + packageName);
     }
 
     private boolean isCrd(JsonNode root) {
