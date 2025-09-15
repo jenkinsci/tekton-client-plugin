@@ -183,7 +183,7 @@ class TektonCrdToJavaProcessorTest {
         
         // Check package declaration in generated file
         List<Path> generatedFiles = Files.list(expectedPackageDir)
-            .filter(p -> p.toString().endsWith("CreateSimpleTaskTyped.java"))
+            .filter(p -> p.toString().endsWith("CreateTaskTyped.java"))
             .toList();
         
         assertThat(generatedFiles).hasSize(1);
@@ -286,9 +286,9 @@ class TektonCrdToJavaProcessorTest {
 
     private static Stream<Arguments> getCompilationTestData() {
         return Stream.of(
-            Arguments.of("simple-task", "CreateSimpleTaskTyped", true),
-            Arguments.of("complex-pipeline", "CreateComplexPipelineTyped", true),
-            Arguments.of("edge-case", "CreateEdgeCaseTyped", true)
+            Arguments.of("simple-task", "CreateTaskTyped", true),
+            Arguments.of("complex-pipeline", "CreatePipelineTyped", true),
+            Arguments.of("edge-case", "CreateCustomRunTyped", true)
         );
     }
 

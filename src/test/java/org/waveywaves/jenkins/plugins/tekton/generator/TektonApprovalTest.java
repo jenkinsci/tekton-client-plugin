@@ -86,10 +86,10 @@ class TektonApprovalTest {
 
     private static Stream<Arguments> getCRDGenerationInputData() {
         return Stream.of(
-            Arguments.of("tekton-task", createTektonTaskCrd(), "CreateTektonTaskTyped", "TaskJavaStep"),
-            Arguments.of("tekton-pipeline", createTektonPipelineCrd(), "CreateTektonPipelineTyped", "PipelineJavaStep"),
-            Arguments.of("tekton-taskrun", createTektonTaskRunCrd(), "CreateTektonTaskRunTyped", "TaskRunJavaStep"),
-            Arguments.of("complex-crd", createComplexCrd(), "CreateComplexCrdTyped", "ComplexJavaStep")
+            Arguments.of("tekton-task", createTektonTaskCrd(), "CreateTaskTyped", "TaskJavaStep"),
+            Arguments.of("tekton-pipeline", createTektonPipelineCrd(), "CreatePipelineTyped", "PipelineJavaStep"),
+            Arguments.of("tekton-taskrun", createTektonTaskRunCrd(), "CreateTaskRunTyped", "TaskRunJavaStep"),
+            Arguments.of("complex-crd", createComplexCrd(), "CreateCustomRunTyped", "ComplexJavaStep")
         );
     }
 
