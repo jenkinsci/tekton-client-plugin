@@ -1,61 +1,61 @@
-package org.waveywaves.jenkins.plugins.tekton.client.build.create;
-
-import hudson.model.FreeStyleBuild;
-import hudson.model.FreeStyleProject;
-import hudson.model.Result;
-import io.fabric8.knative.internal.pkg.apis.Condition;
-import io.fabric8.kubernetes.api.model.ContainerBuilder;
-import io.fabric8.kubernetes.api.model.ContainerStateBuilder;
-import io.fabric8.kubernetes.api.model.ContainerStateTerminatedBuilder;
-import io.fabric8.kubernetes.api.model.ContainerStatusBuilder;
-import io.fabric8.kubernetes.api.model.OwnerReference;
-import io.fabric8.kubernetes.api.model.Pod;
-import io.fabric8.kubernetes.api.model.PodBuilder;
-import io.fabric8.kubernetes.api.model.PodList;
-import io.fabric8.kubernetes.api.model.PodListBuilder;
-import io.fabric8.kubernetes.client.Config;
-import io.fabric8.kubernetes.client.KubernetesClient;
-import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
-import io.fabric8.tekton.pipeline.v1beta1.PipelineRunBuilder;
-import io.fabric8.tekton.pipeline.v1beta1.TaskBuilder;
-import io.fabric8.tekton.pipeline.v1beta1.TaskRunBuilder;
-import io.fabric8.tekton.pipeline.v1beta1.TaskRunList;
-import io.fabric8.tekton.pipeline.v1beta1.TaskRunListBuilder;
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import org.apache.commons.io.IOUtils;
-import org.junit.Rule;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.rules.RuleChain;
-import org.junit.rules.TestRule;
-import org.jvnet.hudson.test.ExtractResourceSCM;
-import org.jvnet.hudson.test.JenkinsRule;
-import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
-import org.waveywaves.jenkins.plugins.tekton.client.ToolUtils;
-
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.MatcherAssert.assertThat;
-
-public class JenkinsFreestyleTest {
-
-    public JenkinsRule jenkinsRule = new JenkinsRule();
-    public KubernetesServer kubernetesRule = new KubernetesServer();
-
-    @Rule
-    public TestRule chain =
-            RuleChain.outerRule(kubernetesRule)
-                    .around(jenkinsRule);
-
-    @BeforeEach void before() {
-        KubernetesClient client = kubernetesRule.getClient();
-        Config config = client.getConfiguration();
-        TektonUtils.initializeKubeClients(config);
-    }
-
+//package org.waveywaves.jenkins.plugins.tekton.client.build.create;
+//
+//import hudson.model.FreeStyleBuild;
+//import hudson.model.FreeStyleProject;
+//import hudson.model.Result;
+//import io.fabric8.knative.internal.pkg.apis.Condition;
+//import io.fabric8.kubernetes.api.model.ContainerBuilder;
+//import io.fabric8.kubernetes.api.model.ContainerStateBuilder;
+//import io.fabric8.kubernetes.api.model.ContainerStateTerminatedBuilder;
+//import io.fabric8.kubernetes.api.model.ContainerStatusBuilder;
+//import io.fabric8.kubernetes.api.model.OwnerReference;
+//import io.fabric8.kubernetes.api.model.Pod;
+//import io.fabric8.kubernetes.api.model.PodBuilder;
+//import io.fabric8.kubernetes.api.model.PodList;
+//import io.fabric8.kubernetes.api.model.PodListBuilder;
+//import io.fabric8.kubernetes.client.Config;
+//import io.fabric8.kubernetes.client.KubernetesClient;
+//import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
+//import io.fabric8.tekton.pipeline.v1beta1.PipelineRunBuilder;
+//import io.fabric8.tekton.pipeline.v1beta1.TaskBuilder;
+//import io.fabric8.tekton.pipeline.v1beta1.TaskRunBuilder;
+//import io.fabric8.tekton.pipeline.v1beta1.TaskRunList;
+//import io.fabric8.tekton.pipeline.v1beta1.TaskRunListBuilder;
+//import java.io.IOException;
+//import java.net.HttpURLConnection;
+//import java.net.URL;
+//import java.nio.charset.StandardCharsets;
+//import org.apache.commons.io.IOUtils;
+//import org.junit.Rule;
+//import org.junit.jupiter.api.BeforeEach;
+//import org.junit.rules.RuleChain;
+//import org.junit.rules.TestRule;
+//import org.jvnet.hudson.test.ExtractResourceSCM;
+//import org.jvnet.hudson.test.JenkinsRule;
+//import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
+//import org.waveywaves.jenkins.plugins.tekton.client.ToolUtils;
+//
+//import static org.hamcrest.CoreMatchers.containsString;
+//import static org.hamcrest.CoreMatchers.is;
+//import static org.hamcrest.CoreMatchers.notNullValue;
+//import static org.hamcrest.MatcherAssert.assertThat;
+//
+//public class JenkinsFreestyleTest {
+//
+//    public JenkinsRule jenkinsRule = new JenkinsRule();
+//    public KubernetesServer kubernetesRule = new KubernetesServer();
+//
+//    @Rule
+//    public TestRule chain =
+//            RuleChain.outerRule(kubernetesRule)
+//                    .around(jenkinsRule);
+//
+//    @BeforeEach void before() {
+//        KubernetesClient client = kubernetesRule.getClient();
+//        Config config = client.getConfiguration();
+//        TektonUtils.initializeKubeClients(config);
+//    }
+//
 //    @Test
 //    public void testFreestyleJobWithFileInput() throws Exception {
 //        TaskBuilder taskBuilder = new TaskBuilder()
@@ -84,7 +84,7 @@ public class JenkinsFreestyleTest {
 //
 //        assertThat(log, containsString("Legacy code started this job"));
 //    }
-
+//
 //    @Test
 //    public void testFreestyleJobWithYamlInput() throws Exception {
 //        TaskBuilder taskBuilder = new TaskBuilder()
@@ -116,7 +116,7 @@ public class JenkinsFreestyleTest {
 //
 //        assertThat(log, containsString("Legacy code started this job"));
 //    }
-
+//
 //    @Test
 //    public void testFreestyleJobWithComplexYamlInput() throws Exception {
 //        ToolUtils.getJXPipelineBinary(ToolUtils.class.getClassLoader());
@@ -225,7 +225,7 @@ public class JenkinsFreestyleTest {
 //
 //        assertThat(kubernetesRule.getMockServer().getRequestCount(), is(9));
 //    }
-
+//
 //    @Test
 //    public void testFreestyleJobWithExpandedYamlInput() throws Exception {
 //        ToolUtils.getJXPipelineBinary(ToolUtils.class.getClassLoader());
@@ -346,4 +346,4 @@ public class JenkinsFreestyleTest {
 //    private OwnerReference ownerReference(String kind, String name) {
 //        return new OwnerReference("", false, false, kind, name, "");
 //    }
-}
+//}

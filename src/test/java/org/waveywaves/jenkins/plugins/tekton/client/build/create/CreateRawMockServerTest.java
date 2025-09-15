@@ -1,52 +1,52 @@
-package org.waveywaves.jenkins.plugins.tekton.client.build.create;
-
-import hudson.EnvVars;
-import io.fabric8.knative.internal.pkg.apis.Condition;
-import io.fabric8.kubernetes.api.model.ConditionBuilder;
-import io.fabric8.kubernetes.api.model.apiextensions.v1beta1.CustomResourceDefinition;
-import io.fabric8.kubernetes.client.KubernetesClient;
-
-import io.fabric8.kubernetes.client.dsl.MixedOperation;
-import io.fabric8.kubernetes.client.dsl.Resource;
-import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
-import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
-
-import io.fabric8.tekton.pipeline.v1beta1.*;
-import org.junit.Rule;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
-
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.nio.charset.StandardCharsets;
-import org.waveywaves.jenkins.plugins.tekton.client.build.FakeChecksPublisher;
-
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.assertj.core.api.Assertions.fail;
-
-
-public class CreateRawMockServerTest {
-
-    private boolean enableCatalog = false;
-    private String namespace = "test";
-    private FakeChecksPublisher checksPublisher;
-
-    @Rule
-    public KubernetesServer server = new KubernetesServer();
-
-    @BeforeEach void before() {
-        checksPublisher = new FakeChecksPublisher();
-    }
-
-    @AfterEach void after() {
-        checksPublisher.validate();
-    }
-
+//package org.waveywaves.jenkins.plugins.tekton.client.build.create;
+//
+//import hudson.EnvVars;
+//import io.fabric8.knative.internal.pkg.apis.Condition;
+//import io.fabric8.kubernetes.api.model.ConditionBuilder;
+//import io.fabric8.kubernetes.api.model.apiextensions.v1beta1.CustomResourceDefinition;
+//import io.fabric8.kubernetes.client.KubernetesClient;
+//
+//import io.fabric8.kubernetes.client.dsl.MixedOperation;
+//import io.fabric8.kubernetes.client.dsl.Resource;
+//import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
+//import io.fabric8.kubernetes.client.server.mock.KubernetesServer;
+//
+//import io.fabric8.tekton.pipeline.v1beta1.*;
+//import org.junit.Rule;
+//import org.junit.jupiter.api.AfterEach;
+//import org.junit.jupiter.api.BeforeEach;
+//import org.junit.jupiter.api.Test;
+//
+//import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
+//
+//import java.io.ByteArrayInputStream;
+//import java.io.InputStream;
+//import java.net.HttpURLConnection;
+//import java.nio.charset.StandardCharsets;
+//import org.waveywaves.jenkins.plugins.tekton.client.build.FakeChecksPublisher;
+//
+//import static org.hamcrest.CoreMatchers.is;
+//import static org.hamcrest.MatcherAssert.assertThat;
+//import static org.assertj.core.api.Assertions.fail;
+//
+//
+//public class CreateRawMockServerTest {
+//
+//    private boolean enableCatalog = false;
+//    private String namespace = "test";
+//    private FakeChecksPublisher checksPublisher;
+//
+//    @Rule
+//    public KubernetesServer server = new KubernetesServer();
+//
+//    @BeforeEach void before() {
+//        checksPublisher = new FakeChecksPublisher();
+//    }
+//
+//    @AfterEach void after() {
+//        checksPublisher.validate();
+//    }
+//
 //    @Test void testTaskCreate() {
 //        // Given
 //        String testTaskYaml = "apiVersion: tekton.dev/v1beta1\n" +
@@ -90,7 +90,7 @@ public class CreateRawMockServerTest {
 //        assertThat(createdTaskName, is("testTask"));
 //        assertThat(testTaskList.getItems().size(), is(1));
 //    }
-
+//
 //    @Test void testTaskRunCreate() {
 //        // Given
 //        String testTaskRunYaml = "apiVersion: tekton.dev/v1beta1\n" +
@@ -145,7 +145,7 @@ public class CreateRawMockServerTest {
 //        assertThat(createdTaskRunName, is("home-is-set-1234"));
 //        assertThat(testTaskRunList.getItems().size(), is(1));
 //    }
-
+//
 //    @Test void testPipelineCreate() {
 //        // Given
 //        String testPipelineYaml = "apiVersion: tekton.dev/v1beta1\n" +
@@ -188,7 +188,7 @@ public class CreateRawMockServerTest {
 //        assertThat(createdPipelineName, is("testPipeline"));
 //        assertThat(testPipelineList.getItems().size(), is(1));
 //    }
-
+//
 //    @Test void testPipelineRunCreate() {
 //        // Given
 //        String testPipelineRunYaml = "apiVersion: tekton.dev/v1beta1\n" +
@@ -257,7 +257,7 @@ public class CreateRawMockServerTest {
 //        assertThat(createdPipelineName, is("testPipelineRun"));
 //        assertThat(testPipelineRunList.getItems().size(), is(1));
 //    }
-
+//
 //    @Test void testPipelineRunCreateWithFailingPod() {
 //        // Given
 //        String testPipelineRunYaml = "apiVersion: tekton.dev/v1beta1\n" +
@@ -322,4 +322,4 @@ public class CreateRawMockServerTest {
 //
 //        assertThat(checksPublisher.getCounter(), is(1));
 //    }
-}
+//}

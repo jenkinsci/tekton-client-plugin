@@ -276,6 +276,7 @@ public class TektonCrdToJavaProcessor {
 
         logger.info("Generated Java classes with inheritance in package: {}", packageName);
         System.out.println("     Generated Java classes with inheritance in package: " + packageName);
+
     }
     
     /**
@@ -385,6 +386,7 @@ public class TektonCrdToJavaProcessor {
 
         logger.info("Generated Java classes in package: {}", packageName);
         System.out.println("     Generated Java classes in package: " + packageName);
+
     }
 
     private boolean isCrd(JsonNode root) {
