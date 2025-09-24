@@ -53,6 +53,9 @@ class TektonApprovalTest {
         // Arrange
         Files.write(crdDirectory.resolve(testName + "-crd.yaml"), crdYaml.getBytes());
         
+        // Configure Jenkins integration for proper class mappings
+        org.waveywaves.jenkins.plugins.tekton.generator.TektonPojoGenerator.configureJenkinsIntegration(processor, BASE_PACKAGE);
+        
         // Act
         processor.processDirectory(crdDirectory, outputDirectory, BASE_PACKAGE, true);
         

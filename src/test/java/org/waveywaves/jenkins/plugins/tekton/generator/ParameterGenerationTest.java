@@ -36,6 +36,9 @@ class ParameterGenerationTest {
         Files.createDirectories(crdDirectory);
         Files.createDirectories(outputDirectory);
         
+        // Configure Jenkins integration for proper class mappings
+        org.waveywaves.jenkins.plugins.tekton.generator.TektonPojoGenerator.configureJenkinsIntegration(processor, BASE_PACKAGE);
+        
         // Create a CRD similar to what CreateRaw handles
         createTaskCrdSimilarToCreateRaw();
     }
@@ -67,7 +70,7 @@ class ParameterGenerationTest {
         // Assert - Check field generation
         assertThat(content).contains("private String apiVersion");
         assertThat(content).contains("private String kind");
-        assertThat(content).contains("private Object metadata");
+        assertThat(content).contains("private Metadata metadata");
         assertThat(content).contains("private Spec spec");
         
         // Check field annotations
@@ -212,7 +215,8 @@ class ParameterGenerationTest {
 
     private void verifyParameterFields(String content) {
         // Should have private fields with JsonProperty annotations
-        Pattern fieldPattern = Pattern.compile("@JsonProperty\\(\"\\w+\"\\)\\s+private \\w+ \\w+;");
+        // Account for JsonPropertyDescription that may appear between JsonProperty and private field
+        Pattern fieldPattern = Pattern.compile("@JsonProperty\\(\"\\w+\"\\)(?:[\\s\\S]*?)private \\w+ \\w+;");
         Matcher matcher = fieldPattern.matcher(content);
         
         assertThat(matcher.find()).isTrue();

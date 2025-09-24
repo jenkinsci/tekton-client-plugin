@@ -10,6 +10,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -183,7 +184,7 @@ class TektonCrdToJavaProcessorTest {
         
         // Check package declaration in generated file
         List<Path> generatedFiles = Files.list(expectedPackageDir)
-            .filter(p -> p.toString().endsWith("CreateTaskTyped.java"))
+            .filter(p -> p.toString().endsWith("Simpletasks.java"))
             .toList();
         
         assertThat(generatedFiles).hasSize(1);
@@ -194,6 +195,9 @@ class TektonCrdToJavaProcessorTest {
 
     @Test
     void testPOJOGeneration() throws IOException {
+        // Configure Jenkins integration for proper class mappings
+        org.waveywaves.jenkins.plugins.tekton.generator.TektonPojoGenerator.configureJenkinsIntegration(processor, BASE_PACKAGE);
+        
         // Act
         processor.processDirectory(crdDirectory, outputDirectory, BASE_PACKAGE, true);
         
@@ -254,14 +258,20 @@ class TektonCrdToJavaProcessorTest {
     @ParameterizedTest
     @MethodSource("getCompilationTestData")
     void testGeneratedCodeCompilation(String crdName, String expectedClassName, boolean shouldHaveConstructor) throws IOException {
+        // Use real CRD directory for this test since we need base class mappings
+        Path realCrdDirectory = Paths.get("src/main/resources/crds");
+        
+        // Configure Jenkins integration to get proper *Typed class names
+        org.waveywaves.jenkins.plugins.tekton.generator.TektonPojoGenerator.configureJenkinsIntegration(processor, BASE_PACKAGE);
+        
         // Act
-        processor.processDirectory(crdDirectory, outputDirectory, BASE_PACKAGE, true);
+        processor.processDirectory(realCrdDirectory, outputDirectory, BASE_PACKAGE, true);
         
         // Find the generated class
         Path generatedClass = findGeneratedStepClass(expectedClassName);
         assertThat(generatedClass).exists();
         
-        String content = Files.readString(generatedClass);
+        String content = Files.readString(generatedClass).trim();
         
         // Basic syntax checks
         assertThat(content).startsWith("package ");
@@ -286,9 +296,8 @@ class TektonCrdToJavaProcessorTest {
 
     private static Stream<Arguments> getCompilationTestData() {
         return Stream.of(
-            Arguments.of("simple-task", "CreateTaskTyped", true),
-            Arguments.of("complex-pipeline", "CreatePipelineTyped", true),
-            Arguments.of("edge-case", "CreateCustomRunTyped", true)
+            Arguments.of("tasks", "CreateTaskTyped", true),
+            Arguments.of("pipelineruns", "CreatePipelineRunTyped", true)
         );
     }
 

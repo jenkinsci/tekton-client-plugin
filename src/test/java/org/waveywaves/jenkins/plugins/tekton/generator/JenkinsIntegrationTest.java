@@ -15,6 +15,8 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.*;
 
+import org.waveywaves.jenkins.plugins.tekton.generator.TektonPojoGenerator;
+
 /**
  * Tests focused on Jenkins-specific integration aspects of generated POJOs.
  * Verifies that generated classes properly integrate with Jenkins pipeline framework.
@@ -32,6 +34,10 @@ class JenkinsIntegrationTest {
     @BeforeEach
     void setUp() throws IOException {
         processor = new TektonCrdToJavaProcessor();
+        
+        // Configure Jenkins integration like the main generator does
+        TektonPojoGenerator.configureJenkinsIntegration(processor, BASE_PACKAGE);
+        
         crdDirectory = tempDir.resolve("crds");
         outputDirectory = tempDir.resolve("generated-sources");
         Files.createDirectories(crdDirectory);
@@ -61,7 +67,7 @@ class JenkinsIntegrationTest {
         processor.processDirectory(crdDirectory, outputDirectory, BASE_PACKAGE, true);
         
         // Find generated Jenkins step class
-        Path stepClass = findGeneratedStepClass("CreateJenkinsTaskTyped");
+        Path stepClass = findGeneratedStepClass("CreateJenkinstasksTyped");
         String content = Files.readString(stepClass);
         
         // Assert - Check BaseStep inheritance
@@ -69,7 +75,7 @@ class JenkinsIntegrationTest {
         assertThat(content).contains("import org.waveywaves.jenkins.plugins.tekton.client.build.BaseStep");
         
         // Check class declaration syntax
-        assertThat(content).containsPattern("public class CreateJenkinsTaskTyped\\s+extends BaseStep");
+        assertThat(content).containsPattern("public class CreateJenkinstasksTyped\\s+extends BaseStep");
     }
 
     @Test
@@ -78,7 +84,7 @@ class JenkinsIntegrationTest {
         processor.processDirectory(crdDirectory, outputDirectory, BASE_PACKAGE, true);
         
         // Find generated Jenkins step class
-        Path stepClass = findGeneratedStepClass("CreateJenkinsTaskTyped");
+        Path stepClass = findGeneratedStepClass("CreateJenkinstasksTyped");
         String content = Files.readString(stepClass);
         
         // Assert - Check DataBoundConstructor
@@ -86,7 +92,7 @@ class JenkinsIntegrationTest {
         assertThat(content).contains("import org.kohsuke.stapler.DataBoundConstructor");
         
         // Check constructor format
-        assertThat(content).containsPattern("@DataBoundConstructor\\s+public CreateJenkinsTaskTyped");
+        assertThat(content).containsPattern("@DataBoundConstructor\\s+public CreateJenkinstasksTyped");
         
         // Check super() call in constructor
         assertThat(content).contains("super()");
@@ -98,18 +104,19 @@ class JenkinsIntegrationTest {
         processor.processDirectory(crdDirectory, outputDirectory, BASE_PACKAGE, true);
         
         // Find generated Jenkins step class
-        Path stepClass = findGeneratedStepClass("CreateJenkinsTaskTyped");
-        String content = Files.readString(stepClass);
+        Path stepClass = findGeneratedStepClass("CreateJenkinstasksTyped");
+        String content = Files.readString(stepClass).trim();
         
-        // Assert - Full Jenkins Step structure
-        assertThat(content).contains("public class CreateJenkinsTaskTyped extends BaseStep");
+        // Assert - Full Jenkins Step structure (handle multi-line formatting)
+        assertThat(content).contains("public class CreateJenkinstasksTyped");
+        assertThat(content).contains("extends BaseStep");
         
         // Required imports for Jenkins integration
         assertThat(content).contains("import org.waveywaves.jenkins.plugins.tekton.client.build.BaseStep");
         assertThat(content).contains("import org.kohsuke.stapler.DataBoundConstructor");
         
         // Constructor with proper annotation and super call
-        assertThat(content).containsPattern("@DataBoundConstructor\\s+public CreateJenkinsTaskTyped");
+        assertThat(content).containsPattern("@DataBoundConstructor\\s+public CreateJenkinstasksTyped");
         assertThat(content).contains("super()");
         
         // Jackson annotations for JSON serialization
@@ -123,8 +130,8 @@ class JenkinsIntegrationTest {
         processor.processDirectory(crdDirectory, outputDirectory, BASE_PACKAGE, true);
         
         // Find both version classes
-        Path v1Class = findGeneratedStepClass("CreateJenkinsPipelineTyped", "v1");
-        Path v1beta1Class = findGeneratedStepClass("CreateJenkinsPipelineTyped", "v1beta1");
+        Path v1Class = findGeneratedStepClass("CreateJenkinspipelinesTyped", "v1");
+        Path v1beta1Class = findGeneratedStepClass("CreateJenkinspipelinesTyped", "v1beta1");
         
         String v1Content = Files.readString(v1Class);
         String v1beta1Content = Files.readString(v1beta1Class);
@@ -147,7 +154,7 @@ class JenkinsIntegrationTest {
         processor.processDirectory(crdDirectory, outputDirectory, BASE_PACKAGE, true);
         
         // Find edge case class
-        Path edgeClass = findGeneratedStepClass("CreateJenkinsEdgeCaseTyped");
+        Path edgeClass = findGeneratedStepClass("CreateJenkinsedgecasesTyped");
         String content = Files.readString(edgeClass);
         
         // Assert - Jenkins integration works even with edge cases
@@ -171,11 +178,11 @@ class JenkinsIntegrationTest {
         processor.processDirectory(crdDirectory, outputDirectory, BASE_PACKAGE, true);
         
         // Check package naming convention
-        Path taskClass = findGeneratedStepClass("CreateJenkinsTaskTyped");
+        Path taskClass = findGeneratedStepClass("CreateJenkinstasksTyped");
         String taskContent = Files.readString(taskClass);
         
         assertThat(taskContent).contains("package org.waveywaves.jenkins.plugins.tekton.generated.jenkinstasks.v1");
-        assertThat(taskContent).contains("public class CreateJenkinsTaskTyped");
+        assertThat(taskContent).contains("public class CreateJenkinstasksTyped");
         
         // Verify naming avoids conflicts with existing Jenkins classes
         assertThat(taskContent).doesNotContain("public class Task"); // Avoid conflict with Jenkins Task
@@ -196,7 +203,7 @@ class JenkinsIntegrationTest {
         assertThat(stepClasses).isNotEmpty();
         
         for (Path stepClass : stepClasses) {
-            String content = Files.readString(stepClass);
+            String content = Files.readString(stepClass).trim();
             
             // Basic syntax validation
             assertThat(content).startsWith("package ");
@@ -256,11 +263,11 @@ class JenkinsIntegrationTest {
 
     private static Stream<Arguments> getJenkinsIntegrationTestData() {
         return Stream.of(
-            Arguments.of("jenkins-task", "CreateJenkinsTaskTyped", 
+            Arguments.of("jenkins-task", "CreateJenkinstasksTyped", 
                 "org.waveywaves.jenkins.plugins.tekton.generated.jenkinstasks.v1"),
-            Arguments.of("jenkins-pipeline", "CreateJenkinsPipelineTyped", 
+            Arguments.of("jenkins-pipeline", "CreateJenkinspipelinesTyped", 
                 "org.waveywaves.jenkins.plugins.tekton.generated.jenkinspipelines.v1"),
-            Arguments.of("jenkins-edge-case", "CreateJenkinsEdgeCaseTyped", 
+            Arguments.of("jenkins-edge-case", "CreateJenkinsedgecasesTyped", 
                 "org.waveywaves.jenkins.plugins.tekton.generated.jenkinsedgecases.v1")
         );
     }

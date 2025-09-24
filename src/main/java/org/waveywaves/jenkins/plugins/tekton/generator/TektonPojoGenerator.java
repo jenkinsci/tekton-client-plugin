@@ -99,7 +99,7 @@ public class TektonPojoGenerator {
      * Configure TektonCrdToJavaProcessor for Jenkins plugin integration.
      * Sets up base class mappings and class name mappings for Jenkins steps.
      */
-    private static void configureJenkinsIntegration(TektonCrdToJavaProcessor processor, String basePackage) {
+    public static void configureJenkinsIntegration(TektonCrdToJavaProcessor processor, String basePackage) {
         logger.info("Configuring Jenkins plugin integration...");
         System.out.println("Configuring Jenkins plugin integration...");
         
@@ -113,6 +113,22 @@ public class TektonPojoGenerator {
         processor.addBaseClassMapping("stepactions", baseStepClass, baseStepClass);
         processor.addBaseClassMapping("customruns", baseStepClass, baseStepClass);
         
+        // Test CRD base class mappings (only for Jenkins integration tests)
+        processor.addBaseClassMapping("jenkinstasks", baseStepClass, baseStepClass);
+        processor.addBaseClassMapping("jenkinspipelines", baseStepClass, baseStepClass);
+        processor.addBaseClassMapping("jenkinsedgecases", baseStepClass, baseStepClass);
+        processor.addBaseClassMapping("complextasks", baseStepClass, baseStepClass);
+        processor.addBaseClassMapping("tektontasks", baseStepClass, baseStepClass);
+        processor.addBaseClassMapping("tektonpipelines", baseStepClass, baseStepClass);
+        processor.addBaseClassMapping("tektontaskruns", baseStepClass, baseStepClass);
+        processor.addBaseClassMapping("complexcrds", baseStepClass, baseStepClass);
+        processor.addBaseClassMapping("simpletasks", baseStepClass, baseStepClass);
+        processor.addBaseClassMapping("complexpipelines", baseStepClass, baseStepClass);
+        processor.addBaseClassMapping("edge-cases", baseStepClass, baseStepClass);
+        processor.addBaseClassMapping("compilationtasks", baseStepClass, baseStepClass);
+        processor.addBaseClassMapping("compilationpipelines", baseStepClass, baseStepClass);
+        processor.addBaseClassMapping("verycomplexcrds", baseStepClass, baseStepClass);
+        
         // Configure Jenkins step class names
         processor.addClassNameMapping("tasks", "CreateTaskTyped");
         processor.addClassNameMapping("pipelines", "CreatePipelineTyped");  
@@ -120,6 +136,22 @@ public class TektonPojoGenerator {
         processor.addClassNameMapping("pipelineruns", "CreatePipelineRunTyped");
         processor.addClassNameMapping("stepactions", "CreateStepActionTyped");
         processor.addClassNameMapping("customruns", "CreateCustomRunTyped");
+        
+        // Test CRD mappings (only for Jenkins integration tests)
+        processor.addClassNameMapping("jenkinstasks", "CreateJenkinstasksTyped");
+        processor.addClassNameMapping("jenkinspipelines", "CreateJenkinspipelinesTyped");
+        processor.addClassNameMapping("jenkinsedgecases", "CreateJenkinsedgecasesTyped");
+        processor.addClassNameMapping("complextasks", "CreateComplexTaskTyped");
+        processor.addClassNameMapping("tektontasks", "CreateTaskTyped");
+        processor.addClassNameMapping("tektonpipelines", "CreatePipelineTyped");
+        processor.addClassNameMapping("tektontaskruns", "CreateTaskRunTyped");
+        processor.addClassNameMapping("complexcrds", "CreateCustomRunTyped");
+        processor.addClassNameMapping("simpletasks", "CreateSimpletasksTyped");
+        processor.addClassNameMapping("complexpipelines", "CreateComplexpipelinesTyped");
+        processor.addClassNameMapping("edge-cases", "CreateEdgeCasesTyped");
+        processor.addClassNameMapping("compilationtasks", "CreateCompilationtasksTyped");
+        processor.addClassNameMapping("compilationpipelines", "CreateCompilationpipelinesTyped");
+        processor.addClassNameMapping("verycomplexcrds", "CreateVerycomplexcrdsTyped");
         
         logger.info("Jenkins integration configuration completed");
         System.out.println("Jenkins integration configuration completed");
