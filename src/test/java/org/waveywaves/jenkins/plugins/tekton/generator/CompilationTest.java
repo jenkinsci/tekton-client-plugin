@@ -4,6 +4,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import javax.tools.Diagnostic;
+import javax.tools.DiagnosticCollector;
 import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
@@ -145,24 +147,39 @@ class CompilationTest {
             Iterable<? extends JavaFileObject> compilationUnits = 
                 fileManager.getJavaFileObjectsFromPaths(javaFiles);
             
-            // Set compilation options
+            // Set compilation options with better classpath handling
             List<String> options = Arrays.asList(
                 "-d", compilationDirectory.toString(),
                 "-cp", getClasspath(),
-                "-Xlint:none" // Suppress warnings for generated code
+                "-Xlint:none", // Suppress warnings for generated code
+                "-source", "17",
+                "-target", "17"
             );
+            
+            // Create a diagnostic collector to capture compilation errors
+            DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
             
             // Perform compilation
             JavaCompiler.CompilationTask task = compiler.getTask(
                 null, // Writer for additional output
                 fileManager,
-                null, // DiagnosticListener
+                diagnostics, // DiagnosticListener
                 options,
                 null, // Classes to process
                 compilationUnits
             );
             
-            return task.call();
+            boolean success = task.call();
+            
+            // Print diagnostics if compilation failed
+            if (!success) {
+                System.err.println("Compilation failed with " + diagnostics.getDiagnostics().size() + " errors:");
+                for (Diagnostic<? extends JavaFileObject> diagnostic : diagnostics.getDiagnostics()) {
+                    System.err.println(diagnostic.toString());
+                }
+            }
+            
+            return success;
             
         } catch (Exception e) {
             System.err.println("Compilation failed: " + e.getMessage());
@@ -173,7 +190,23 @@ class CompilationTest {
 
     private String getClasspath() {
         // Get current classpath for compilation
-        return System.getProperty("java.class.path");
+        String classpath = System.getProperty("java.class.path");
+        
+        // In CI environments, the classpath might be incomplete
+        // Add common Maven target directories if they exist
+        Path targetClasses = Path.of("target/classes");
+        Path targetTestClasses = Path.of("target/test-classes");
+        
+        StringBuilder enhancedClasspath = new StringBuilder(classpath);
+        
+        if (Files.exists(targetClasses)) {
+            enhancedClasspath.append(":").append(targetClasses.toAbsolutePath());
+        }
+        if (Files.exists(targetTestClasses)) {
+            enhancedClasspath.append(":").append(targetTestClasses.toAbsolutePath());
+        }
+        
+        return enhancedClasspath.toString();
     }
 
 
