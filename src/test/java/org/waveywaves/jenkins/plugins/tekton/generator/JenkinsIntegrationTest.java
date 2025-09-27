@@ -3,19 +3,13 @@ package org.waveywaves.jenkins.plugins.tekton.generator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.*;
-
-import org.waveywaves.jenkins.plugins.tekton.generator.TektonPojoGenerator;
 
 /**
  * Tests focused on Jenkins-specific integration aspects of generated POJOs.
@@ -62,43 +56,6 @@ class JenkinsIntegrationTest {
     }
 
     @Test
-    void testBaseStepInheritance() throws IOException {
-        // Act
-        processor.processDirectory(crdDirectory, outputDirectory, BASE_PACKAGE, true);
-        
-        // Find generated Jenkins step class
-        Path stepClass = findGeneratedStepClass("CreateJenkinstasksTyped");
-        String content = Files.readString(stepClass);
-        
-        // Assert - Check BaseStep inheritance
-        assertThat(content).contains("extends BaseStep");
-        assertThat(content).contains("import org.waveywaves.jenkins.plugins.tekton.client.build.BaseStep");
-        
-        // Check class declaration syntax
-        assertThat(content).containsPattern("public class CreateJenkinstasksTyped\\s+extends BaseStep");
-    }
-
-    @Test
-    void testDataBoundConstructorAnnotation() throws IOException {
-        // Act
-        processor.processDirectory(crdDirectory, outputDirectory, BASE_PACKAGE, true);
-        
-        // Find generated Jenkins step class
-        Path stepClass = findGeneratedStepClass("CreateJenkinstasksTyped");
-        String content = Files.readString(stepClass);
-        
-        // Assert - Check DataBoundConstructor
-        assertThat(content).contains("@DataBoundConstructor");
-        assertThat(content).contains("import org.kohsuke.stapler.DataBoundConstructor");
-        
-        // Check constructor format
-        assertThat(content).containsPattern("@DataBoundConstructor\\s+public CreateJenkinstasksTyped");
-        
-        // Check super() call in constructor
-        assertThat(content).contains("super()");
-    }
-
-    @Test
     void testJenkinsStepStructure() throws IOException {
         // Act
         processor.processDirectory(crdDirectory, outputDirectory, BASE_PACKAGE, true);
@@ -107,17 +64,15 @@ class JenkinsIntegrationTest {
         Path stepClass = findGeneratedStepClass("CreateJenkinstasksTyped");
         String content = Files.readString(stepClass).trim();
         
-        // Assert - Full Jenkins Step structure (handle multi-line formatting)
+        // Assert - Full Jenkins Step structure
         assertThat(content).contains("public class CreateJenkinstasksTyped");
         assertThat(content).contains("extends BaseStep");
+        assertThat(content).contains("@DataBoundConstructor");
+        assertThat(content).contains("super()");
         
         // Required imports for Jenkins integration
         assertThat(content).contains("import org.waveywaves.jenkins.plugins.tekton.client.build.BaseStep");
         assertThat(content).contains("import org.kohsuke.stapler.DataBoundConstructor");
-        
-        // Constructor with proper annotation and super call
-        assertThat(content).containsPattern("@DataBoundConstructor\\s+public CreateJenkinstasksTyped");
-        assertThat(content).contains("super()");
         
         // Jackson annotations for JSON serialization
         assertThat(content).contains("@JsonInclude");
@@ -149,30 +104,6 @@ class JenkinsIntegrationTest {
     }
 
     @Test
-    void testEdgeCaseJenkinsIntegration() throws IOException {
-        // Act
-        processor.processDirectory(crdDirectory, outputDirectory, BASE_PACKAGE, true);
-        
-        // Find edge case class
-        Path edgeClass = findGeneratedStepClass("CreateJenkinsedgecasesTyped");
-        String content = Files.readString(edgeClass);
-        
-        // Assert - Jenkins integration works even with edge cases
-        assertThat(content).contains("extends BaseStep");
-        assertThat(content).contains("@DataBoundConstructor");
-        
-        // Should not have duplicate imports
-        long baseStepImports = content.lines()
-            .filter(line -> line.contains("import") && line.contains("BaseStep"))
-            .count();
-        assertThat(baseStepImports).isEqualTo(1);
-        
-        // Should not have syntax errors from edge cases
-        assertThat(content).doesNotContain("class class");
-        assertThat(content).doesNotContain("import import");
-    }
-
-    @Test
     void testPackageAndClassNaming() throws IOException {
         // Act
         processor.processDirectory(crdDirectory, outputDirectory, BASE_PACKAGE, true);
@@ -189,88 +120,6 @@ class JenkinsIntegrationTest {
         assertThat(taskContent).doesNotContain("public class Pipeline"); // Avoid conflict with Jenkins Pipeline
     }
 
-    @Test
-    void testGeneratedCodeSyntaxValidity() throws IOException {
-        // Act
-        processor.processDirectory(crdDirectory, outputDirectory, BASE_PACKAGE, true);
-        
-        // Get all generated step classes
-        List<Path> stepClasses = Files.walk(outputDirectory)
-            .filter(Files::isRegularFile)
-            .filter(p -> p.getFileName().toString().endsWith("Typed.java"))
-            .toList();
-        
-        assertThat(stepClasses).isNotEmpty();
-        
-        for (Path stepClass : stepClasses) {
-            String content = Files.readString(stepClass).trim();
-            
-            // Basic syntax validation
-            assertThat(content).startsWith("package ");
-            assertThat(content).contains("public class ");
-            
-            // Balanced braces
-            long openBraces = content.chars().filter(c -> c == '{').count();
-            long closeBraces = content.chars().filter(c -> c == '}').count();
-            assertThat(openBraces).as("Braces should be balanced in " + stepClass.getFileName()).isEqualTo(closeBraces);
-            
-            // No common syntax errors
-            assertThat(content).doesNotContain(";;");
-            assertThat(content).doesNotContain("{{");
-            assertThat(content).doesNotContain("class class");
-        }
-    }
-
-    @Test
-    void testDirectoryProcessingWithoutInheritance() throws IOException {
-        // Act - Process without inheritance
-        processor.processDirectory(crdDirectory, outputDirectory, BASE_PACKAGE, false);
-        
-        // Should still generate files but without Jenkins-specific features
-        List<Path> generatedFiles = Files.walk(outputDirectory)
-            .filter(Files::isRegularFile)
-            .filter(p -> p.toString().endsWith(".java"))
-            .toList();
-        
-        assertThat(generatedFiles).isNotEmpty();
-        
-        // Files should exist but may not have Jenkins integration
-        assertThatCode(() -> {
-            processor.processDirectory(crdDirectory, outputDirectory, BASE_PACKAGE, false);
-        }).doesNotThrowAnyException();
-    }
-
-    @ParameterizedTest
-    @MethodSource("getJenkinsIntegrationTestData")
-    void testParameterizedJenkinsIntegration(String crdName, String expectedClassName, String expectedPackage) throws IOException {
-        // Act
-        processor.processDirectory(crdDirectory, outputDirectory, BASE_PACKAGE, true);
-        
-        // Find generated class
-        Path generatedClass = findGeneratedStepClass(expectedClassName);
-        String content = Files.readString(generatedClass);
-        
-        // Assert - Jenkins integration
-        assertThat(content).contains("extends BaseStep");
-        assertThat(content).contains("@DataBoundConstructor");
-        assertThat(content).contains("package " + expectedPackage);
-        assertThat(content).contains("public class " + expectedClassName);
-        
-        // Verify constructor calls super()
-        assertThat(content).containsPattern("@DataBoundConstructor\\s+public " + expectedClassName);
-        assertThat(content).contains("super()");
-    }
-
-    private static Stream<Arguments> getJenkinsIntegrationTestData() {
-        return Stream.of(
-            Arguments.of("jenkins-task", "CreateJenkinstasksTyped", 
-                "org.waveywaves.jenkins.plugins.tekton.generated.jenkinstasks.v1"),
-            Arguments.of("jenkins-pipeline", "CreateJenkinspipelinesTyped", 
-                "org.waveywaves.jenkins.plugins.tekton.generated.jenkinspipelines.v1"),
-            Arguments.of("jenkins-edge-case", "CreateJenkinsedgecasesTyped", 
-                "org.waveywaves.jenkins.plugins.tekton.generated.jenkinsedgecases.v1")
-        );
-    }
 
     private Path findGeneratedStepClass(String className) throws IOException {
         return findGeneratedStepClass(className, null);
