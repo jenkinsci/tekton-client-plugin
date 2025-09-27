@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -89,7 +90,7 @@ public class TektonPojoGenerator {
             System.out.println("=== Enhanced Java code generation completed successfully! ===");
             System.out.println("Generated Tekton POJOs and Jenkins Steps successfully!");
             
-        } catch (Exception e) {
+        } catch (IOException e) {
             logger.error("Error during enhanced code generation", e);
             throw new RuntimeException("Failed to generate Tekton POJOs", e);
         }

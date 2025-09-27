@@ -68,6 +68,69 @@ class CompilationTest {
             .isTrue();
     }
 
+    @Test
+    void testJenkinsStepClassesCompile() throws IOException {
+        // Use the actual generated Jenkins Step classes from target/generated-sources
+        Path realGeneratedDir = Path.of("target/generated-sources/tekton");
+        
+        if (!Files.exists(realGeneratedDir)) {
+            // Skip test if no generated sources exist
+            System.out.println("No generated sources found, skipping Jenkins Step compilation test");
+            return;
+        }
+        
+        // Get only the main Jenkins Step classes (ending with "Typed.java")
+        List<Path> stepClasses = Files.walk(realGeneratedDir)
+            .filter(Files::isRegularFile)
+            .filter(p -> p.getFileName().toString().endsWith("Typed.java"))
+            .toList();
+        
+        assertThat(stepClasses).isNotEmpty();
+        
+        // Compile only the Jenkins Step classes first
+        boolean compilationSuccess = compileJavaFiles(stepClasses);
+        
+        assertThat(compilationSuccess)
+            .as("Jenkins Step classes should compile without errors")
+            .isTrue();
+    }
+
+    @Test
+    void testComplexCrdCompilation() throws IOException {
+        // Use existing complex generated files (e.g. from tasks, pipelines with deep nesting)
+        Path realGeneratedDir = Path.of("target/generated-sources/tekton");
+        
+        if (!Files.exists(realGeneratedDir)) {
+            // Skip test if no generated sources exist
+            System.out.println("No generated sources found, skipping complex CRD compilation test");
+            return;
+        }
+        
+        // Get generated files for complex structures (e.g. from tasks or pipelines with many nested objects)
+        List<Path> complexFiles = Files.walk(realGeneratedDir)
+            .filter(Files::isRegularFile)
+            .filter(p -> p.toString().endsWith(".java"))
+            // Focus on files that indicate complexity (multiple nested levels, many properties)
+            .filter(p -> {
+                String fileName = p.getFileName().toString();
+                // Look for files with numbered suffixes indicating complex nested structures
+                return fileName.matches(".*__\\d+\\.java") || 
+                       fileName.contains("Properties") || 
+                       fileName.contains("Spec") ||
+                       fileName.contains("Status");
+            })
+            .toList();
+        
+        assertThat(complexFiles).isNotEmpty();
+        
+        // Compile complex CRD files
+        boolean compilationSuccess = compileJavaFiles(complexFiles);
+        
+        assertThat(compilationSuccess)
+            .as("Complex CRD generated files should compile")
+            .isTrue();
+    }
+
 
     private boolean compileJavaFiles(List<Path> javaFiles) {
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
