@@ -381,6 +381,24 @@
                             </options>
                         </configuration>
                     </execution>
+                    <!-- Generate Jelly UI configs after POJOs are generated and all classes compiled -->
+                    <execution>
+                        <id>generate-jelly-configs</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <mainClass>org.waveywaves.jenkins.plugins.tekton.generator.AdvancedJellyConfigGenerator</mainClass>
+                            <arguments>
+                                <argument>${project.build.directory}/generated-sources/tekton</argument>
+                                <argument>${project.basedir}/src/main/resources</argument>
+                            </arguments>
+                            <classpathScope>compile</classpathScope>
+                            <includeProjectDependencies>true</includeProjectDependencies>
+                            <includePluginDependencies>true</includePluginDependencies>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
 
