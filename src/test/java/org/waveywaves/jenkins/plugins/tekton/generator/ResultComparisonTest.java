@@ -19,8 +19,8 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.*;
 
 /**
- * Test thực sự so sánh RESULT/OUTPUT của generated code vs manual code.
- * Cùng input → compare actual results.
+ * Test that actually compares RESULT/OUTPUT of generated code vs manual code.
+ * Same input → compare actual results.
  */
 class ResultComparisonTest {
 
@@ -48,7 +48,7 @@ class ResultComparisonTest {
 
     @Test
     void testSameInputProducesSameObjectState() throws Exception {
-        // Test: Cùng input, object state có giống nhau không?
+        // Test: Same input, do object states match?
         
         // Manual approach
         CreateRaw manual = new CreateRaw("test-input", "yaml");
@@ -56,7 +56,7 @@ class ResultComparisonTest {
         manual.setClusterName("test-cluster");
         manual.setEnableCatalog(true);
         
-        // Generated approach - tìm generated class
+        // Generated approach - find generated class
         String generatedContent = getGeneratedTaskContent();
         
         // Extract class name from generated content
@@ -101,7 +101,7 @@ class ResultComparisonTest {
 
     @Test
     void testFieldMappingEquivalence() throws Exception {
-        // Test: Field mapping có tương đương không?
+        // Test: Is field mapping equivalent?
         
         CreateRaw manual = new CreateRaw("mapping-test", "json");
         manual.setNamespace("field-namespace");
@@ -145,7 +145,7 @@ class ResultComparisonTest {
 
     @Test
     void testBehaviorWithDifferentInputs() throws Exception {
-        // Test: Khác input, behavior có consistent không?
+        // Test: Different input, is behavior consistent?
         
         System.out.println("=== TESTING DIFFERENT INPUTS ===");
         
@@ -190,7 +190,7 @@ class ResultComparisonTest {
 
     @Test
     void testObjectStateComparison() throws Exception {
-        // Test: Object state sau khi set values có equivalent không?
+        // Test: Is object state equivalent after setting values?
         
         CreateRaw manual = new CreateRaw("state-test", "yaml");
         manual.setNamespace("state-namespace");

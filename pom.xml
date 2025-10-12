@@ -359,7 +359,7 @@
                 <executions>
                     <execution>
                         <id>generate-tekton-pojos</id>
-                        <phase>process-classes</phase>
+                        <phase>process-test-classes</phase>
                         <goals>
                             <goal>java</goal>
                         </goals>
@@ -370,6 +370,7 @@
                                 <argument>${project.build.directory}/generated-sources/tekton</argument>
                                 <argument>org.waveywaves.jenkins.plugins.tekton.generated</argument>
                             </arguments>
+                            <classpathScope>test</classpathScope>
                             <includeProjectDependencies>true</includeProjectDependencies>
                             <includePluginDependencies>true</includePluginDependencies>
                             <options>
@@ -381,6 +382,27 @@
                             </options>
                         </configuration>
                     </execution>
+                    <!-- Generate Jelly UI configs - Run manually: ./scripts/generate-jelly-configs.sh -->
+                    <!-- Commented out automatic generation to avoid classpath issues -->
+                    <!--
+                    <execution>
+                        <id>generate-jelly-configs</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <mainClass>org.waveywaves.jenkins.plugins.tekton.generator.AdvancedJellyConfigGenerator</mainClass>
+                            <arguments>
+                                <argument>${project.build.directory}/generated-sources/tekton</argument>
+                                <argument>${project.basedir}/src/main/resources</argument>
+                            </arguments>
+                            <classpathScope>compile</classpathScope>
+                            <includeProjectDependencies>true</includeProjectDependencies>
+                            <includePluginDependencies>true</includePluginDependencies>
+                        </configuration>
+                    </execution>
+                    -->
                 </executions>
             </plugin>
 
@@ -475,7 +497,7 @@
                         <executions>
                             <execution>
                                 <id>generate-tekton-pojos-alias</id>
-                                <phase>generate-sources</phase>
+                                <phase>process-test-classes</phase>
                                 <goals>
                                     <goal>java</goal>
                                 </goals>
@@ -486,6 +508,7 @@
                                         <argument>${project.build.directory}/generated-sources/tekton</argument>
                                         <argument>org.waveywaves.jenkins.plugins.tekton.generated</argument>
                                     </arguments>
+                                    <classpathScope>test</classpathScope>
                                     <includeProjectDependencies>true</includeProjectDependencies>
                                     <includePluginDependencies>true</includePluginDependencies>
                                     <options>
