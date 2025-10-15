@@ -61,11 +61,6 @@
             <artifactId>slf4j-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.kohsuke.stapler</groupId>
-            <artifactId>stapler</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
             <groupId>com.squareup.okio</groupId>
             <artifactId>okio</artifactId>
             <version>3.16.0</version>
@@ -307,6 +302,16 @@
                 <groupId>org.jenkins-ci.tools</groupId>
                 <artifactId>maven-hpi-plugin</artifactId>
                 <extensions>true</extensions>
+                <configuration>
+                    <!-- Enable clean reload when pressing Enter -->
+                    <systemProperties>
+                        <hudson.PluginManager.workDir>${project.build.directory}/work/plugins</hudson.PluginManager.workDir>
+                    </systemProperties>
+                    <!-- Force clean webapp on redeploy -->
+                    <webApp>
+                        <contextPath>/jenkins</contextPath>
+                    </webApp>
+                </configuration>
             </plugin>
             
             <!-- Maven Surefire Plugin for running tests -->
