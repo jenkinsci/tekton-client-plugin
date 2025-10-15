@@ -356,58 +356,36 @@
                 </executions>
             </plugin>
 
-            <!-- Generate Tekton POJOs from CRDs after compilation -->
+            <!-- Generate Tekton POJOs from CRDs automatically during build -->
+            <!-- Runs after main compilation so generator classes are available -->
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
                 <version>3.1.0</version>
                 <executions>
                     <execution>
                         <id>generate-tekton-pojos</id>
-                        <phase>process-test-classes</phase>
+                        <phase>process-classes</phase>
                         <goals>
-                            <goal>java</goal>
+                            <goal>run</goal>
                         </goals>
                         <configuration>
-                            <mainClass>org.waveywaves.jenkins.plugins.tekton.generator.TektonPojoGenerator</mainClass>
-                            <arguments>
-                                <argument>${project.basedir}/src/main/resources/crds</argument>
-                                <argument>${project.build.directory}/generated-sources/tekton</argument>
-                                <argument>org.waveywaves.jenkins.plugins.tekton.generated</argument>
-                            </arguments>
-                            <classpathScope>test</classpathScope>
-                            <includeProjectDependencies>true</includeProjectDependencies>
-                            <includePluginDependencies>true</includePluginDependencies>
-                            <options>
-                                <option>-Dorg.slf4j.simpleLogger.defaultLogLevel=info</option>
-                                <option>-Dorg.slf4j.simpleLogger.showDateTime=true</option>
-                                <option>-Dorg.slf4j.simpleLogger.showThreadName=false</option>
-                                <option>-Dorg.slf4j.simpleLogger.showLogName=false</option>
-                                <option>-Dorg.slf4j.simpleLogger.showShortLogName=true</option>
-                            </options>
+                            <target>
+                                <echo message="Generating Tekton POJOs from CRDs..."/>
+                                <java classname="org.waveywaves.jenkins.plugins.tekton.generator.TektonPojoGenerator"
+                                      fork="true"
+                                      failonerror="true">
+                                    <classpath>
+                                        <path refid="maven.compile.classpath"/>
+                                        <pathelement location="${project.build.outputDirectory}"/>
+                                    </classpath>
+                                    <arg value="${project.basedir}/src/main/resources/crds"/>
+                                    <arg value="${project.build.directory}/generated-sources/tekton"/>
+                                    <arg value="org.waveywaves.jenkins.plugins.tekton.generated"/>
+                                </java>
+                            </target>
                         </configuration>
                     </execution>
-                    <!-- Generate Jelly UI configs - Run manually: ./scripts/generate-jelly-configs.sh -->
-                    <!-- Commented out automatic generation to avoid classpath issues -->
-                    <!--
-                    <execution>
-                        <id>generate-jelly-configs</id>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>java</goal>
-                        </goals>
-                        <configuration>
-                            <mainClass>org.waveywaves.jenkins.plugins.tekton.generator.AdvancedJellyConfigGenerator</mainClass>
-                            <arguments>
-                                <argument>${project.build.directory}/generated-sources/tekton</argument>
-                                <argument>${project.basedir}/src/main/resources</argument>
-                            </arguments>
-                            <classpathScope>compile</classpathScope>
-                            <includeProjectDependencies>true</includeProjectDependencies>
-                            <includePluginDependencies>true</includePluginDependencies>
-                        </configuration>
-                    </execution>
-                    -->
                 </executions>
             </plugin>
 
@@ -502,7 +480,7 @@
                         <executions>
                             <execution>
                                 <id>generate-tekton-pojos-alias</id>
-                                <phase>process-test-classes</phase>
+                                <phase>process-classes</phase>
                                 <goals>
                                     <goal>java</goal>
                                 </goals>
@@ -513,7 +491,7 @@
                                         <argument>${project.build.directory}/generated-sources/tekton</argument>
                                         <argument>org.waveywaves.jenkins.plugins.tekton.generated</argument>
                                     </arguments>
-                                    <classpathScope>test</classpathScope>
+                                    <classpathScope>compile</classpathScope>
                                     <includeProjectDependencies>true</includeProjectDependencies>
                                     <includePluginDependencies>true</includePluginDependencies>
                                     <options>
