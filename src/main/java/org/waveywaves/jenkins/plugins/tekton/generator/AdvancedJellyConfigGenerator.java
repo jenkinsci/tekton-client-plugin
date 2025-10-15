@@ -84,7 +84,10 @@ public class AdvancedJellyConfigGenerator {
         jelly.append("</j:jelly>\n");
         
         // Write file
-        Files.createDirectories(outputPath.getParent());
+        Path parent = outputPath.getParent();
+        if (parent != null) {
+            Files.createDirectories(parent);
+        }
         Files.writeString(outputPath, jelly.toString());
         
         logger.info("Generated advanced Jelly config at: {}", outputPath);
@@ -183,31 +186,8 @@ public class AdvancedJellyConfigGenerator {
             control.append(indent).append("    <f:checkbox/>\n");
             control.append(indent).append("</f:entry>\n");
             
-        } else if (fieldType == Integer.class || fieldType == int.class ||
-                   fieldType == Long.class || fieldType == long.class) {
-            // Number - textbox
-            control.append(indent).append("<f:entry field=\"").append(fieldName);
-            control.append("\" title=\"").append(fieldTitle).append("\"");
-            if (description != null && !description.isEmpty()) {
-                control.append(" description=\"").append(escapeXml(description)).append("\"");
-            }
-            control.append(">\n");
-            control.append(indent).append("    <f:textbox/>\n");
-            control.append(indent).append("</f:entry>\n");
-            
-        } else if (fieldType == Map.class) {
-            // Map - use properties or textbox
-            control.append(indent).append("<f:entry field=\"").append(fieldName);
-            control.append("\" title=\"").append(fieldTitle).append("\"");
-            if (description != null && !description.isEmpty()) {
-                control.append(" description=\"").append(escapeXml(description)).append("\"");
-            }
-            control.append(">\n");
-            control.append(indent).append("    <f:textbox/>\n");
-            control.append(indent).append("</f:entry>\n");
-            
         } else {
-            // String or other simple type - textbox
+            // Number, Map, String, or other simple type - use textbox
             control.append(indent).append("<f:entry field=\"").append(fieldName);
             control.append("\" title=\"").append(fieldTitle).append("\"");
             if (description != null && !description.isEmpty()) {

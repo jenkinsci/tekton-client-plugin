@@ -59,7 +59,10 @@ public class JellyConfigGenerator {
         jellyContent.append("</j:jelly>\n");
         
         // Write to file
-        Files.createDirectories(outputPath.getParent());
+        Path parent = outputPath.getParent();
+        if (parent != null) {
+            Files.createDirectories(parent);
+        }
         Files.writeString(outputPath, jellyContent.toString());
         
         logger.info("Generated Jelly config at: {}", outputPath);
@@ -114,15 +117,8 @@ public class JellyConfigGenerator {
             control.append("        <f:checkbox/>\n");
             control.append("    </f:entry>\n");
             
-        } else if (fieldType == Integer.class || fieldType == int.class ||
-                   fieldType == Long.class || fieldType == long.class) {
-            // Use textbox with number for numeric types
-            control.append("    <f:entry field=\"").append(fieldName).append("\" title=\"").append(fieldTitle).append("\">\n");
-            control.append("        <f:textbox/>\n");
-            control.append("    </f:entry>\n");
-            
         } else {
-            // Default: textbox for strings and other simple types
+            // Numeric types and default: textbox for all simple types
             control.append("    <f:entry field=\"").append(fieldName).append("\" title=\"").append(fieldTitle).append("\">\n");
             control.append("        <f:textbox/>\n");
             control.append("    </f:entry>\n");
