@@ -13,10 +13,6 @@
     <artifactId>tekton-client</artifactId>
     <version>${revision}${changelist}</version>
     <name>Tekton Client Plugin</name>
-    <description>Tekton is a Cloud Native CI/CD tool for Kubernetes. This plugin helps in the creation and manipulation
-        of Tekton Resources on you Kubernetes cluster and helps drive your operations from your Jenkins Server itself
-        without having to carry them out from the Command Line Interface or any other User Interface.
-    </description>
 
     <packaging>hpi</packaging>
     <url>https://github.com/jenkinsci/tekton-client-plugin</url>
@@ -45,6 +41,9 @@
         <junit-jupiter-engine.version>5.12.2</junit-jupiter-engine.version>
         <jx-pipeline.version>0.1.5</jx-pipeline.version>
         <ban-junit4-imports.skip>false</ban-junit4-imports.skip>
+        
+        <!-- HPI Plugin Configuration -->
+        <hpi.bundledArtifacts>annotations,annotations,automaton,codemodel,commons-io,commons-lang,commons-lang3,commons-text,error_prone_annotations,generex,gson,jakarta.json.bind-api,jakarta.validation-api,javaparser,javax.json.bind-api,joda-time,jsonschema2pojo-core,knative-model,kotlin-stdlib,kubernetes-client,kubernetes-model-admissionregistration,kubernetes-model-apiextensions,kubernetes-model-apps,kubernetes-model-autoscaling,kubernetes-model-batch,kubernetes-model-certificates,kubernetes-model-common,kubernetes-model-coordination,kubernetes-model-core,kubernetes-model-discovery,kubernetes-model-events,kubernetes-model-extensions,kubernetes-model-flowcontrol,kubernetes-model-metrics,kubernetes-model-networking,kubernetes-model-node,kubernetes-model-policy,kubernetes-model-rbac,kubernetes-model-scheduling,kubernetes-model-storageclass,logging-interceptor,okhttp,okhttp-jvm,okio,okio-jvm,slf4j-api,tekton-client,tekton-model-triggers,tekton-model-v1alpha1,tekton-model-v1beta1,validation-api,zjsonpatch</hpi.bundledArtifacts>
     </properties>
 
     <licenses>
@@ -313,6 +312,7 @@
                     </webApp>
                 </configuration>
             </plugin>
+
             
             <!-- Maven Surefire Plugin for running tests -->
             <!-- JaCoCo for code coverage -->
@@ -383,6 +383,23 @@
                                     <arg value="${project.build.directory}/generated-sources/tekton"/>
                                     <arg value="org.waveywaves.jenkins.plugins.tekton.generated"/>
                                 </java>
+                            </target>
+                        </configuration>
+                    </execution>
+
+                    <!-- Ensure index.jelly is always present before HPI plugin runs -->
+                    <execution>
+                        <id>ensure-index-jelly</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <echo message="Ensuring index.jelly is present in target/classes" />
+                                <copy file="${project.basedir}/src/main/resources/index.jelly" 
+                                      tofile="${project.build.directory}/classes/index.jelly" 
+                                      failonerror="true" />
                             </target>
                         </configuration>
                     </execution>

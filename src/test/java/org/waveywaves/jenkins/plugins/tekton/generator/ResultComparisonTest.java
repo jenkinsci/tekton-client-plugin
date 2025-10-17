@@ -94,9 +94,9 @@ class ResultComparisonTest {
         assertThat(generatedContent).contains("spec");
         
         System.out.println("\n=== COMPARISON RESULT ===");
-        System.out.println("✅ Manual code works with input/output");
-        System.out.println("✅ Generated class has equivalent structure");
-        System.out.println("✅ Both support same field types and operations");
+        System.out.println("[OK] Manual code works with input/output");
+        System.out.println("[OK] Generated class has equivalent structure");
+        System.out.println("[OK] Both support same field types and operations");
     }
 
     @Test
@@ -138,9 +138,9 @@ class ResultComparisonTest {
         assertThat(generatedContent).contains("@JsonProperty");
         
         System.out.println("\n=== FIELD MAPPING RESULT ===");
-        System.out.println("✅ Manual fields mapped correctly");
-        System.out.println("✅ Generated class has JSON property mapping");
-        System.out.println("✅ Both support equivalent field operations");
+        System.out.println("[OK] Manual fields mapped correctly");
+        System.out.println("[OK] Generated class has JSON property mapping");
+        System.out.println("[OK] Both support equivalent field operations");
     }
 
     @Test
@@ -183,9 +183,9 @@ class ResultComparisonTest {
         assertThat(special.getInput()).isEqualTo("special-chars-!@#");
         
         System.out.println("\n=== BEHAVIOR COMPARISON RESULT ===");
-        System.out.println("✅ Manual code handles all input types consistently");
-        System.out.println("✅ Generated class has equivalent input handling capability");
-        System.out.println("✅ Both approaches support same input variations");
+        System.out.println("[OK] Manual code handles all input types consistently");
+        System.out.println("[OK] Generated class has equivalent input handling capability");
+        System.out.println("[OK] Both approaches support same input variations");
     }
 
     @Test
@@ -239,8 +239,8 @@ class ResultComparisonTest {
         assertThat(manualState.get("enableCatalog")).isEqualTo(false);
         assertThat(generatedContent).contains("@JsonProperty");
         
-        System.out.println("✅ Manual object state is consistent");
-        System.out.println("✅ Generated class supports equivalent state management");
+        System.out.println("[OK] Manual object state is consistent");
+        System.out.println("[OK] Generated class supports equivalent state management");
     }
 
     @Test
@@ -288,9 +288,9 @@ class ResultComparisonTest {
         assertThat(generatedContent).contains("@DataBoundConstructor");
         assertThat(generatedContent).contains("extends BaseStep");
         
-        System.out.println("✅ Manual usage works for different scenarios");
-        System.out.println("✅ Generated class supports equivalent usage patterns");
-        System.out.println("✅ Both can handle multiple instances with different states");
+        System.out.println("[OK] Manual usage works for different scenarios");
+        System.out.println("[OK] Generated class supports equivalent usage patterns");
+        System.out.println("[OK] Both can handle multiple instances with different states");
     }
 
     // Helper methods
