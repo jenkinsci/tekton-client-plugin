@@ -182,7 +182,7 @@ jobs:
 
       - name: Upload E2E Test Reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: e2e-test-reports
           path: target/surefire-reports/**
