@@ -249,7 +249,7 @@
         <dependency>
             <groupId>com.google.errorprone</groupId>
             <artifactId>error_prone_annotations</artifactId>
-            <version>2.41.0</version>
+            <version>2.27.0</version>
         </dependency>
         <dependency>
             <groupId>com.google.code.gson</groupId>
@@ -334,7 +334,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
-                <version>3.6.1</version>
+                <version>3.4.0</version>
                 <executions>
                     <execution>
                         <id>add-generated-sources</id>
@@ -370,6 +370,31 @@
                                 <argument>${project.build.directory}/generated-sources/tekton</argument>
                                 <argument>org.waveywaves.jenkins.plugins.tekton.generated</argument>
                             </arguments>
+                            <includeProjectDependencies>true</includeProjectDependencies>
+                            <includePluginDependencies>true</includePluginDependencies>
+                            <options>
+                                <option>-Dorg.slf4j.simpleLogger.defaultLogLevel=info</option>
+                                <option>-Dorg.slf4j.simpleLogger.showDateTime=true</option>
+                                <option>-Dorg.slf4j.simpleLogger.showThreadName=false</option>
+                                <option>-Dorg.slf4j.simpleLogger.showLogName=false</option>
+                                <option>-Dorg.slf4j.simpleLogger.showShortLogName=true</option>
+                            </options>
+                        </configuration>
+                    </execution>
+                    <!-- Generate Jelly UI configs after POJOs are generated and all classes compiled -->
+                    <execution>
+                        <id>generate-jelly-configs</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <mainClass>org.waveywaves.jenkins.plugins.tekton.generator.AdvancedJellyConfigGenerator</mainClass>
+                            <arguments>
+                                <argument>${project.build.directory}/generated-sources/tekton</argument>
+                                <argument>${project.basedir}/src/main/resources</argument>
+                            </arguments>
+                            <classpathScope>compile</classpathScope>
                             <includeProjectDependencies>true</includeProjectDependencies>
                             <includePluginDependencies>true</includePluginDependencies>
                         </configuration>
@@ -481,6 +506,13 @@
                                     </arguments>
                                     <includeProjectDependencies>true</includeProjectDependencies>
                                     <includePluginDependencies>true</includePluginDependencies>
+                                    <options>
+                                        <option>-Dorg.slf4j.simpleLogger.defaultLogLevel=info</option>
+                                        <option>-Dorg.slf4j.simpleLogger.showDateTime=true</option>
+                                        <option>-Dorg.slf4j.simpleLogger.showThreadName=false</option>
+                                        <option>-Dorg.slf4j.simpleLogger.showLogName=false</option>
+                                        <option>-Dorg.slf4j.simpleLogger.showShortLogName=true</option>
+                                    </options>
                                 </configuration>
                             </execution>
                         </executions>
