@@ -21,15 +21,7 @@ public class JellyConfigGenerator {
     
     private static final Logger logger = LoggerFactory.getLogger(JellyConfigGenerator.class);
     
-    // Field groups that should be placed in sections
-    private static final Map<String, List<String>> SECTION_GROUPS = new HashMap<>();
-    
-    static {
-        // Common Kubernetes/Tekton field groupings
-        SECTION_GROUPS.put("Metadata", Arrays.asList("name", "generateName", "namespace", "labels", "annotations"));
-        SECTION_GROUPS.put("Spec", Arrays.asList("params", "workspaces", "taskRef", "pipelineRef", "serviceAccountName", "timeout"));
-    }
-    
+
     /**
      * Generate Jelly config with proper structure and nesting.
      */

@@ -90,7 +90,7 @@ public class TektonPojoGenerator {
             System.out.println("=== Enhanced Java code generation completed successfully! ===");
             System.out.println("Generated Tekton POJOs and Jenkins Steps successfully!");
             
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.error("Error during enhanced code generation", e);
             throw new RuntimeException("Failed to generate Tekton POJOs", e);
         }
