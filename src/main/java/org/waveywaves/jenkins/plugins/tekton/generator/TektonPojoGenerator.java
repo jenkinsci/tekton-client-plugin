@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -21,13 +20,12 @@ public class TektonPojoGenerator {
 
     /**
      * Main method for Maven exec plugin integration.
-     * 
      * Arguments:
      * args[0] - CRD directory path (e.g., "src/main/resources/crds")
      * args[1] - Output directory path (e.g., "target/generated-sources/tekton")  
      * args[2] - Base package name (e.g., "org.waveywaves.jenkins.plugins.tekton.generated")
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         if (args.length < 3) {
             String usage = "Usage: TektonPojoGenerator <crd-directory> <output-directory> <base-package>\n" +
                           "Example: TektonPojoGenerator src/main/resources/crds target/generated-sources/tekton org.example.generated";
@@ -43,7 +41,7 @@ public class TektonPojoGenerator {
             // Validate arguments
             Path crdDirectory = Paths.get(crdDirPath);
             Path outputDirectory = Paths.get(outputDirPath);
-            
+
             logger.info("Starting Enhanced CRD Java code generation...");
             logger.info("CRD Directory: {}", crdDirectory.toAbsolutePath());
             logger.info("Output Directory: {}", outputDirectory.toAbsolutePath());
@@ -83,16 +81,19 @@ public class TektonPojoGenerator {
                 crdDirectory, 
                 outputDirectory, 
                 basePackage, 
-                true  // Enable base class inheritance for Jenkins steps
+                true // Enable base class inheritance for Jenkins steps
             );
             
             logger.info("Enhanced Java code generation completed successfully!");
             System.out.println("=== Enhanced Java code generation completed successfully! ===");
             System.out.println("Generated Tekton POJOs and Jenkins Steps successfully!");
             
+        } catch (RuntimeException e) {
+            // Let programming errors (NPE, etc.) pass through
+            throw e;
         } catch (Exception e) {
             logger.error("Error during enhanced code generation", e);
-            throw new RuntimeException("Failed to generate Tekton POJOs", e);
+            throw new Exception("Failed to generate Tekton POJOs", e);
         }
     }
     

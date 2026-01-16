@@ -28,7 +28,7 @@
         <revision>1.1.1</revision>
         <changelist>-SNAPSHOT</changelist>
         <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
-        <jenkins.baseline>2.492</jenkins.baseline>
+        <jenkins.baseline>2.516</jenkins.baseline>
         <!-- Baseline Jenkins version you use to build the plugin. Users must have this version or newer to run. -->
         <jenkins.version>${jenkins.baseline}.3</jenkins.version>
         <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
@@ -511,13 +511,28 @@
                                     <classpathScope>compile</classpathScope>
                                     <includeProjectDependencies>true</includeProjectDependencies>
                                     <includePluginDependencies>true</includePluginDependencies>
-                                    <options>
-                                        <option>-Dorg.slf4j.simpleLogger.defaultLogLevel=info</option>
-                                        <option>-Dorg.slf4j.simpleLogger.showDateTime=true</option>
-                                        <option>-Dorg.slf4j.simpleLogger.showThreadName=false</option>
-                                        <option>-Dorg.slf4j.simpleLogger.showLogName=false</option>
-                                        <option>-Dorg.slf4j.simpleLogger.showShortLogName=true</option>
-                                    </options>
+                                    <systemProperties>
+                                        <systemProperty>
+                                            <key>org.slf4j.simpleLogger.defaultLogLevel</key>
+                                            <value>info</value>
+                                        </systemProperty>
+                                        <systemProperty>
+                                            <key>org.slf4j.simpleLogger.showDateTime</key>
+                                            <value>true</value>
+                                        </systemProperty>
+                                        <systemProperty>
+                                            <key>org.slf4j.simpleLogger.showThreadName</key>
+                                            <value>false</value>
+                                        </systemProperty>
+                                        <systemProperty>
+                                            <key>org.slf4j.simpleLogger.showLogName</key>
+                                            <value>false</value>
+                                        </systemProperty>
+                                        <systemProperty>
+                                            <key>org.slf4j.simpleLogger.showShortLogName</key>
+                                            <value>true</value>
+                                        </systemProperty>
+                                    </systemProperties>
                                 </configuration>
                             </execution>
                         </executions>
