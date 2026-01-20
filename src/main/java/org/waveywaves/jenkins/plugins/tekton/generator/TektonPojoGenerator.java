@@ -20,13 +20,12 @@ public class TektonPojoGenerator {
 
     /**
      * Main method for Maven exec plugin integration.
-     * 
      * Arguments:
      * args[0] - CRD directory path (e.g., "src/main/resources/crds")
      * args[1] - Output directory path (e.g., "target/generated-sources/tekton")  
      * args[2] - Base package name (e.g., "org.waveywaves.jenkins.plugins.tekton.generated")
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         if (args.length < 3) {
             String usage = "Usage: TektonPojoGenerator <crd-directory> <output-directory> <base-package>\n" +
                           "Example: TektonPojoGenerator src/main/resources/crds target/generated-sources/tekton org.example.generated";
@@ -42,11 +41,17 @@ public class TektonPojoGenerator {
             // Validate arguments
             Path crdDirectory = Paths.get(crdDirPath);
             Path outputDirectory = Paths.get(outputDirPath);
-            
+
             logger.info("Starting Enhanced CRD Java code generation...");
             logger.info("CRD Directory: {}", crdDirectory.toAbsolutePath());
             logger.info("Output Directory: {}", outputDirectory.toAbsolutePath());
             logger.info("Base Package: {}", basePackage);
+            
+            // Also print to System.out to ensure visibility in Maven output
+            System.out.println("=== Starting Enhanced CRD Java code generation ===");
+            System.out.println("CRD Directory: " + crdDirectory.toAbsolutePath());
+            System.out.println("Output Directory: " + outputDirectory.toAbsolutePath());
+            System.out.println("Base Package: " + basePackage);
 
             // Validate input directory exists
             File crdDir = crdDirectory.toFile();
@@ -62,6 +67,7 @@ public class TektonPojoGenerator {
                     throw new RuntimeException("Failed to create output directory: " + outputDirectory);
                 }
                 logger.info("Created output directory: {}", outputDirectory);
+                System.out.println("Created output directory: " + outputDirectory);
             }
 
             // Create and configure Enhanced CRD Processor
@@ -75,15 +81,19 @@ public class TektonPojoGenerator {
                 crdDirectory, 
                 outputDirectory, 
                 basePackage, 
-                true  // Enable base class inheritance for Jenkins steps
+                true // Enable base class inheritance for Jenkins steps
             );
             
             logger.info("Enhanced Java code generation completed successfully!");
+            System.out.println("=== Enhanced Java code generation completed successfully! ===");
             System.out.println("Generated Tekton POJOs and Jenkins Steps successfully!");
             
+        } catch (RuntimeException e) {
+            // Let programming errors (NPE, etc.) pass through
+            throw e;
         } catch (Exception e) {
             logger.error("Error during enhanced code generation", e);
-            throw new RuntimeException("Failed to generate Tekton POJOs", e);
+            throw new Exception("Failed to generate Tekton POJOs", e);
         }
     }
     
@@ -91,8 +101,9 @@ public class TektonPojoGenerator {
      * Configure TektonCrdToJavaProcessor for Jenkins plugin integration.
      * Sets up base class mappings and class name mappings for Jenkins steps.
      */
-    private static void configureJenkinsIntegration(TektonCrdToJavaProcessor processor, String basePackage) {
+    public static void configureJenkinsIntegration(TektonCrdToJavaProcessor processor, String basePackage) {
         logger.info("Configuring Jenkins plugin integration...");
+        System.out.println("Configuring Jenkins plugin integration...");
         
         // Configure base class inheritance - all generated steps extend BaseStep
         String baseStepClass = BASE_STEP_CLASS;
@@ -104,6 +115,22 @@ public class TektonPojoGenerator {
         processor.addBaseClassMapping("stepactions", baseStepClass, baseStepClass);
         processor.addBaseClassMapping("customruns", baseStepClass, baseStepClass);
         
+        // Test CRD base class mappings (only for Jenkins integration tests)
+        processor.addBaseClassMapping("jenkinstasks", baseStepClass, baseStepClass);
+        processor.addBaseClassMapping("jenkinspipelines", baseStepClass, baseStepClass);
+        processor.addBaseClassMapping("jenkinsedgecases", baseStepClass, baseStepClass);
+        processor.addBaseClassMapping("complextasks", baseStepClass, baseStepClass);
+        processor.addBaseClassMapping("tektontasks", baseStepClass, baseStepClass);
+        processor.addBaseClassMapping("tektonpipelines", baseStepClass, baseStepClass);
+        processor.addBaseClassMapping("tektontaskruns", baseStepClass, baseStepClass);
+        processor.addBaseClassMapping("complexcrds", baseStepClass, baseStepClass);
+        processor.addBaseClassMapping("simpletasks", baseStepClass, baseStepClass);
+        processor.addBaseClassMapping("complexpipelines", baseStepClass, baseStepClass);
+        processor.addBaseClassMapping("edge-cases", baseStepClass, baseStepClass);
+        processor.addBaseClassMapping("compilationtasks", baseStepClass, baseStepClass);
+        processor.addBaseClassMapping("compilationpipelines", baseStepClass, baseStepClass);
+        processor.addBaseClassMapping("verycomplexcrds", baseStepClass, baseStepClass);
+        
         // Configure Jenkins step class names
         processor.addClassNameMapping("tasks", "CreateTaskTyped");
         processor.addClassNameMapping("pipelines", "CreatePipelineTyped");  
@@ -112,6 +139,23 @@ public class TektonPojoGenerator {
         processor.addClassNameMapping("stepactions", "CreateStepActionTyped");
         processor.addClassNameMapping("customruns", "CreateCustomRunTyped");
         
+        // Test CRD mappings (only for Jenkins integration tests)
+        processor.addClassNameMapping("jenkinstasks", "CreateJenkinstasksTyped");
+        processor.addClassNameMapping("jenkinspipelines", "CreateJenkinspipelinesTyped");
+        processor.addClassNameMapping("jenkinsedgecases", "CreateJenkinsedgecasesTyped");
+        processor.addClassNameMapping("complextasks", "CreateComplexTaskTyped");
+        processor.addClassNameMapping("tektontasks", "CreateTaskTyped");
+        processor.addClassNameMapping("tektonpipelines", "CreatePipelineTyped");
+        processor.addClassNameMapping("tektontaskruns", "CreateTaskRunTyped");
+        processor.addClassNameMapping("complexcrds", "CreateCustomRunTyped");
+        processor.addClassNameMapping("simpletasks", "CreateSimpletasksTyped");
+        processor.addClassNameMapping("complexpipelines", "CreateComplexpipelinesTyped");
+        processor.addClassNameMapping("edge-cases", "CreateEdgeCasesTyped");
+        processor.addClassNameMapping("compilationtasks", "CreateCompilationtasksTyped");
+        processor.addClassNameMapping("compilationpipelines", "CreateCompilationpipelinesTyped");
+        processor.addClassNameMapping("verycomplexcrds", "CreateVerycomplexcrdsTyped");
+        
         logger.info("Jenkins integration configuration completed");
+        System.out.println("Jenkins integration configuration completed");
     }
 }

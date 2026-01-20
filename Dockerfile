@@ -1,4 +1,4 @@
-FROM jenkins/jenkins:2.277.1-lts-jdk11
+FROM jenkins/jenkins:2.516.3-lts
 
 COPY plugins.txt /usr/share/jenkins/ref/plugins.txt
 RUN jenkins-plugin-cli -f /usr/share/jenkins/ref/plugins.txt --verbose

@@ -1,6 +1,3 @@
-
-
-
 # Kubernetes Resources Path
 KUBE_RES_PATH := ./src/main/kubernetes
 
@@ -38,4 +35,3 @@ e2e-cleanup:
 # Legacy e2e target (basic deployment)
 e2e-deploy:
 	kubectl create -f $(JENKINS_DEPLOYMENT)
-

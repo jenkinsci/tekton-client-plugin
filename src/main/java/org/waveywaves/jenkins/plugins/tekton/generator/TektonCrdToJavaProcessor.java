@@ -181,6 +181,8 @@ public class TektonCrdToJavaProcessor {
         try {
             logger.info("Generating classes for CRD {} version {} with base class inheritance: {}", 
                        crdName, versionName, enableBaseClassInheritance);
+            System.out.println("  -> Generating classes for CRD: " + crdName + " version: " + versionName + 
+                              " (base class inheritance: " + enableBaseClassInheritance + ")");
             
             // Create package directory for this CRD and version
             String packageName = String.format("%s.%s.%s", basePackage, sanitizePackageName(crdName), versionName);
@@ -273,6 +275,8 @@ public class TektonCrdToJavaProcessor {
         }
 
         logger.info("Generated Java classes with inheritance in package: {}", packageName);
+        System.out.println("     Generated Java classes with inheritance in package: " + packageName);
+
     }
     
     /**
@@ -315,13 +319,75 @@ public class TektonCrdToJavaProcessor {
      */
     private void addJenkinsSpecificFeatures(JDefinedClass generatedClass, String crdName) {
         try {
+            // Add @DataBoundConstructor if not already present
             JMethod constructor = generatedClass.constructor(JMod.PUBLIC);
             constructor.annotate(generatedClass.owner().ref("org.kohsuke.stapler.DataBoundConstructor"));
             constructor.body().invoke("super");
+            
+            // Add @Extension Descriptor inner class for Jenkins discovery
+            addDescriptorClass(generatedClass, crdName);
                 
         } catch (Exception e) {
             logger.warn("Could not add Jenkins-specific features: {}", e.getMessage());
         }
+    }
+    
+    /**
+     * Add @Extension Descriptor inner class so Jenkins can discover the build step.
+     */
+    private void addDescriptorClass(JDefinedClass generatedClass, String crdName) {
+        try {
+            JCodeModel codeModel = generatedClass.owner();
+            
+            // Create DescriptorImpl as static inner class
+            JDefinedClass descriptorClass = generatedClass._class(
+                JMod.PUBLIC | JMod.STATIC | JMod.FINAL, 
+                "DescriptorImpl"
+            );
+            
+            // Extend BuildStepDescriptor<Builder>
+            JClass builderClass = codeModel.ref("hudson.tasks.Builder");
+            JClass buildStepDescriptor = codeModel.ref("hudson.tasks.BuildStepDescriptor").narrow(builderClass);
+            descriptorClass._extends(buildStepDescriptor);
+            
+            // Add @Extension annotation
+            descriptorClass.annotate(codeModel.ref("hudson.Extension"));
+            
+            // Add constructor
+            JMethod descriptorConstructor = descriptorClass.constructor(JMod.PUBLIC);
+            descriptorConstructor.body().invoke("load");
+            
+            // Add getDisplayName() method
+            JMethod getDisplayName = descriptorClass.method(JMod.PUBLIC, String.class, "getDisplayName");
+            getDisplayName.annotate(Override.class);
+            String displayName = formatDisplayName(generatedClass.name(), crdName);
+            getDisplayName.body()._return(com.sun.codemodel.JExpr.lit(displayName));
+            
+            // Add isApplicable() method
+            JClass abstractProject = codeModel.ref("hudson.model.AbstractProject");
+            JClass classType = codeModel.ref("java.lang.Class");
+            JClass classWithWildcard = classType.narrow(abstractProject.wildcard());
+            JMethod isApplicable = descriptorClass.method(JMod.PUBLIC, boolean.class, "isApplicable");
+            isApplicable.annotate(Override.class);
+            isApplicable.param(classWithWildcard, "jobType");
+            isApplicable.body()._return(com.sun.codemodel.JExpr.TRUE);
+            
+            logger.info("Added @Extension Descriptor to class: {}", generatedClass.name());
+            
+        } catch (Exception e) {
+            logger.error("Failed to add Descriptor class: {}", e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Format the display name for Jenkins UI dropdown.
+     */
+    private String formatDisplayName(String className, String crdName) {
+        // Convert "CreatePipelineRunTyped" to "Tekton: Create Pipeline Run"
+        String name = className.replace("Typed", "")
+                               .replaceAll("([A-Z])", " $1")
+                               .trim();
+        return "Tekton: " + name;
     }
     
     /**
@@ -381,6 +447,8 @@ public class TektonCrdToJavaProcessor {
         }
 
         logger.info("Generated Java classes in package: {}", packageName);
+        System.out.println("     Generated Java classes in package: " + packageName);
+
     }
 
     private boolean isCrd(JsonNode root) {

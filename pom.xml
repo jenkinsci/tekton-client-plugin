@@ -17,7 +17,6 @@
         of Tekton Resources on you Kubernetes cluster and helps drive your operations from your Jenkins Server itself
         without having to carry them out from the Command Line Interface or any other User Interface.
     </description>
-
     <packaging>hpi</packaging>
     <url>https://github.com/jenkinsci/tekton-client-plugin</url>
 
@@ -32,7 +31,7 @@
         <revision>1.1.1</revision>
         <changelist>-SNAPSHOT</changelist>
         <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
-        <jenkins.baseline>2.492</jenkins.baseline>
+        <jenkins.baseline>2.516</jenkins.baseline>
         <!-- Baseline Jenkins version you use to build the plugin. Users must have this version or newer to run. -->
         <jenkins.version>${jenkins.baseline}.3</jenkins.version>
         <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
@@ -45,6 +44,9 @@
         <junit-jupiter-engine.version>5.12.2</junit-jupiter-engine.version>
         <jx-pipeline.version>0.1.5</jx-pipeline.version>
         <ban-junit4-imports.skip>false</ban-junit4-imports.skip>
+        
+        <!-- HPI Plugin Configuration -->
+        <hpi.bundledArtifacts>annotations,automaton,codemodel,commons-io,commons-lang,commons-lang3,commons-text,error_prone_annotations,generex,gson,jakarta.json.bind-api,jakarta.validation-api,javaparser,javax.json.bind-api,joda-time,jsonschema2pojo-core,knative-model,kotlin-stdlib,kubernetes-client,kubernetes-model-admissionregistration,kubernetes-model-apiextensions,kubernetes-model-apps,kubernetes-model-autoscaling,kubernetes-model-batch,kubernetes-model-certificates,kubernetes-model-common,kubernetes-model-coordination,kubernetes-model-core,kubernetes-model-discovery,kubernetes-model-events,kubernetes-model-extensions,kubernetes-model-flowcontrol,kubernetes-model-metrics,kubernetes-model-networking,kubernetes-model-node,kubernetes-model-policy,kubernetes-model-rbac,kubernetes-model-scheduling,kubernetes-model-storageclass,logging-interceptor,okhttp,okhttp-jvm,okio,okio-jvm,slf4j-api,tekton-client,tekton-model-triggers,tekton-model-v1alpha1,tekton-model-v1beta1,validation-api,zjsonpatch</hpi.bundledArtifacts>
     </properties>
 
     <licenses>
@@ -59,11 +61,6 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.kohsuke.stapler</groupId>
-            <artifactId>stapler</artifactId>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.squareup.okio</groupId>
@@ -307,7 +304,18 @@
                 <groupId>org.jenkins-ci.tools</groupId>
                 <artifactId>maven-hpi-plugin</artifactId>
                 <extensions>true</extensions>
+                <configuration>
+                    <!-- Enable clean reload when pressing Enter -->
+                    <systemProperties>
+                        <hudson.PluginManager.workDir>${project.build.directory}/work/plugins</hudson.PluginManager.workDir>
+                    </systemProperties>
+                    <!-- Force clean webapp on redeploy -->
+                    <webApp>
+                        <contextPath>/jenkins</contextPath>
+                    </webApp>
+                </configuration>
             </plugin>
+
             
             <!-- Maven Surefire Plugin for running tests -->
             <!-- JaCoCo for code coverage -->
@@ -351,27 +359,51 @@
                 </executions>
             </plugin>
 
-            <!-- Generate Tekton POJOs from CRDs after compilation -->
+            <!-- Generate Tekton POJOs from CRDs automatically during build -->
+            <!-- Runs after main compilation so generator classes are available -->
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
                 <version>3.1.0</version>
                 <executions>
                     <execution>
                         <id>generate-tekton-pojos</id>
                         <phase>process-classes</phase>
                         <goals>
-                            <goal>java</goal>
+                            <goal>run</goal>
                         </goals>
                         <configuration>
-                            <mainClass>org.waveywaves.jenkins.plugins.tekton.generator.TektonPojoGenerator</mainClass>
-                            <arguments>
-                                <argument>${project.basedir}/src/main/resources/crds</argument>
-                                <argument>${project.build.directory}/generated-sources/tekton</argument>
-                                <argument>org.waveywaves.jenkins.plugins.tekton.generated</argument>
-                            </arguments>
-                            <includeProjectDependencies>true</includeProjectDependencies>
-                            <includePluginDependencies>true</includePluginDependencies>
+                            <target>
+                                <echo message="Generating Tekton POJOs from CRDs..."/>
+                                <java classname="org.waveywaves.jenkins.plugins.tekton.generator.TektonPojoGenerator"
+                                      fork="true"
+                                      failonerror="true">
+                                    <classpath>
+                                        <path refid="maven.compile.classpath"/>
+                                        <pathelement location="${project.build.outputDirectory}"/>
+                                    </classpath>
+                                    <arg value="${project.basedir}/src/main/resources/crds"/>
+                                    <arg value="${project.build.directory}/generated-sources/tekton"/>
+                                    <arg value="org.waveywaves.jenkins.plugins.tekton.generated"/>
+                                </java>
+                            </target>
+                        </configuration>
+                    </execution>
+
+                    <!-- Ensure index.jelly is always present before HPI plugin runs -->
+                    <execution>
+                        <id>ensure-index-jelly</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <echo message="Ensuring index.jelly is present in target/classes" />
+                                <copy file="${project.basedir}/src/main/resources/index.jelly" 
+                                      tofile="${project.build.directory}/classes/index.jelly" 
+                                      failonerror="true" />
+                            </target>
                         </configuration>
                     </execution>
                 </executions>
@@ -468,7 +500,7 @@
                         <executions>
                             <execution>
                                 <id>generate-tekton-pojos-alias</id>
-                                <phase>generate-sources</phase>
+                                <phase>process-classes</phase>
                                 <goals>
                                     <goal>java</goal>
                                 </goals>
@@ -479,8 +511,31 @@
                                         <argument>${project.build.directory}/generated-sources/tekton</argument>
                                         <argument>org.waveywaves.jenkins.plugins.tekton.generated</argument>
                                     </arguments>
+                                    <classpathScope>compile</classpathScope>
                                     <includeProjectDependencies>true</includeProjectDependencies>
                                     <includePluginDependencies>true</includePluginDependencies>
+                                    <systemProperties>
+                                        <systemProperty>
+                                            <key>org.slf4j.simpleLogger.defaultLogLevel</key>
+                                            <value>info</value>
+                                        </systemProperty>
+                                        <systemProperty>
+                                            <key>org.slf4j.simpleLogger.showDateTime</key>
+                                            <value>true</value>
+                                        </systemProperty>
+                                        <systemProperty>
+                                            <key>org.slf4j.simpleLogger.showThreadName</key>
+                                            <value>false</value>
+                                        </systemProperty>
+                                        <systemProperty>
+                                            <key>org.slf4j.simpleLogger.showLogName</key>
+                                            <value>false</value>
+                                        </systemProperty>
+                                        <systemProperty>
+                                            <key>org.slf4j.simpleLogger.showShortLogName</key>
+                                            <value>true</value>
+                                        </systemProperty>
+                                    </systemProperties>
                                 </configuration>
                             </execution>
                         </executions>
