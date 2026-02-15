@@ -43,7 +43,6 @@ import java.net.MalformedURLException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Optional;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
@@ -75,10 +74,12 @@ import java.util.logging.Logger;
 import org.waveywaves.jenkins.plugins.tekton.client.global.TektonGlobalConfiguration;
 import org.waveywaves.jenkins.plugins.tekton.client.global.ClusterConfig;
 import io.fabric8.kubernetes.client.Config;
+import jenkins.model.Jenkins;
 
 public class CreateRaw extends BaseStep {
     private static final Logger LOGGER = Logger.getLogger(CreateRaw.class.getName());
-    private static final String DEFAULT_NAMESPACE = "default";
+    /** Default namespace when none is specified (CI-safe fallback). Package visibility for tests. */
+    static final String DEFAULT_NAMESPACE = "default";
 
     private final String input;
     private final String inputType;
@@ -153,11 +154,14 @@ public class CreateRaw extends BaseStep {
         }
 
         // Priority 2: Check Global Plugin Configuration for default namespace
-        TektonGlobalConfiguration globalConfig = TektonGlobalConfiguration.get();
-        if (globalConfig != null) {
-            for (ClusterConfig cc : globalConfig.getClusterConfigs()) {
-                if (cc.getName().equals(getClusterName()) && !Strings.isNullOrEmpty(cc.getDefaultNamespace())) {
-                    return cc.getDefaultNamespace();
+        // CI-safe: only access global config when Jenkins is running (avoid NPE in headless JUnit)
+        if (Jenkins.getInstanceOrNull() != null) {
+            TektonGlobalConfiguration globalConfig = TektonGlobalConfiguration.get();
+            if (globalConfig != null) {
+                for (ClusterConfig cc : globalConfig.getClusterConfigs()) {
+                    if (cc.getName().equals(getClusterName()) && !Strings.isNullOrEmpty(cc.getDefaultNamespace())) {
+                        return cc.getDefaultNamespace();
+                    }
                 }
             }
         }
