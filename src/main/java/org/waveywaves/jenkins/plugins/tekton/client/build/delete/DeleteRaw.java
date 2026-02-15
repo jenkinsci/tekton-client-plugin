@@ -20,14 +20,13 @@ import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
-import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
-import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils.TektonResourceType;
-import org.waveywaves.jenkins.plugins.tekton.client.build.BaseStep;
-
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.List;
 import java.util.logging.Logger;
+import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils;
+import org.waveywaves.jenkins.plugins.tekton.client.build.BaseStep;
+import org.waveywaves.jenkins.plugins.tekton.client.TektonUtils.TektonResourceType;
 
 @Symbol("tektonDeleteStep")
 public class DeleteRaw extends BaseStep {
@@ -35,7 +34,7 @@ public class DeleteRaw extends BaseStep {
     private String resourceType;
     private String resourceName;
     private String clusterName;
-
+    private String namespace;
     @DataBoundConstructor
     public DeleteRaw(String resourceType, String clusterName, DeleteAllBlock deleteAllStatus) {
         super();
@@ -44,7 +43,14 @@ public class DeleteRaw extends BaseStep {
         this.clusterName = clusterName;
         setTektonClient(TektonUtils.getTektonClient(getClusterName()));
     }
+    public String getNamespace() {
+        return namespace;
+    }
 
+    @DataBoundSetter
+    public void setNamespace(String namespace) {
+        this.namespace = namespace;
+    }
     public static class DeleteAllBlock {
         private String resourceName;
 

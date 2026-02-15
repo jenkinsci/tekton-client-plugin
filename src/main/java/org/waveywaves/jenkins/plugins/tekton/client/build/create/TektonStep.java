@@ -17,16 +17,13 @@ public class TektonStep extends AbstractDescribableImpl<TektonStep> {
     private String script;
     private Boolean tty;
     private String workingDir;
+    private String namespace;
 
     @DataBoundConstructor
-    public TektonStep(String name,
-                      String image,
-                      List<TektonArg> args,
-                      List<TektonCommandI> command,
-                      List<TektonEnv> envs,
-                      String script,
-                      Boolean tty,
-                      String workingDir) {
+    public TektonStep(String name, String image, List<TektonArg> args,
+                      List<TektonCommandI> command, List<TektonEnv> envs,
+                      String script, Boolean tty, String workingDir,
+                      String namespace) {
         this.name = name;
         this.image = image;
         this.args = args;
@@ -35,6 +32,7 @@ public class TektonStep extends AbstractDescribableImpl<TektonStep> {
         this.script = script;
         this.tty = tty;
         this.workingDir = workingDir;
+        this.namespace = namespace;
     }
 
     public String getName() {
@@ -67,6 +65,9 @@ public class TektonStep extends AbstractDescribableImpl<TektonStep> {
 
     public List<TektonEnv> getEnvs() {
         return envs;
+    }
+    public String getNamespace() {
+        return namespace;
     }
 
     @Extension

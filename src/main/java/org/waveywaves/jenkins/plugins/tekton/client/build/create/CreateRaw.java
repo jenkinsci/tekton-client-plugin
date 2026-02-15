@@ -94,6 +94,11 @@ public class CreateRaw extends BaseStep {
         setKubernetesClient(TektonUtils.getKubernetesClient(getClusterName()));
         setTektonClient(TektonUtils.getTektonClient(getClusterName()));
     }
+    public String getNamespace() {
+        return namespace;
+    }
+
+
 
     @DataBoundSetter
     public void setNamespace(String namespace) {
@@ -144,11 +149,6 @@ public class CreateRaw extends BaseStep {
     public boolean isEnableCatalog() {
         return enableCatalog;
     }
-
-    public String getNamespace() {
-        return namespace;
-    }
-
     public String getClusterName() {
         if (Strings.isNullOrEmpty(clusterName)) {
             clusterName = TektonUtils.DEFAULT_CLIENT_KEY;
