@@ -232,7 +232,7 @@ public class CreateRaw extends BaseStep {
         }
         String resourceName;
         TaskRun taskrun = taskRunClient.load(inputStream).get();
-        String resourceNamespace = taskRun.getMetadata().getNamespace();
+        String resourceNamespace = taskrun.getMetadata().getNamespace();
         String resolvedNamespace = resolveNamespace(resourceNamespace);
 
         // Only log and set if the resource didn't originally have a namespace
