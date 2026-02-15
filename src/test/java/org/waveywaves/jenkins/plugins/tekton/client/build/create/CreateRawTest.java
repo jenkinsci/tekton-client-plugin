@@ -285,8 +285,7 @@ class CreateRawTest {
 
         KubernetesClient kc = mock(KubernetesClient.class);
         Resource<HasMetadata> resource = mock(Resource.class);
-        when(kc.resource(any(InputStream.class))).thenReturn(resource);
-        when(resource.inNamespace(anyString())).thenReturn(resource);
+        when(kc.resource(any(HasMetadata.class))).thenReturn(resource);
 
         HasMetadata created = mock(HasMetadata.class);
         ObjectMeta meta = mock(ObjectMeta.class);
