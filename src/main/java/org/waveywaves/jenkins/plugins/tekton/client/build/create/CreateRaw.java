@@ -9,6 +9,7 @@ import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
@@ -296,10 +297,23 @@ public class CreateRaw extends BaseStep {
     public String createPipelineRun(InputStream inputStream, EnvVars envVars) throws Exception {
         if (pipelineRunClient == null) {
             TektonClient tc = (TektonClient) tektonClient;
+            if (tc == null) {
+                throw new AbortException("Tekton client is not available. Check Jenkins global configuration for the cluster.");
+            }
             setPipelineRunClient(tc.v1beta1().pipelineRuns());
         }
         String resourceName;
         final PipelineRun pipelineRun = pipelineRunClient.load(inputStream).get();
+        if (pipelineRun == null) {
+            throw new AbortException("Failed to load PipelineRun from input: parsed resource is null. Check that the YAML/JSON is valid and contains a PipelineRun.");
+        }
+        if (pipelineRun.getMetadata() == null) {
+            throw new AbortException("PipelineRun manifest is invalid: missing 'metadata'. Ensure your YAML has a metadata section (e.g. name, namespace).");
+        }
+        if (pipelineRun.getSpec() == null) {
+            throw new AbortException("PipelineRun manifest is invalid: missing 'spec'. Ensure your YAML has a spec section.");
+        }
+
         String resourceNamespace = pipelineRun.getMetadata().getNamespace();
         String resolvedNamespace = resolveNamespace(resourceNamespace);
 
@@ -320,17 +334,21 @@ public class CreateRaw extends BaseStep {
 
         resourceName = updatedPipelineRun.getMetadata().getName();
 
-        ChecksDetails checkDetails = new ChecksDetails.ChecksDetailsBuilder()
-                .withName("tekton")
-                .withOutput(new ChecksOutput.ChecksOutputBuilder()
-                        .withTitle(updatedPipelineRun.getMetadata().getName())
-                        .withSummary("PipelineRun is running...")
-                        .build())
-                .withStartedAt(LocalDateTime.now())
-                .withStatus(ChecksStatus.IN_PROGRESS)
-                .withConclusion(ChecksConclusion.NONE)
-                .build();
-        checksPublisher.publish(checkDetails);
+        if (checksPublisher != null) {
+            ChecksDetails checkDetails = new ChecksDetails.ChecksDetailsBuilder()
+                    .withName("tekton")
+                    .withOutput(new ChecksOutput.ChecksOutputBuilder()
+                            .withTitle(updatedPipelineRun.getMetadata().getName())
+                            .withSummary("PipelineRun is running...")
+                            .build())
+                    .withStartedAt(LocalDateTime.now())
+                    .withStatus(ChecksStatus.IN_PROGRESS)
+                    .withConclusion(ChecksConclusion.NONE)
+                    .build();
+            checksPublisher.publish(checkDetails);
+        } else {
+            LOGGER.fine("[Checks API] No checks publisher available; skipping checks publish (this is normal when not using GitHub Checks).");
+        }
 
         streamPipelineRunLogsToConsole(updatedPipelineRun);
 
@@ -492,8 +510,8 @@ public class CreateRaw extends BaseStep {
                 }
             }
 
-            // only recording checks for pipelineruns
-            if (resourceType != null && resourceType == TektonResourceType.pipelinerun) {
+            // only recording checks for pipelineruns (when a checks publisher is available)
+            if (resourceType != null && resourceType == TektonResourceType.pipelinerun && checksPublisher != null) {
                 ChecksDetails checkDetails = new ChecksDetails.ChecksDetailsBuilder()
                         .withName("tekton")
                         .withOutput(new ChecksOutput.ChecksOutputBuilder()
@@ -519,8 +537,8 @@ public class CreateRaw extends BaseStep {
 
             run.setResult(Result.FAILURE);
 
-            // only recording checks for pipelineruns
-            if (resourceType != null && resourceType == TektonResourceType.pipelinerun) {
+            // only recording checks for pipelineruns (when a checks publisher is available)
+            if (resourceType != null && resourceType == TektonResourceType.pipelinerun && checksPublisher != null) {
                 ChecksDetails checkDetails = new ChecksDetails.ChecksDetailsBuilder()
                         .withName("tekton")
                         .withStatus(ChecksStatus.COMPLETED)
