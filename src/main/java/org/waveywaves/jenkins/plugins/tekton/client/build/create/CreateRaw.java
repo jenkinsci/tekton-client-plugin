@@ -9,6 +9,7 @@ import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
@@ -43,7 +44,6 @@ import java.net.MalformedURLException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Optional;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
@@ -72,9 +72,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.waveywaves.jenkins.plugins.tekton.client.global.TektonGlobalConfiguration;
+import org.waveywaves.jenkins.plugins.tekton.client.global.ClusterConfig;
+import io.fabric8.kubernetes.client.Config;
+import jenkins.model.Jenkins;
 
 public class CreateRaw extends BaseStep {
     private static final Logger LOGGER = Logger.getLogger(CreateRaw.class.getName());
+    /** Default namespace when none is specified (CI-safe fallback). Package visibility for tests. */
+    static final String DEFAULT_NAMESPACE = "default";
 
     private final String input;
     private final String inputType;
@@ -128,6 +134,55 @@ public class CreateRaw extends BaseStep {
         this.toolClassLoader = toolClassLoader;
     }
 
+    /**
+     * Resolves the namespace to use for Tekton resources using a priority hierarchy:
+     * 1. Explicit namespace from the step configuration
+     * 2. Default namespace from Global Plugin Configuration
+     * 3. Namespace from current KubeConfig context (if running on Minikube or similar)
+     * 4. Hard fallback to "default" namespace
+     *
+     * @return the resolved namespace, or null if the resource already has one
+     */
+    private String resolveNamespace(String resourceNamespace) {
+        // If the resource already has a namespace, respect it
+        if (!Strings.isNullOrEmpty(resourceNamespace)) {
+            return resourceNamespace;
+        }
+
+        // Priority 1: Check explicit namespace from step configuration
+        if (!Strings.isNullOrEmpty(this.namespace)) {
+            return this.namespace;
+        }
+
+        // Priority 2: Check Global Plugin Configuration for default namespace
+        // CI-safe: only access global config when Jenkins is running (avoid NPE in headless JUnit)
+        if (Jenkins.getInstanceOrNull() != null) {
+            TektonGlobalConfiguration globalConfig = TektonGlobalConfiguration.get();
+            if (globalConfig != null) {
+                for (ClusterConfig cc : globalConfig.getClusterConfigs()) {
+                    if (cc.getName().equals(getClusterName()) && !Strings.isNullOrEmpty(cc.getDefaultNamespace())) {
+                        return cc.getDefaultNamespace();
+                    }
+                }
+            }
+        }
+
+        // Priority 3: Try to get namespace from KubeConfig context (via KubernetesClient)
+        if (kubernetesClient != null) {
+            try {
+                Config config = ((io.fabric8.kubernetes.client.KubernetesClient) kubernetesClient).getConfiguration();
+                if (config != null && !Strings.isNullOrEmpty(config.getNamespace())) {
+                    return config.getNamespace();
+                }
+            } catch (Exception e) {
+                LOGGER.warning("Failed to get namespace from KubeConfig: " + e.getMessage());
+            }
+        }
+
+        // Priority 4: Hard fallback to "default" namespace
+        return DEFAULT_NAMESPACE;
+    }
+
     public void setChecksPublisher(ChecksPublisher checksPublisher) {
         this.checksPublisher = checksPublisher;
     }
@@ -178,15 +233,17 @@ public class CreateRaw extends BaseStep {
         }
         String resourceName;
         TaskRun taskrun = taskRunClient.load(inputStream).get();
-        if (!Strings.isNullOrEmpty(namespace) && Strings.isNullOrEmpty(taskrun.getMetadata().getNamespace())) {
-            taskrun.getMetadata().setNamespace(namespace);
+        String resourceNamespace = taskrun.getMetadata().getNamespace();
+        String resolvedNamespace = resolveNamespace(resourceNamespace);
+
+        // Only log and set if the resource didn't originally have a namespace
+        if (Strings.isNullOrEmpty(resourceNamespace)) {
+            LOGGER.info("No namespace specified in TaskRun manifest, using resolved namespace: " + resolvedNamespace);
+            taskrun.getMetadata().setNamespace(resolvedNamespace);
+            logMessage("Using namespace: " + resolvedNamespace);
         }
-        String ns = taskrun.getMetadata().getNamespace();
-        if (Strings.isNullOrEmpty(ns)) {
-            taskrun = taskRunClient.create(taskrun);
-        } else {
-            taskrun = taskRunClient.inNamespace(ns).create(taskrun);
-        }
+
+        taskrun = taskRunClient.inNamespace(resolvedNamespace).create(taskrun);
         resourceName = taskrun.getMetadata().getName();
 
         streamTaskRunLogsToConsole(taskrun);
@@ -200,15 +257,17 @@ public class CreateRaw extends BaseStep {
         }
         String resourceName;
         Task task = taskClient.load(inputStream).get();
-        if (!Strings.isNullOrEmpty(namespace) && Strings.isNullOrEmpty(task.getMetadata().getNamespace())) {
-            task.getMetadata().setNamespace(namespace);
+        String resourceNamespace = task.getMetadata().getNamespace();
+        String resolvedNamespace = resolveNamespace(resourceNamespace);
+
+        // Only log and set if the resource didn't originally have a namespace
+        if (Strings.isNullOrEmpty(resourceNamespace)) {
+            LOGGER.info("No namespace specified in Task manifest, using resolved namespace: " + resolvedNamespace);
+            task.getMetadata().setNamespace(resolvedNamespace);
+            logMessage("Using namespace: " + resolvedNamespace);
         }
-        String ns = task.getMetadata().getNamespace();
-        if (Strings.isNullOrEmpty(ns)) {
-            task = taskClient.create(task);
-        } else {
-            task = taskClient.inNamespace(ns).create(task);
-        }
+
+        task = taskClient.inNamespace(resolvedNamespace).create(task);
         resourceName = task.getMetadata().getName();
         return resourceName;
     }
@@ -220,15 +279,17 @@ public class CreateRaw extends BaseStep {
         }
         String resourceName;
         Pipeline pipeline = pipelineClient.load(inputStream).get();
-        if (!Strings.isNullOrEmpty(namespace) && Strings.isNullOrEmpty(pipeline.getMetadata().getNamespace())) {
-            pipeline.getMetadata().setNamespace(namespace);
+        String resourceNamespace = pipeline.getMetadata().getNamespace();
+        String resolvedNamespace = resolveNamespace(resourceNamespace);
+
+        // Only log and set if the resource didn't originally have a namespace
+        if (Strings.isNullOrEmpty(resourceNamespace)) {
+            LOGGER.info("No namespace specified in Pipeline manifest, using resolved namespace: " + resolvedNamespace);
+            pipeline.getMetadata().setNamespace(resolvedNamespace);
+            logMessage("Using namespace: " + resolvedNamespace);
         }
-        String ns = pipeline.getMetadata().getNamespace();
-        if (Strings.isNullOrEmpty(ns)) {
-            pipeline = pipelineClient.create(pipeline);
-        } else {
-            pipeline = pipelineClient.inNamespace(ns).create(pipeline);
-        }
+
+        pipeline = pipelineClient.inNamespace(resolvedNamespace).create(pipeline);
         resourceName = pipeline.getMetadata().getName();
         return resourceName;
     }
@@ -236,43 +297,62 @@ public class CreateRaw extends BaseStep {
     public String createPipelineRun(InputStream inputStream, EnvVars envVars) throws Exception {
         if (pipelineRunClient == null) {
             TektonClient tc = (TektonClient) tektonClient;
+            if (tc == null) {
+                throw new AbortException("Tekton client is not available. Check Jenkins global configuration for the cluster.");
+            }
             setPipelineRunClient(tc.v1beta1().pipelineRuns());
         }
         String resourceName;
         final PipelineRun pipelineRun = pipelineRunClient.load(inputStream).get();
-        if (!Strings.isNullOrEmpty(namespace) && Strings.isNullOrEmpty(pipelineRun.getMetadata().getNamespace())) {
-            pipelineRun.getMetadata().setNamespace(namespace);
+        if (pipelineRun == null) {
+            throw new AbortException("Failed to load PipelineRun from input: parsed resource is null. Check that the YAML/JSON is valid and contains a PipelineRun.");
+        }
+        if (pipelineRun.getMetadata() == null) {
+            throw new AbortException("PipelineRun manifest is invalid: missing 'metadata'. Ensure your YAML has a metadata section (e.g. name, namespace).");
+        }
+        if (pipelineRun.getSpec() == null) {
+            throw new AbortException("PipelineRun manifest is invalid: missing 'spec'. Ensure your YAML has a spec section.");
+        }
+
+        String resourceNamespace = pipelineRun.getMetadata().getNamespace();
+        String resolvedNamespace = resolveNamespace(resourceNamespace);
+
+        // Only log and set if the resource didn't originally have a namespace
+        if (Strings.isNullOrEmpty(resourceNamespace)) {
+            LOGGER.info("No namespace specified in PipelineRun manifest, using resolved namespace: " + resolvedNamespace);
+            pipelineRun.getMetadata().setNamespace(resolvedNamespace);
+            logMessage("Using namespace: " + resolvedNamespace);
         }
 
         LOGGER.info("Using environment variables " + envVars);
 
         enhancePipelineRunWithEnvVars(pipelineRun, envVars);
 
-        String ns = pipelineRun.getMetadata().getNamespace();
-
         LOGGER.info("Creating PipelineRun\n" + marshall(pipelineRun));
 
-        PipelineRun updatedPipelineRun = Strings.isNullOrEmpty(ns) ?
-                pipelineRunClient.create(pipelineRun) :
-                pipelineRunClient.inNamespace(ns).create(pipelineRun);
+        PipelineRun updatedPipelineRun = pipelineRunClient.inNamespace(resolvedNamespace).create(pipelineRun);
 
         resourceName = updatedPipelineRun.getMetadata().getName();
 
-        ChecksDetails checkDetails = new ChecksDetails.ChecksDetailsBuilder()
-                .withName("tekton")
-                .withOutput(new ChecksOutput.ChecksOutputBuilder()
-                        .withTitle(updatedPipelineRun.getMetadata().getName())
-                        .withSummary("PipelineRun is running...")
-                        .build())
-                .withStartedAt(LocalDateTime.now())
-                .withStatus(ChecksStatus.IN_PROGRESS)
-                .withConclusion(ChecksConclusion.NONE)
-                .build();
-        checksPublisher.publish(checkDetails);
+        if (checksPublisher != null) {
+            ChecksDetails checkDetails = new ChecksDetails.ChecksDetailsBuilder()
+                    .withName("tekton")
+                    .withOutput(new ChecksOutput.ChecksOutputBuilder()
+                            .withTitle(updatedPipelineRun.getMetadata().getName())
+                            .withSummary("PipelineRun is running...")
+                            .build())
+                    .withStartedAt(LocalDateTime.now())
+                    .withStatus(ChecksStatus.IN_PROGRESS)
+                    .withConclusion(ChecksConclusion.NONE)
+                    .build();
+            checksPublisher.publish(checkDetails);
+        } else {
+            LOGGER.fine("[Checks API] No checks publisher available; skipping checks publish (this is normal when not using GitHub Checks).");
+        }
 
         streamPipelineRunLogsToConsole(updatedPipelineRun);
 
-        PipelineRun reloaded = pipelineRunClient.inNamespace(ns).withName(resourceName).get();
+        PipelineRun reloaded = pipelineRunClient.inNamespace(resolvedNamespace).withName(resourceName).get();
         List<Condition> conditions = reloaded
                 .getStatus()
                 .getConditions();
@@ -430,8 +510,8 @@ public class CreateRaw extends BaseStep {
                 }
             }
 
-            // only recording checks for pipelineruns
-            if (resourceType != null && resourceType == TektonResourceType.pipelinerun) {
+            // only recording checks for pipelineruns (when a checks publisher is available)
+            if (resourceType != null && resourceType == TektonResourceType.pipelinerun && checksPublisher != null) {
                 ChecksDetails checkDetails = new ChecksDetails.ChecksDetailsBuilder()
                         .withName("tekton")
                         .withOutput(new ChecksOutput.ChecksOutputBuilder()
@@ -457,8 +537,8 @@ public class CreateRaw extends BaseStep {
 
             run.setResult(Result.FAILURE);
 
-            // only recording checks for pipelineruns
-            if (resourceType != null && resourceType == TektonResourceType.pipelinerun) {
+            // only recording checks for pipelineruns (when a checks publisher is available)
+            if (resourceType != null && resourceType == TektonResourceType.pipelinerun && checksPublisher != null) {
                 ChecksDetails checkDetails = new ChecksDetails.ChecksDetailsBuilder()
                         .withName("tekton")
                         .withStatus(ChecksStatus.COMPLETED)

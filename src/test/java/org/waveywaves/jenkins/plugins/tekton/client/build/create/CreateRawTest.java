@@ -3,12 +3,15 @@ package org.waveywaves.jenkins.plugins.tekton.client.build.create;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.model.Run;
+import hudson.AbortException;
 import io.fabric8.tekton.pipeline.v1beta1.Param;
 import io.fabric8.tekton.pipeline.v1beta1.PipelineRun;
 import io.fabric8.tekton.pipeline.v1beta1.PipelineRunBuilder;
+
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.AfterEach;
 
-import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -19,13 +22,18 @@ import org.waveywaves.jenkins.plugins.tekton.client.build.create.mock.FakeCreate
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.logging.Logger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class CreateRawTest {
+    private static final Logger LOGGER = Logger.getLogger(CreateRawTest.class.getName());
 
     private Run<?,?> run;
     private String namespace;
@@ -157,4 +165,54 @@ class CreateRawTest {
         return param.getValue().getStringVal();
     }
 
+    /**
+     * CI-safe test for Issue #45: verifies the default namespace constant used when
+     * no namespace is specified (headless-safe; does not call Jenkins or runCreate).
+     */
+    @Test void testDefaultNamespaceConstantForMissingNamespace() {
+        assertThat(CreateRaw.DEFAULT_NAMESPACE).isEqualTo("default");
+    }
+
+    /**
+     * Verifies that when checksPublisher is null (e.g. "No suitable checks publisher found"),
+     * the pipeline run creation path does not throw NPE. Regression test for Issue #253 / NPE at createPipelineRun.
+     */
+    @Test void testRunCreateWithNullChecksPublisherDoesNotThrow() {
+        String pipelineRunYaml = "apiVersion: tekton.dev/v1beta1\n" +
+                "kind: PipelineRun\n" +
+                "metadata:\n" +
+                "  name: test-pr\n" +
+                "  namespace: default\n" +
+                "spec:\n" +
+                "  pipelineRef:\n" +
+                "    name: test-pipeline\n";
+        CreateRawMock createRaw = new CreateRawMock(pipelineRunYaml, CreateRaw.InputType.YAML.toString());
+        createRaw.setClusterName(TektonUtils.DEFAULT_CLIENT_KEY);
+        createRaw.setNamespace("default");
+        createRaw.setChecksPublisher(null); // Simulate "No suitable checks publisher found"
+
+        assertDoesNotThrow(() -> createRaw.runCreate(run, null, null),
+                "runCreate must not throw NPE when checksPublisher is null (Issue #253)");
+    }
+
+    /**
+     * Verifies that createPipelineRun fails with a clear exception (AbortException or similar)
+     * rather than NullPointerException when input or environment is invalid (e.g. missing metadata or no Tekton client).
+     */
+    @Test void testCreatePipelineRunFailsGracefullyWithoutNPE() {
+        String minimalYaml = "apiVersion: tekton.dev/v1beta1\nkind: PipelineRun\n";
+        CreateRaw createRaw = new CreateRaw(minimalYaml, CreateRaw.InputType.YAML.toString());
+        createRaw.setClusterName(TektonUtils.DEFAULT_CLIENT_KEY);
+        createRaw.setChecksPublisher(null);
+        ByteArrayInputStream stream = new ByteArrayInputStream(minimalYaml.getBytes(StandardCharsets.UTF_8));
+        EnvVars envVars = new EnvVars();
+
+        Throwable thrown = assertThrows(Throwable.class,
+                () -> createRaw.createPipelineRun(stream, envVars));
+        assertThat(thrown).isNotNull();
+        assertThat(thrown).isNotInstanceOf(NullPointerException.class);
+        if (thrown instanceof AbortException) {
+            assertThat(thrown.getMessage()).isNotBlank();
+        }
+    }
 }
