@@ -193,7 +193,7 @@ public class CreateRaw extends BaseStep {
 
     /**
      * Unmarshals YAML bytes to HasMetadata (single or list) and creates the resource via the Kubernetes client.
-     * Compatible with fabric8 5.4.x where resource(InputStream) is not available; uses Serialization.unmarshal.
+     * Compatible with fabric8 5.4.x DSL: uses Serialization.unmarshal and resource().createOrReplace().
      */
     private HasMetadata createHasMetadataFromYaml(KubernetesClient kc, byte[] yamlBytes) {
         Object result = Serialization.unmarshal(new ByteArrayInputStream(yamlBytes));
@@ -209,7 +209,7 @@ public class CreateRaw extends BaseStep {
             return null;
         }
         HasMetadata item = items.get(0);
-        return kc.resource(item).create();
+        return kc.resource(item).createOrReplace();
     }
 
     public void setChecksPublisher(ChecksPublisher checksPublisher) {

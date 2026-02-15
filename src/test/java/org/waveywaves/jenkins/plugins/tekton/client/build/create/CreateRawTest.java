@@ -292,7 +292,7 @@ class CreateRawTest {
         ObjectMeta meta = mock(ObjectMeta.class);
         when(meta.getName()).thenReturn("test-pr");
         when(created.getMetadata()).thenReturn(meta);
-        when(resource.create()).thenReturn(created);
+        when(resource.createOrReplace()).thenReturn(created);
 
         createRaw.setKubernetesClient(kc);
 
