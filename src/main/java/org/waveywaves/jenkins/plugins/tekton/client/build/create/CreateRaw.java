@@ -191,11 +191,16 @@ public class CreateRaw extends BaseStep {
         return DEFAULT_NAMESPACE;
     }
 
+    /** Full apiVersion for Tekton v1 (used so the client posts to /apis/tekton.dev/v1/...). */
+    private static final String TEKTON_API_VERSION_V1 = "tekton.dev/v1";
+
     /**
      * Unmarshals YAML bytes to HasMetadata (single or list) and creates the resource via the Kubernetes client.
      * Compatible with fabric8 5.4.x DSL: uses Serialization.unmarshal and resource().createOrReplace().
+     * When {@code expectedApiVersion} is non-null, the resource's apiVersion is set to it before create so the
+     * request URL matches the body (avoids "API version in the data does not match expected" when using v1).
      */
-    private HasMetadata createHasMetadataFromYaml(KubernetesClient kc, byte[] yamlBytes) {
+    private HasMetadata createHasMetadataFromYaml(KubernetesClient kc, byte[] yamlBytes, String expectedApiVersion) {
         Object result = Serialization.unmarshal(new ByteArrayInputStream(yamlBytes));
         List<HasMetadata> items;
         if (result instanceof List) {
@@ -209,7 +214,14 @@ public class CreateRaw extends BaseStep {
             return null;
         }
         HasMetadata item = items.get(0);
+        if (expectedApiVersion != null && !expectedApiVersion.isEmpty()) {
+            item.setApiVersion(expectedApiVersion);
+        }
         return kc.resource(item).createOrReplace();
+    }
+
+    private HasMetadata createHasMetadataFromYaml(KubernetesClient kc, byte[] yamlBytes) {
+        return createHasMetadataFromYaml(kc, yamlBytes, null);
     }
 
     public void setChecksPublisher(ChecksPublisher checksPublisher) {
@@ -325,7 +337,7 @@ public class CreateRaw extends BaseStep {
         }
         byte[] enhancedBytes = yamlMapper.writeValueAsBytes(rootObj);
         LOGGER.info("Creating TaskRun (tekton.dev/v1) in namespace " + resolvedNamespace);
-        HasMetadata created = createHasMetadataFromYaml(kc, enhancedBytes);
+        HasMetadata created = createHasMetadataFromYaml(kc, enhancedBytes, TEKTON_API_VERSION_V1);
         if (created == null || created.getMetadata() == null) {
             throw new AbortException("Failed to create TaskRun (v1): no resource returned.");
         }
@@ -378,7 +390,7 @@ public class CreateRaw extends BaseStep {
         }
         byte[] enhancedBytes = yamlMapper.writeValueAsBytes(rootObj);
         LOGGER.info("Creating Task (tekton.dev/v1) in namespace " + resolvedNamespace);
-        HasMetadata created = createHasMetadataFromYaml(kc, enhancedBytes);
+        HasMetadata created = createHasMetadataFromYaml(kc, enhancedBytes, TEKTON_API_VERSION_V1);
         if (created == null || created.getMetadata() == null) {
             throw new AbortException("Failed to create Task (v1): no resource returned.");
         }
@@ -427,7 +439,7 @@ public class CreateRaw extends BaseStep {
         }
         byte[] enhancedBytes = yamlMapper.writeValueAsBytes(rootObj);
         LOGGER.info("Creating Pipeline (tekton.dev/v1) in namespace " + resolvedNamespace);
-        HasMetadata created = createHasMetadataFromYaml(kc, enhancedBytes);
+        HasMetadata created = createHasMetadataFromYaml(kc, enhancedBytes, TEKTON_API_VERSION_V1);
         if (created == null || created.getMetadata() == null) {
             throw new AbortException("Failed to create Pipeline (v1): no resource returned.");
         }
@@ -498,7 +510,7 @@ public class CreateRaw extends BaseStep {
         enhancePipelineRunSpecWithEnvVars(rootObj, envVars);
         byte[] enhancedBytes = yamlMapper.writeValueAsBytes(rootObj);
         LOGGER.info("Creating PipelineRun (tekton.dev/v1)\n" + new String(enhancedBytes, StandardCharsets.UTF_8));
-        HasMetadata created = createHasMetadataFromYaml(kc, enhancedBytes);
+        HasMetadata created = createHasMetadataFromYaml(kc, enhancedBytes, TEKTON_API_VERSION_V1);
         if (created == null || created.getMetadata() == null) {
             throw new AbortException("Failed to create PipelineRun (v1): no resource returned.");
         }
