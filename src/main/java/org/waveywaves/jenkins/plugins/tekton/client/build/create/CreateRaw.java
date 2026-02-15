@@ -12,6 +12,7 @@ import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
@@ -79,7 +80,10 @@ import org.waveywaves.jenkins.plugins.tekton.client.global.ClusterConfig;
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.api.model.HasMetadata;
+import io.fabric8.kubernetes.client.utils.Serialization;
 import jenkins.model.Jenkins;
+
+import java.util.Collections;
 
 public class CreateRaw extends BaseStep {
     private static final Logger LOGGER = Logger.getLogger(CreateRaw.class.getName());
@@ -185,6 +189,27 @@ public class CreateRaw extends BaseStep {
 
         // Priority 4: Hard fallback to "default" namespace
         return DEFAULT_NAMESPACE;
+    }
+
+    /**
+     * Unmarshals YAML bytes to HasMetadata (single or list) and creates the resource via the Kubernetes client.
+     * Compatible with fabric8 5.4.x where resource(InputStream) is not available; uses Serialization.unmarshal.
+     */
+    private HasMetadata createHasMetadataFromYaml(KubernetesClient kc, byte[] yamlBytes) {
+        Object result = Serialization.unmarshal(new ByteArrayInputStream(yamlBytes));
+        List<HasMetadata> items;
+        if (result instanceof List) {
+            @SuppressWarnings("unchecked")
+            List<HasMetadata> list = (List<HasMetadata>) (List<?>) result;
+            items = list;
+        } else {
+            items = Collections.singletonList((HasMetadata) result);
+        }
+        if (items == null || items.isEmpty()) {
+            return null;
+        }
+        HasMetadata item = items.get(0);
+        return kc.resource(item).create();
     }
 
     public void setChecksPublisher(ChecksPublisher checksPublisher) {
@@ -300,8 +325,7 @@ public class CreateRaw extends BaseStep {
         }
         byte[] enhancedBytes = yamlMapper.writeValueAsBytes(rootObj);
         LOGGER.info("Creating TaskRun (tekton.dev/v1) in namespace " + resolvedNamespace);
-        Resource<HasMetadata> resource = kc.resource(new ByteArrayInputStream(enhancedBytes));
-        HasMetadata created = resource.inNamespace(resolvedNamespace).create();
+        HasMetadata created = createHasMetadataFromYaml(kc, enhancedBytes);
         if (created == null || created.getMetadata() == null) {
             throw new AbortException("Failed to create TaskRun (v1): no resource returned.");
         }
@@ -354,8 +378,7 @@ public class CreateRaw extends BaseStep {
         }
         byte[] enhancedBytes = yamlMapper.writeValueAsBytes(rootObj);
         LOGGER.info("Creating Task (tekton.dev/v1) in namespace " + resolvedNamespace);
-        Resource<HasMetadata> resource = kc.resource(new ByteArrayInputStream(enhancedBytes));
-        HasMetadata created = resource.inNamespace(resolvedNamespace).create();
+        HasMetadata created = createHasMetadataFromYaml(kc, enhancedBytes);
         if (created == null || created.getMetadata() == null) {
             throw new AbortException("Failed to create Task (v1): no resource returned.");
         }
@@ -404,8 +427,7 @@ public class CreateRaw extends BaseStep {
         }
         byte[] enhancedBytes = yamlMapper.writeValueAsBytes(rootObj);
         LOGGER.info("Creating Pipeline (tekton.dev/v1) in namespace " + resolvedNamespace);
-        Resource<HasMetadata> resource = kc.resource(new ByteArrayInputStream(enhancedBytes));
-        HasMetadata created = resource.inNamespace(resolvedNamespace).create();
+        HasMetadata created = createHasMetadataFromYaml(kc, enhancedBytes);
         if (created == null || created.getMetadata() == null) {
             throw new AbortException("Failed to create Pipeline (v1): no resource returned.");
         }
@@ -476,8 +498,7 @@ public class CreateRaw extends BaseStep {
         enhancePipelineRunSpecWithEnvVars(rootObj, envVars);
         byte[] enhancedBytes = yamlMapper.writeValueAsBytes(rootObj);
         LOGGER.info("Creating PipelineRun (tekton.dev/v1)\n" + new String(enhancedBytes, StandardCharsets.UTF_8));
-        Resource<HasMetadata> resource = kc.resource(new ByteArrayInputStream(enhancedBytes));
-        HasMetadata created = resource.inNamespace(resolvedNamespace).create();
+        HasMetadata created = createHasMetadataFromYaml(kc, enhancedBytes);
         if (created == null || created.getMetadata() == null) {
             throw new AbortException("Failed to create PipelineRun (v1): no resource returned.");
         }
