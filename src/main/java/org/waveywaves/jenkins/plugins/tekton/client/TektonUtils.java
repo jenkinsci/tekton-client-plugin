@@ -128,6 +128,35 @@ public class TektonUtils {
         return kind;
     }
 
+    /**
+     * Parses the Tekton apiVersion from YAML/JSON manifest data (e.g. "tekton.dev/v1" or "tekton.dev/v1beta1").
+     *
+     * @param data raw manifest bytes
+     * @return "v1", "v1beta1", or null if not found / not tekton.dev (caller may treat null as v1beta1 for backward compatibility)
+     */
+    public static String getApiVersionFromData(byte[] data) {
+        if (data == null || data.length == 0) {
+            return null;
+        }
+        String content = new String(data, StandardCharsets.UTF_8);
+        String[] lines = content.split("\n");
+        for (String line : lines) {
+            String trimmed = line.trim();
+            if (trimmed.startsWith("apiVersion:")) {
+                int colon = trimmed.indexOf(':');
+                String value = colon >= 0 ? trimmed.substring(colon + 1).trim() : "";
+                if (value.contains("tekton.dev/v1beta1")) {
+                    return "v1beta1";
+                }
+                if (value.contains("tekton.dev/v1")) {
+                    return "v1";
+                }
+                return null;
+            }
+        }
+        return null;
+    }
+
     public static InputStream urlToByteArrayStream(URL url) {
         InputStream inputStream = null;
         BufferedReader reader = null;

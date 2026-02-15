@@ -1,7 +1,10 @@
 package org.waveywaves.jenkins.plugins.tekton.client.build.create;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import com.google.common.base.Strings;
@@ -9,6 +12,7 @@ import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
@@ -43,7 +47,6 @@ import java.net.MalformedURLException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Optional;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
@@ -72,9 +75,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.waveywaves.jenkins.plugins.tekton.client.global.TektonGlobalConfiguration;
+import org.waveywaves.jenkins.plugins.tekton.client.global.ClusterConfig;
+import io.fabric8.kubernetes.client.Config;
+import io.fabric8.kubernetes.client.dsl.Resource;
+import io.fabric8.kubernetes.api.model.HasMetadata;
+import io.fabric8.kubernetes.client.utils.Serialization;
+import jenkins.model.Jenkins;
+
+import java.util.Collections;
 
 public class CreateRaw extends BaseStep {
     private static final Logger LOGGER = Logger.getLogger(CreateRaw.class.getName());
+    /** Default namespace when none is specified (CI-safe fallback). Package visibility for tests. */
+    static final String DEFAULT_NAMESPACE = "default";
 
     private final String input;
     private final String inputType;
@@ -128,6 +142,88 @@ public class CreateRaw extends BaseStep {
         this.toolClassLoader = toolClassLoader;
     }
 
+    /**
+     * Resolves the namespace to use for Tekton resources using a priority hierarchy:
+     * 1. Explicit namespace from the step configuration
+     * 2. Default namespace from Global Plugin Configuration
+     * 3. Namespace from current KubeConfig context (if running on Minikube or similar)
+     * 4. Hard fallback to "default" namespace
+     *
+     * @return the resolved namespace, or null if the resource already has one
+     */
+    private String resolveNamespace(String resourceNamespace) {
+        // If the resource already has a namespace, respect it
+        if (!Strings.isNullOrEmpty(resourceNamespace)) {
+            return resourceNamespace;
+        }
+
+        // Priority 1: Check explicit namespace from step configuration
+        if (!Strings.isNullOrEmpty(this.namespace)) {
+            return this.namespace;
+        }
+
+        // Priority 2: Check Global Plugin Configuration for default namespace
+        // CI-safe: only access global config when Jenkins is running (avoid NPE in headless JUnit)
+        if (Jenkins.getInstanceOrNull() != null) {
+            TektonGlobalConfiguration globalConfig = TektonGlobalConfiguration.get();
+            if (globalConfig != null) {
+                for (ClusterConfig cc : globalConfig.getClusterConfigs()) {
+                    if (cc.getName().equals(getClusterName()) && !Strings.isNullOrEmpty(cc.getDefaultNamespace())) {
+                        return cc.getDefaultNamespace();
+                    }
+                }
+            }
+        }
+
+        // Priority 3: Try to get namespace from KubeConfig context (via KubernetesClient)
+        if (kubernetesClient != null) {
+            try {
+                Config config = ((io.fabric8.kubernetes.client.KubernetesClient) kubernetesClient).getConfiguration();
+                if (config != null && !Strings.isNullOrEmpty(config.getNamespace())) {
+                    return config.getNamespace();
+                }
+            } catch (Exception e) {
+                LOGGER.warning("Failed to get namespace from KubeConfig: " + e.getMessage());
+            }
+        }
+
+        // Priority 4: Hard fallback to "default" namespace
+        return DEFAULT_NAMESPACE;
+    }
+
+    /** Full apiVersion for Tekton v1 (used so the client posts to /apis/tekton.dev/v1/...). */
+    private static final String TEKTON_API_VERSION_V1 = "tekton.dev/v1";
+
+    /**
+     * Unmarshals YAML bytes to HasMetadata (single or list) and creates the resource via the Kubernetes client.
+     * Compatible with fabric8 5.4.x DSL: uses Serialization.unmarshal and resource().createOrReplace().
+     * When {@code expectedApiVersion} is non-null, the resource's apiVersion is set to it before create so the
+     * request URL matches the body (avoids "API version in the data does not match expected" when using v1).
+     */
+    private HasMetadata createHasMetadataFromYaml(KubernetesClient kc, byte[] yamlBytes, String expectedApiVersion) {
+        Object result = Serialization.unmarshal(new ByteArrayInputStream(yamlBytes));
+        List<HasMetadata> items;
+        if (result instanceof List) {
+            @SuppressWarnings("unchecked")
+            List<HasMetadata> list = (List<HasMetadata>) (List<?>) result;
+            items = list;
+        } else {
+            items = Collections.singletonList((HasMetadata) result);
+        }
+        if (items == null || items.isEmpty()) {
+            return null;
+        }
+        HasMetadata item = items.get(0);
+        if (expectedApiVersion != null && !expectedApiVersion.isEmpty()) {
+            item.setApiVersion(expectedApiVersion);
+        }
+        return kc.resource(item).createOrReplace();
+    }
+
+    private HasMetadata createHasMetadataFromYaml(KubernetesClient kc, byte[] yamlBytes) {
+        return createHasMetadataFromYaml(kc, yamlBytes, null);
+    }
+
     public void setChecksPublisher(ChecksPublisher checksPublisher) {
         this.checksPublisher = checksPublisher;
     }
@@ -172,90 +268,347 @@ public class CreateRaw extends BaseStep {
     }
 
     public String createTaskRun(InputStream inputStream) throws Exception {
+        byte[] data = ByteStreams.toByteArray(inputStream);
+        String apiVersion = TektonUtils.getApiVersionFromData(data);
+        if (apiVersion == null) {
+            apiVersion = "v1beta1";
+        }
+        if (!"v1".equals(apiVersion) && !"v1beta1".equals(apiVersion)) {
+            throw new AbortException("Unsupported Tekton API version: " + apiVersion + ". Supported versions are v1 and v1beta1.");
+        }
+        if ("v1".equals(apiVersion)) {
+            return createTaskRunV1(data);
+        }
+        return createTaskRunV1Beta1(data);
+    }
+
+    public String createTask(InputStream inputStream) throws Exception {
+        byte[] data = ByteStreams.toByteArray(inputStream);
+        String apiVersion = TektonUtils.getApiVersionFromData(data);
+        if (apiVersion == null) {
+            apiVersion = "v1beta1";
+        }
+        if (!"v1".equals(apiVersion) && !"v1beta1".equals(apiVersion)) {
+            throw new AbortException("Unsupported Tekton API version: " + apiVersion + ". Supported versions are v1 and v1beta1.");
+        }
+        if ("v1".equals(apiVersion)) {
+            return createTaskV1(data);
+        }
+        return createTaskV1Beta1(data);
+    }
+
+    public String createPipeline(InputStream inputStream) throws Exception {
+        byte[] data = ByteStreams.toByteArray(inputStream);
+        String apiVersion = TektonUtils.getApiVersionFromData(data);
+        if (apiVersion == null) {
+            apiVersion = "v1beta1";
+        }
+        if (!"v1".equals(apiVersion) && !"v1beta1".equals(apiVersion)) {
+            throw new AbortException("Unsupported Tekton API version: " + apiVersion + ". Supported versions are v1 and v1beta1.");
+        }
+        if ("v1".equals(apiVersion)) {
+            return createPipelineV1(data);
+        }
+        return createPipelineV1Beta1(data);
+    }
+
+    private String createTaskRunV1(byte[] data) throws Exception {
+        KubernetesClient kc = (KubernetesClient) kubernetesClient;
+        if (kc == null) {
+            throw new AbortException("Kubernetes client is not available. Check Jenkins global configuration for the cluster.");
+        }
+        ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
+        JsonNode root = yamlMapper.readTree(data);
+        if (!root.isObject()) {
+            throw new AbortException("TaskRun manifest is invalid: expected a YAML object.");
+        }
+        ObjectNode rootObj = (ObjectNode) root;
+        JsonNode metadata = rootObj.get("metadata");
+        if (metadata == null || !metadata.isObject()) {
+            throw new AbortException("TaskRun manifest is invalid: missing 'metadata'.");
+        }
+        ObjectNode metadataObj = (ObjectNode) metadata;
+        String resourceNamespace = metadataObj.has("namespace") ? metadataObj.get("namespace").asText(null) : null;
+        String resolvedNamespace = resolveNamespace(resourceNamespace);
+        metadataObj.put("namespace", resolvedNamespace);
+        if (Strings.isNullOrEmpty(resourceNamespace)) {
+            LOGGER.info("No namespace specified in TaskRun manifest (v1), using resolved namespace: " + resolvedNamespace);
+            logMessage("Using namespace: " + resolvedNamespace);
+        }
+        byte[] enhancedBytes = yamlMapper.writeValueAsBytes(rootObj);
+        LOGGER.info("Creating TaskRun (tekton.dev/v1) in namespace " + resolvedNamespace);
+        HasMetadata created = createHasMetadataFromYaml(kc, enhancedBytes, TEKTON_API_VERSION_V1);
+        if (created == null || created.getMetadata() == null) {
+            throw new AbortException("Failed to create TaskRun (v1): no resource returned.");
+        }
+        String resourceName = created.getMetadata().getName() != null ? created.getMetadata().getName() : created.getMetadata().getGenerateName();
+        LOGGER.info("TaskRun (v1) created: " + resourceName + ". Log streaming is not supported for v1.");
+        return resourceName != null ? resourceName : "taskrun-v1";
+    }
+
+    private String createTaskRunV1Beta1(byte[] data) throws Exception {
         if (taskRunClient == null) {
             TektonClient tc = (TektonClient) tektonClient;
             setTaskRunClient(tc.v1beta1().taskRuns());
         }
-        String resourceName;
-        TaskRun taskrun = taskRunClient.load(inputStream).get();
-        if (!Strings.isNullOrEmpty(namespace) && Strings.isNullOrEmpty(taskrun.getMetadata().getNamespace())) {
-            taskrun.getMetadata().setNamespace(namespace);
+        TaskRun taskrun = taskRunClient.load(new ByteArrayInputStream(data)).get();
+        String resourceNamespace = taskrun.getMetadata().getNamespace();
+        String resolvedNamespace = resolveNamespace(resourceNamespace);
+        if (Strings.isNullOrEmpty(resourceNamespace)) {
+            LOGGER.info("No namespace specified in TaskRun manifest, using resolved namespace: " + resolvedNamespace);
+            taskrun.getMetadata().setNamespace(resolvedNamespace);
+            logMessage("Using namespace: " + resolvedNamespace);
         }
-        String ns = taskrun.getMetadata().getNamespace();
-        if (Strings.isNullOrEmpty(ns)) {
-            taskrun = taskRunClient.create(taskrun);
-        } else {
-            taskrun = taskRunClient.inNamespace(ns).create(taskrun);
-        }
-        resourceName = taskrun.getMetadata().getName();
-
+        taskrun = taskRunClient.inNamespace(resolvedNamespace).create(taskrun);
+        String resourceName = taskrun.getMetadata().getName();
         streamTaskRunLogsToConsole(taskrun);
         return resourceName;
     }
 
-    public String createTask(InputStream inputStream) {
+    private String createTaskV1(byte[] data) throws Exception {
+        KubernetesClient kc = (KubernetesClient) kubernetesClient;
+        if (kc == null) {
+            throw new AbortException("Kubernetes client is not available. Check Jenkins global configuration for the cluster.");
+        }
+        ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
+        JsonNode root = yamlMapper.readTree(data);
+        if (!root.isObject()) {
+            throw new AbortException("Task manifest is invalid: expected a YAML object.");
+        }
+        ObjectNode rootObj = (ObjectNode) root;
+        JsonNode metadata = rootObj.get("metadata");
+        if (metadata == null || !metadata.isObject()) {
+            throw new AbortException("Task manifest is invalid: missing 'metadata'.");
+        }
+        ObjectNode metadataObj = (ObjectNode) metadata;
+        String resourceNamespace = metadataObj.has("namespace") ? metadataObj.get("namespace").asText(null) : null;
+        String resolvedNamespace = resolveNamespace(resourceNamespace);
+        metadataObj.put("namespace", resolvedNamespace);
+        if (Strings.isNullOrEmpty(resourceNamespace)) {
+            LOGGER.info("No namespace specified in Task manifest (v1), using resolved namespace: " + resolvedNamespace);
+            logMessage("Using namespace: " + resolvedNamespace);
+        }
+        byte[] enhancedBytes = yamlMapper.writeValueAsBytes(rootObj);
+        LOGGER.info("Creating Task (tekton.dev/v1) in namespace " + resolvedNamespace);
+        HasMetadata created = createHasMetadataFromYaml(kc, enhancedBytes, TEKTON_API_VERSION_V1);
+        if (created == null || created.getMetadata() == null) {
+            throw new AbortException("Failed to create Task (v1): no resource returned.");
+        }
+        return created.getMetadata().getName();
+    }
+
+    private String createTaskV1Beta1(byte[] data) {
         if (taskClient == null) {
             TektonClient tc = (TektonClient) tektonClient;
             setTaskClient(tc.v1beta1().tasks());
         }
-        String resourceName;
-        Task task = taskClient.load(inputStream).get();
-        if (!Strings.isNullOrEmpty(namespace) && Strings.isNullOrEmpty(task.getMetadata().getNamespace())) {
-            task.getMetadata().setNamespace(namespace);
+        Task task = taskClient.load(new ByteArrayInputStream(data)).get();
+        String resourceNamespace = task.getMetadata().getNamespace();
+        String resolvedNamespace = resolveNamespace(resourceNamespace);
+        if (Strings.isNullOrEmpty(resourceNamespace)) {
+            LOGGER.info("No namespace specified in Task manifest, using resolved namespace: " + resolvedNamespace);
+            task.getMetadata().setNamespace(resolvedNamespace);
+            logMessage("Using namespace: " + resolvedNamespace);
         }
-        String ns = task.getMetadata().getNamespace();
-        if (Strings.isNullOrEmpty(ns)) {
-            task = taskClient.create(task);
-        } else {
-            task = taskClient.inNamespace(ns).create(task);
-        }
-        resourceName = task.getMetadata().getName();
-        return resourceName;
+        task = taskClient.inNamespace(resolvedNamespace).create(task);
+        return task.getMetadata().getName();
     }
 
-    public String createPipeline(InputStream inputStream) {
+    private String createPipelineV1(byte[] data) throws Exception {
+        KubernetesClient kc = (KubernetesClient) kubernetesClient;
+        if (kc == null) {
+            throw new AbortException("Kubernetes client is not available. Check Jenkins global configuration for the cluster.");
+        }
+        ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
+        JsonNode root = yamlMapper.readTree(data);
+        if (!root.isObject()) {
+            throw new AbortException("Pipeline manifest is invalid: expected a YAML object.");
+        }
+        ObjectNode rootObj = (ObjectNode) root;
+        JsonNode metadata = rootObj.get("metadata");
+        if (metadata == null || !metadata.isObject()) {
+            throw new AbortException("Pipeline manifest is invalid: missing 'metadata'.");
+        }
+        ObjectNode metadataObj = (ObjectNode) metadata;
+        String resourceNamespace = metadataObj.has("namespace") ? metadataObj.get("namespace").asText(null) : null;
+        String resolvedNamespace = resolveNamespace(resourceNamespace);
+        metadataObj.put("namespace", resolvedNamespace);
+        if (Strings.isNullOrEmpty(resourceNamespace)) {
+            LOGGER.info("No namespace specified in Pipeline manifest (v1), using resolved namespace: " + resolvedNamespace);
+            logMessage("Using namespace: " + resolvedNamespace);
+        }
+        byte[] enhancedBytes = yamlMapper.writeValueAsBytes(rootObj);
+        LOGGER.info("Creating Pipeline (tekton.dev/v1) in namespace " + resolvedNamespace);
+        HasMetadata created = createHasMetadataFromYaml(kc, enhancedBytes, TEKTON_API_VERSION_V1);
+        if (created == null || created.getMetadata() == null) {
+            throw new AbortException("Failed to create Pipeline (v1): no resource returned.");
+        }
+        return created.getMetadata().getName();
+    }
+
+    private String createPipelineV1Beta1(byte[] data) {
         if (pipelineClient == null) {
             TektonClient tc = (TektonClient) tektonClient;
             setPipelineClient(tc.v1beta1().pipelines());
         }
-        String resourceName;
-        Pipeline pipeline = pipelineClient.load(inputStream).get();
-        if (!Strings.isNullOrEmpty(namespace) && Strings.isNullOrEmpty(pipeline.getMetadata().getNamespace())) {
-            pipeline.getMetadata().setNamespace(namespace);
+        Pipeline pipeline = pipelineClient.load(new ByteArrayInputStream(data)).get();
+        String resourceNamespace = pipeline.getMetadata().getNamespace();
+        String resolvedNamespace = resolveNamespace(resourceNamespace);
+        if (Strings.isNullOrEmpty(resourceNamespace)) {
+            LOGGER.info("No namespace specified in Pipeline manifest, using resolved namespace: " + resolvedNamespace);
+            pipeline.getMetadata().setNamespace(resolvedNamespace);
+            logMessage("Using namespace: " + resolvedNamespace);
         }
-        String ns = pipeline.getMetadata().getNamespace();
-        if (Strings.isNullOrEmpty(ns)) {
-            pipeline = pipelineClient.create(pipeline);
-        } else {
-            pipeline = pipelineClient.inNamespace(ns).create(pipeline);
-        }
-        resourceName = pipeline.getMetadata().getName();
-        return resourceName;
+        pipeline = pipelineClient.inNamespace(resolvedNamespace).create(pipeline);
+        return pipeline.getMetadata().getName();
     }
 
     public String createPipelineRun(InputStream inputStream, EnvVars envVars) throws Exception {
+        byte[] data = ByteStreams.toByteArray(inputStream);
+        String apiVersion = TektonUtils.getApiVersionFromData(data);
+        if (apiVersion == null) {
+            apiVersion = "v1beta1";
+        }
+        if (!"v1".equals(apiVersion) && !"v1beta1".equals(apiVersion)) {
+            throw new AbortException("Unsupported Tekton API version: " + apiVersion + ". Supported versions are v1 and v1beta1.");
+        }
+
+        if ("v1".equals(apiVersion)) {
+            return createPipelineRunV1(data, envVars);
+        }
+
+        return createPipelineRunV1Beta1(data, envVars);
+    }
+
+    /**
+     * Create PipelineRun using the generic Kubernetes client so the request uses the manifest's apiVersion (tekton.dev/v1).
+     * Applies namespace fallback and env params to the YAML, then creates. Log streaming is not performed for v1.
+     */
+    private String createPipelineRunV1(byte[] data, EnvVars envVars) throws Exception {
+        KubernetesClient kc = (KubernetesClient) kubernetesClient;
+        if (kc == null) {
+            throw new AbortException("Kubernetes client is not available. Check Jenkins global configuration for the cluster.");
+        }
+        ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
+        JsonNode root = yamlMapper.readTree(data);
+        if (!root.isObject()) {
+            throw new AbortException("PipelineRun manifest is invalid: expected a YAML object.");
+        }
+        ObjectNode rootObj = (ObjectNode) root;
+        JsonNode metadata = rootObj.get("metadata");
+        if (metadata == null || !metadata.isObject()) {
+            throw new AbortException("PipelineRun manifest is invalid: missing 'metadata'. Ensure your YAML has a metadata section (e.g. name, namespace).");
+        }
+        ObjectNode metadataObj = (ObjectNode) metadata;
+        String resourceNamespace = metadataObj.has("namespace") ? metadataObj.get("namespace").asText(null) : null;
+        String resolvedNamespace = resolveNamespace(resourceNamespace);
+        metadataObj.put("namespace", resolvedNamespace);
+        if (Strings.isNullOrEmpty(resourceNamespace)) {
+            LOGGER.info("No namespace specified in PipelineRun manifest (v1), using resolved namespace: " + resolvedNamespace);
+            logMessage("Using namespace: " + resolvedNamespace);
+        }
+        enhancePipelineRunSpecWithEnvVars(rootObj, envVars);
+        byte[] enhancedBytes = yamlMapper.writeValueAsBytes(rootObj);
+        LOGGER.info("Creating PipelineRun (tekton.dev/v1)\n" + new String(enhancedBytes, StandardCharsets.UTF_8));
+        HasMetadata created = createHasMetadataFromYaml(kc, enhancedBytes, TEKTON_API_VERSION_V1);
+        if (created == null || created.getMetadata() == null) {
+            throw new AbortException("Failed to create PipelineRun (v1): no resource returned.");
+        }
+        String resourceName = created.getMetadata().getName();
+        if (checksPublisher != null) {
+            ChecksDetails checkDetails = new ChecksDetails.ChecksDetailsBuilder()
+                    .withName("tekton")
+                    .withOutput(new ChecksOutput.ChecksOutputBuilder()
+                            .withTitle(resourceName)
+                            .withSummary("PipelineRun (v1) is running...")
+                            .build())
+                    .withStartedAt(LocalDateTime.now())
+                    .withStatus(ChecksStatus.IN_PROGRESS)
+                    .withConclusion(ChecksConclusion.NONE)
+                    .build();
+            checksPublisher.publish(checkDetails);
+        }
+        LOGGER.info("PipelineRun (v1) created: " + resourceName + ". Log streaming is not supported for v1; check cluster for status.");
+        return resourceName;
+    }
+
+    /**
+     * Adds Jenkins env vars as params on spec.params for a generic PipelineRun YAML (ObjectNode). Used for v1.
+     */
+    private void enhancePipelineRunSpecWithEnvVars(ObjectNode specRoot, EnvVars envVars) {
+        JsonNode specNode = specRoot.get("spec");
+        if (specNode == null || !specNode.isObject()) {
+            return;
+        }
+        ObjectNode spec = (ObjectNode) specNode;
+        ArrayNode params = spec.has("params") && spec.get("params").isArray() ? (ArrayNode) spec.get("params") : spec.putArray("params");
+        setParamOnSpec(params, "BUILD_ID", envVars.get("BUILD_ID"));
+        setParamOnSpec(params, "JOB_NAME", envVars.get("JOB_NAME"));
+        setParamOnSpec(params, "PULL_PULL_SHA", envVars.get("GIT_COMMIT"));
+        String gitBranch = envVars.get("GIT_BRANCH");
+        setParamOnSpec(params, "PULL_BASE_REF", gitBranch != null && gitBranch.contains("/") ? gitBranch.split("/")[gitBranch.split("/").length - 1] : gitBranch);
+        setParamOnSpec(params, "REPO_URL", envVars.get("GIT_URL"));
+        String gitUrlString = envVars.get("GIT_URL");
+        if (StringUtils.isNotEmpty(gitUrlString)) {
+            try {
+                URL gitUrl = new URL(gitUrlString);
+                String[] parts = gitUrl.getPath().split("/");
+                setParamOnSpec(params, "REPO_OWNER", parts.length > 1 ? parts[1] : "");
+                setParamOnSpec(params, "REPO_NAME", parts.length > 2 ? removeGitSuffix(parts[2]) : "");
+            } catch (MalformedURLException e) {
+                setParamOnSpec(params, "REPO_OWNER", "");
+                setParamOnSpec(params, "REPO_NAME", "");
+            }
+        }
+    }
+
+    private void setParamOnSpec(ArrayNode params, String name, String value) {
+        if (value == null) {
+            value = "";
+        }
+        for (int i = 0; i < params.size(); i++) {
+            JsonNode p = params.get(i);
+            if (p.has("name") && name.equals(p.get("name").asText())) {
+                ((ObjectNode) p).put("value", value);
+                return;
+            }
+        }
+        ObjectNode param = params.addObject();
+        param.put("name", name);
+        param.put("value", value);
+    }
+
+    private String createPipelineRunV1Beta1(byte[] data, EnvVars envVars) throws Exception {
         if (pipelineRunClient == null) {
             TektonClient tc = (TektonClient) tektonClient;
             setPipelineRunClient(tc.v1beta1().pipelineRuns());
         }
         String resourceName;
-        final PipelineRun pipelineRun = pipelineRunClient.load(inputStream).get();
-        if (!Strings.isNullOrEmpty(namespace) && Strings.isNullOrEmpty(pipelineRun.getMetadata().getNamespace())) {
-            pipelineRun.getMetadata().setNamespace(namespace);
+        final PipelineRun pipelineRun = pipelineRunClient.load(new ByteArrayInputStream(data)).get();
+        if (pipelineRun == null) {
+            throw new AbortException("Failed to load PipelineRun from input: parsed resource is null. Check that the YAML/JSON is valid and contains a PipelineRun.");
+        }
+        if (pipelineRun.getMetadata() == null) {
+            throw new AbortException("PipelineRun manifest is invalid: missing 'metadata'. Ensure your YAML has a metadata section (e.g. name, namespace).");
+        }
+        if (pipelineRun.getSpec() == null) {
+            throw new AbortException("PipelineRun manifest is invalid: missing 'spec'. Ensure your YAML has a spec section.");
+        }
+
+        String resourceNamespace = pipelineRun.getMetadata().getNamespace();
+        String resolvedNamespace = resolveNamespace(resourceNamespace);
+
+        if (Strings.isNullOrEmpty(resourceNamespace)) {
+            LOGGER.info("No namespace specified in PipelineRun manifest, using resolved namespace: " + resolvedNamespace);
+            pipelineRun.getMetadata().setNamespace(resolvedNamespace);
+            logMessage("Using namespace: " + resolvedNamespace);
         }
 
         LOGGER.info("Using environment variables " + envVars);
-
         enhancePipelineRunWithEnvVars(pipelineRun, envVars);
-
-        String ns = pipelineRun.getMetadata().getNamespace();
-
         LOGGER.info("Creating PipelineRun\n" + marshall(pipelineRun));
 
-        PipelineRun updatedPipelineRun = Strings.isNullOrEmpty(ns) ?
-                pipelineRunClient.create(pipelineRun) :
-                pipelineRunClient.inNamespace(ns).create(pipelineRun);
-
+        PipelineRun updatedPipelineRun = pipelineRunClient.inNamespace(resolvedNamespace).create(pipelineRun);
         resourceName = updatedPipelineRun.getMetadata().getName();
 
         ChecksDetails checkDetails = new ChecksDetails.ChecksDetailsBuilder()
@@ -272,17 +625,13 @@ public class CreateRaw extends BaseStep {
 
         streamPipelineRunLogsToConsole(updatedPipelineRun);
 
-        PipelineRun reloaded = pipelineRunClient.inNamespace(ns).withName(resourceName).get();
-        List<Condition> conditions = reloaded
-                .getStatus()
-                .getConditions();
-        Optional<Condition> succeeded = conditions
-                .stream()
+        PipelineRun reloaded = pipelineRunClient.inNamespace(resolvedNamespace).withName(resourceName).get();
+        List<Condition> conditions = reloaded.getStatus().getConditions();
+        Optional<Condition> succeeded = conditions.stream()
                 .filter(c -> c.getType().equalsIgnoreCase("Succeeded"))
                 .findFirst();
 
         if (succeeded.isPresent() && succeeded.get().getStatus().equalsIgnoreCase("false")) {
-            // pass the error message
             throw new Exception(succeeded.get().getReason() + ": " + succeeded.get().getMessage());
         }
 
